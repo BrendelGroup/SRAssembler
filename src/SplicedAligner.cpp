@@ -32,12 +32,12 @@ string SplicedAligner::get_output_summary(){
 }
 //singleton implementation
 SplicedAligner* SplicedAligner::getInstance(int type, int log_level, string log_file){
-	if (type == SplicedAligner::GENOME_THREADER){
+	if (type == SplicedAligner::GENOMETHREADER){
 		if (spliced_aligner == NULL)
 			spliced_aligner = new GTHAligner(log_level, log_file);
 		return spliced_aligner;
 	}
-	if (type == SplicedAligner::GENE_SEQER){
+	if (type == SplicedAligner::GENESEQER){
 		if (spliced_aligner == NULL)
 			spliced_aligner = new GSQAligner(log_level, log_file);
 		return spliced_aligner;

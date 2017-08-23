@@ -27,8 +27,8 @@ public:
 	string_map get_aligned_query_list();
 	string get_output_summary();
 	int get_match_num();
-	static const int GENOME_THREADER = 0;
-	static const int GENE_SEQER = 1;
+	static const int GENESEQER = 0;
+	static const int GENOMETHREADER = 1;
 	static const int EXONERATE = 2;
 	static SplicedAligner* getInstance(int, int, string);
 	void set_log_file(std::string log_file);
