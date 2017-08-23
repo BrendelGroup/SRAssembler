@@ -1,0 +1,30 @@
+#!/bin/bash
+
+echo "============================================================================================================"
+echo " Test1: Use the -1, -2 options to assign reads files."
+echo "============================================================================================================"
+rm -rf Atestout1
+rm -rf reads_data
+mkdir -p Atestout1
+../bin/SRAssembler                 -q input/LOC_Os06g04560.pep -t protein -p SRAssembler.conf -1 input/reads1_200.fq -2 input/reads2_200.fq -z 200 -r ./reads_data -x 15000 -o Atestout1 -A 1 -S 0 -s arabidopsis -n 10
+
+echo "============================================================================================================"
+echo " Test2: Use the library definition file (-l option) and the previously pre-processed reads data (-r option)."
+echo "============================================================================================================"
+rm -rf Atestout2
+mkdir -p Atestout2
+../bin/SRAssembler                 -q input/LOC_Os06g04560.pep -t protein -p SRAssembler.conf -l libraries_200bp.conf                              -r ./reads_data -x 15000 -o Atestout2 -A 1 -S 0 -s arabidopsis -n 10
+
+echo "============================================================================================================"
+echo " Test3: Use two libraries. Only the second library will be pre-processed."
+echo "============================================================================================================"
+rm -rf Atestout3
+mkdir -p Atestout3
+../bin/SRAssembler                 -q input/LOC_Os06g04560.pep -t protein -p SRAssembler.conf -l libraries_200bp_1kb.conf                          -r ./reads_data -x 15000 -o Atestout3 -A 1 -S 0 -s arabidopsis -n  3
+
+echo "============================================================================================================"
+echo " Test4: Previous example, but using the MPI implementation."
+echo "============================================================================================================"
+rm -rf Atestout4
+mkdir -p Atestout4
+mpirun -n 4 ../bin/SRAssembler_MPI -q input/LOC_Os06g04560.pep -t protein -p SRAssembler.conf -l libraries_200bp_1kb.conf                          -r ./reads_data -x 15000 -o Atestout4 -A 1 -S 0 -s arabidopsis -n  3
