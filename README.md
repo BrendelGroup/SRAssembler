@@ -21,8 +21,7 @@ our software should be _ramose_ ("having many branches") - it's yours to use,
 modify, improve, enhance, ... .
 
 To proceed, please follow the instructions in the [INSTALL](./INSTALL.md)
-document.  Once all preparatory steps are taken care of, see the
-[HOWTO](./HOWTO.md) document
+document.
 
 ## Reference
 
