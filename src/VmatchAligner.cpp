@@ -185,7 +185,10 @@ void VmatchAligner::do_alignment(const string& index_name, const string& type, i
 		  else
 			  param_list += " -" + it->first + " " + it->second;
 	}
-	string cmd = "vmatch " + align_type + " -q " + reads_file + " -l " + int2str(match_length) + " " + e_option + " " + param_list + " -showdesc 0 -nodist -noevalue -noscore -noidentity " + index_name + " | awk '{print $1,$2,$3,$4,$5,$6}' | uniq -f5 > " + output_file;
+	string cmd = "vmatch " + align_type + " -q " + reads_file + " -d" + " -l " + int2str(match_length) + " " + e_option + " " + param_list + " -showdesc 0 -nodist -noevalue -noscore -noidentity " + index_name + " | awk '{print $1,$2,$3,$4,$5,$6}' | uniq -f5 > " + output_file;
+	logger->debug(cmd);
+	run_shell_command(cmd);
+	       cmd = "vmatch " + align_type + " -q " + reads_file + " -p" + " -l " + int2str(match_length) + " " + e_option + " " + param_list + " -showdesc 0 -nodist -noevalue -noscore -noidentity " + index_name + " | awk '{print $1,$2,$3,$4,$5,$6}' | uniq -f5 >> " + output_file;
 	logger->debug(cmd);
 	run_shell_command(cmd);
 }
