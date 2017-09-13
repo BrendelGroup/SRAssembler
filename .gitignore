@@ -1,0 +1,4 @@
+demo/*testout*
+bin/
+src/*.d
+src/*.o
