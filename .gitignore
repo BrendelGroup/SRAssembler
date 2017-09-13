@@ -1,5 +1,4 @@
-data/Stestout*
-data/reads_data
+demo/*testout*
 bin/
 src/*.d
 src/*.o
