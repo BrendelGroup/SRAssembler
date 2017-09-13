@@ -162,7 +162,7 @@ make install
 ## Installation of both versions
 ```bash
 cd src
-make linux
+make
 make clean
 make mpi
 make install

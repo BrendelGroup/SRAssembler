@@ -1,0 +1,5 @@
+data/Stestout*
+data/reads_data
+bin/
+src/*.d
+src/*.o
