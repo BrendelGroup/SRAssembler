@@ -22,9 +22,10 @@ Logger::~Logger() {
 
 Logger *Logger::getInstance(int level, string log_file)
 {
-	if (logger == NULL)
+	if (logger == NULL) {
 		logger = new Logger(level, log_file);
-		return logger;
+	}
+	return logger;
 }
 
 void Logger::fatal(const string& msg)
