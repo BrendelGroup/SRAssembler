@@ -21,7 +21,7 @@ class Aligner {
 public:
 	Aligner(int, string);
 	virtual void create_index(const string& index_name, const string& type, const string& fasta_file)=0;
-	virtual void do_alignment(const string& index_name, const string& type, int match_length, int mismatch_allowed, const string& reads_file, const Params& params, const string& output_file)=0;
+	virtual void do_alignment(const string& fasta_file_name, const string& index_name, const string& type, int match_length, int mismatch_allowed, const string& reads_file, const Params& params, const string& output_file)=0;
 	virtual int parse_output(const string& output_file, unordered_set<string>& mapped_reads, const string& source_read, const string& out_left_read, const string& out_right_read, int fastq_format, int format)=0;
 	virtual unordered_set<string> get_hit_list(const string& output_file)=0;
 	virtual void align_long_contigs(const string& long_contig_candidate_file, const string& tmp_dir, const string& contig_file, const int max_contig_size, unordered_set<string>& candicate_ids, unordered_set<string>& long_contig_ids)=0;

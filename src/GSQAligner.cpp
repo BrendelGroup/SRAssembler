@@ -45,7 +45,7 @@ void GSQAligner::do_spliced_alignment(const string& genomic_file, const string& 
 		species_str = "generic";
 	if (type == "protein")
 		type_str = "Q";
-	string cmd = "GeneSeqer -L " + genomic_file + " -" + type_str + " " + query_file + " -species " + species_str + " " + param_list + " -o " + output_file + " >> " + logger->get_log_file() + " 2>&1";
+	string cmd = "GeneSeqer -L " + genomic_file + " -" + type_str + " " + query_file + " -species " + species_str + " " + param_list + " -O " + output_file + " >> " + logger->get_log_file() + " 2>&1";
 	logger->debug(cmd);
 	run_shell_command(cmd);
 	//get_aligned_contigs(genomic_file, hit_contig_file, output_file);

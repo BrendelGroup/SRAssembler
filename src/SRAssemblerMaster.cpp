@@ -496,7 +496,7 @@ void SRAssemblerMaster::clean_tmp_files(int round){
 	//else: remove data of previous round
 	string cmd = "rm -f " + tmp_dir + "/vmatch_" + "r" + int2str(round) + "_*";
 	logger->debug(cmd);
-	run_shell_command(cmd);
+	//run_shell_command(cmd);
 	cmd = "rm -f " + tmp_dir + "/matched_reads_left_" + "r" + int2str(round) + "_*";
 	logger->debug(cmd);
 	run_shell_command(cmd);
@@ -1020,7 +1020,7 @@ void SRAssemblerMaster::remove_no_hit_contigs(int round){
 	program_name += "_" + get_type(1) + "_vs_contig";
 	Params params = read_param_file(program_name);
 	string out_file = tmp_dir + "/query_contig.aln";
-	aligner->do_alignment(tmp_dir + "/qindex", type, get_match_length(1), get_mismatch_allowed(1), contig_file, params, out_file);
+	aligner->do_alignment(query_file, tmp_dir + "/qindex", type, get_match_length(1), get_mismatch_allowed(1), contig_file, params, out_file);
 	unordered_set<string> hits = aligner->get_hit_list(out_file);
 	remove_no_hit_contigs(hits, round);
 	string cmd = "rm -f " + tmp_dir + "/qindex*";

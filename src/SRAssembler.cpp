@@ -551,10 +551,11 @@ string SRAssembler:: get_index_fasta_file_name(int round){
 					cmd = "cat " + left_file + " " + right_file + " >> " + joined_file;
 					logger->debug(cmd);
 					run_shell_command(cmd);
-				}else
+				} else {
 					cmd = "cat " + left_file + " >> " + joined_file;
 					logger->debug(cmd);
 					run_shell_command(cmd);
+				}
 			}
 			return joined_file;
 		}
@@ -582,7 +583,7 @@ int SRAssembler::do_alignment(int round, int lib_idx, int idx) {
 	}
 	logger->info("... using Vmatch criteria: " + program_name);
 	Params params = this->read_param_file(program_name);
-	aligner->do_alignment(get_index_name(round), get_type(round), get_match_length(round), get_mismatch_allowed(round), lib.get_split_file_name(idx, aligner->get_format()), params, get_output_file_name(round, lib_idx, idx));
+	aligner->do_alignment(get_index_fasta_file_name(round),get_index_name(round), get_type(round), get_match_length(round), get_mismatch_allowed(round), lib.get_split_file_name(idx, aligner->get_format()), params, get_output_file_name(round, lib_idx, idx));
 	int ret = aligner->parse_output(get_output_file_name(round, lib_idx, idx), mapped_reads, lib.get_split_file_name(idx, lib.get_format()), lib.get_matched_left_read_name(round, idx), lib.get_matched_right_read_name(round, idx), fastq_format,  lib.get_format());
 	save_mapped_reads(round);
 	return ret;

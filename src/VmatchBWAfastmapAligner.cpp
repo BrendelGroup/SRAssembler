@@ -1,20 +1,20 @@
 /*
- * VmatchAligner.cpp
+ * VmatchBWAfastmapAligner.cpp
  *
  *  Created on: Oct 15, 2011
  *      Author: hchou
  */
 
-#include "VmatchAligner.h"
+#include "VmatchBWAfastmapAligner.h"
 #include <boost/unordered_set.hpp>
 
 using namespace std;
 
-VmatchAligner::VmatchAligner(int log_level, string log_file):Aligner(log_level, log_file){
+VmatchBWAfastmapAligner::VmatchBWAfastmapAligner(int log_level, string log_file):Aligner(log_level, log_file){
 
 }
 
-unordered_set<string> VmatchAligner::get_hit_list(const string& output_file){
+unordered_set<string> VmatchBWAfastmapAligner::get_hit_list(const string& output_file){
 	logger->debug("get hit list from output file " + output_file);
 	ifstream report_file_stream(output_file.c_str());
 	boost::unordered_set<string> current_mapped_reads;
@@ -43,7 +43,7 @@ unordered_set<string> VmatchAligner::get_hit_list(const string& output_file){
  * format: fastq or fasta
  *
  */
-int VmatchAligner::parse_output(const string& output_file, unordered_set<string>& mapped_reads, const string& source_read, const string& out_left_read, const string& out_right_read, int fastq_format, int format)
+int VmatchBWAfastmapAligner::parse_output(const string& output_file, unordered_set<string>& mapped_reads, const string& source_read, const string& out_left_read, const string& out_right_read, int fastq_format, int format)
 {
 	logger->debug("parsing output file " + output_file);
 	ifstream report_file_stream(output_file.c_str());
@@ -157,16 +157,22 @@ int VmatchAligner::parse_output(const string& output_file, unordered_set<string>
     return found_new_read;
 }
 
-void VmatchAligner::create_index(const string& index_name, const string& type, const string& fasta_file)
+void VmatchBWAfastmapAligner::create_index(const string& index_name, const string& type, const string& fasta_file)
 {
 	string db_type = type;
-	if (db_type == "cdna") db_type = "dna";
-	string cmd = "mkvtree -" + db_type + " -db " + fasta_file + " -pl -indexname " + index_name + " -allout -v >> " + logger->get_log_file();
-	logger->debug(cmd);
-	run_shell_command(cmd);
+	if (db_type == "protein") {
+	  string cmd = "mkvtree -protein -db " + fasta_file + " -pl -indexname " + index_name + " -allout -v >> " + logger->get_log_file();
+	  logger->debug(cmd);
+	  run_shell_command(cmd);
+	}
+	else {
+	  string cmd = "bwasra index " + fasta_file + "  >> " + logger->get_log_file();
+	  logger->debug(cmd);
+	  run_shell_command(cmd);
+	}
 }
 
-void VmatchAligner::do_alignment(const string& index_name, const string& type, int match_length, int mismatch_allowed, const string& reads_file, const Params& params, const string& output_file)
+void VmatchBWAfastmapAligner::do_alignment(const string& fasta_file, const string& index_name, const string& type, int match_length, int mismatch_allowed, const string& reads_file, const Params& params, const string& output_file)
 {
 	string align_type = (type == "protein") ? "-dnavsprot 1": "";
 	string e_option = "";
@@ -185,21 +191,23 @@ void VmatchAligner::do_alignment(const string& index_name, const string& type, i
 		  else
 			  param_list += " -" + it->first + " " + it->second;
 	}
-	string cmd = "vmatch " + align_type + " -q " + reads_file + " -d" + " -l " + int2str(match_length) + " " + e_option + " " + param_list + " -showdesc 0 -nodist -noevalue -noscore -noidentity " + index_name + " | awk '{print $1,$2,$3,$4,$5,$6}' | uniq -f5 > " + output_file;
-	logger->debug(cmd);
-	run_shell_command(cmd);
-	if (type == "cDNA" ) {
-	       cmd = "vmatch " + align_type + " -q " + reads_file + " -p" + " -l " + int2str(match_length) + " " + e_option + " " + param_list + " -showdesc 0 -nodist -noevalue -noscore -noidentity " + index_name + " | awk '{print $1,$2,$3,$4,$5,$6}' | uniq -f5 >> " + output_file;
+	if (type == "protein" ) {
+	   string cmd = "vmatch " + align_type + " -q " + reads_file + " -d" + " -l " + int2str(match_length) + " " + e_option + " " + param_list + " -showdesc 0 -nodist -noevalue -noscore -noidentity " + index_name + " | awk '{print $1,$2,$3,$4,$5,$6}' | uniq -f5 > " + output_file;
+	   logger->debug(cmd);
+	   run_shell_command(cmd);
 	}
-	logger->debug(cmd);
-	run_shell_command(cmd);
+	else {	
+	  string cmd = "bwasra fastmap -l " + int2str(match_length) + " " + fasta_file + " " + reads_file + " | awk '{print $1,$2,$3,$4,$5,$6}' | uniq -f5 > " + output_file;
+	  logger->debug(cmd);
+	  run_shell_command(cmd);
+	}
 }
 
-int VmatchAligner::get_format(){
+int VmatchBWAfastmapAligner::get_format(){
 	return FORMAT_FASTA;
 }
 
-bool VmatchAligner::is_available(){
+bool VmatchBWAfastmapAligner::is_available(){
 	int ret = system("vmatch > /dev/null 2>&1");
 	if (WEXITSTATUS(ret) != 1) {
 		cout << "Cannot find vmatch, check your PATH variable!" << endl;
@@ -208,11 +216,11 @@ bool VmatchAligner::is_available(){
 	return true;
 }
 
-string VmatchAligner::get_program_name(){
-	return "Vmatch";
+string VmatchBWAfastmapAligner::get_program_name(){
+		return "VmatchBWAfastmap";
 }
 
-void VmatchAligner::align_long_contigs(const string& long_contig_candidate_file, const string& tmp_dir, const string& contig_file, const int max_contig_size, unordered_set<string>& candidate_ids, unordered_set<string>& long_contig_ids)
+void VmatchBWAfastmapAligner::align_long_contigs(const string& long_contig_candidate_file, const string& tmp_dir, const string& contig_file, const int max_contig_size, unordered_set<string>& candidate_ids, unordered_set<string>& long_contig_ids)
 {
 	if (!file_exists(long_contig_candidate_file)){
 	   return;
@@ -242,6 +250,6 @@ void VmatchAligner::align_long_contigs(const string& long_contig_candidate_file,
 	out_file_stream.close();
 }
 
-VmatchAligner::~VmatchAligner() {
+VmatchBWAfastmapAligner::~VmatchBWAfastmapAligner() {
 	// TODO Auto-generated destructor stub
 }
