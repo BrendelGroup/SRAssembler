@@ -581,7 +581,7 @@ int SRAssembler::do_alignment(int round, int lib_idx, int idx) {
 	} else {	
 		program_name += "_extend_contig";
 	}
-	logger->info("... using Vmatch criteria: " + program_name);
+	logger->info("... using criteria: " + program_name);
 	Params params = this->read_param_file(program_name);
 	aligner->do_alignment(get_index_fasta_file_name(round),get_index_name(round), get_type(round), get_match_length(round), get_mismatch_allowed(round), lib.get_split_file_name(idx, aligner->get_format()), params, get_output_file_name(round, lib_idx, idx));
 	int ret = aligner->parse_output(get_output_file_name(round, lib_idx, idx), mapped_reads, lib.get_split_file_name(idx, lib.get_format()), lib.get_matched_left_read_name(round, idx), lib.get_matched_right_read_name(round, idx), fastq_format,  lib.get_format());
