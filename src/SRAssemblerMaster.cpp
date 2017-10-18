@@ -494,9 +494,9 @@ void SRAssemblerMaster::do_walking(){
 void SRAssemblerMaster::clean_tmp_files(int round){
 	if (round == 0) return;
 	//else: remove data of previous round
-	string cmd = "rm -f " + tmp_dir + "/vmatch_" + "r" + int2str(round) + "_*";
+	string cmd = "rm -f " + tmp_dir + "/readhits_" + "r" + int2str(round) + "_*";
 	logger->debug(cmd);
-	//run_shell_command(cmd);
+	run_shell_command(cmd);
 	cmd = "rm -f " + tmp_dir + "/matched_reads_left_" + "r" + int2str(round) + "_*";
 	logger->debug(cmd);
 	run_shell_command(cmd);

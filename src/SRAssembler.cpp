@@ -683,7 +683,7 @@ int SRAssembler::get_mismatch_allowed(int round) {
 }
 
 string SRAssembler::get_output_file_name(int round, int lib_idx, int idx){
-    return tmp_dir + "/vmatch_" + "r" + int2str(round) + "_" + "l" + int2str(lib_idx+1) + "_" + "s" + int2str(idx) + "";
+    return tmp_dir + "/readhits_" + "r" + int2str(round) + "_" + "l" + int2str(lib_idx+1) + "_" + "s" + int2str(idx) + "";
 }
 
 void SRAssembler::merge_mapped_files(int round){
