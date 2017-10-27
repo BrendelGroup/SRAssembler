@@ -398,7 +398,7 @@ void SRAssemblerMaster::do_walking(){
 			logger->info("Round " + int2str(round) + " is done!");
 			if (round == num_rounds) {
 				logger->info("The walking is terminated: The maximum round (" + int2str(num_rounds) + ") has been reached.");
-			   	break;
+				break;
 			}
 			if (longest_contig == 0) {
 				assembly_round = round + 1;
@@ -862,6 +862,14 @@ void SRAssemblerMaster::process_long_contigs(int round, int k) {
 			}
 		}
 	}
+	// For right now masking is done by NCBI's dustmasker.
+	//TODO This should be more modular
+	string cmd;
+	string contig_file;
+	contig_file = get_index_fasta_file_name(round+1);
+	string masked_file = contig_file + ".masked";
+	cmd = "printf '\e[38;5;002mPROCESS_LONG_CONTIGS\e[0m\n'; dustmasker -in " + contig_file + " -outfmt fasta -out - | sed '/^[^>]/s/[a-z]/N/g' > " + masked_file;
+	run_shell_command(cmd);
 }
 
 void SRAssemblerMaster::remove_hit_contigs(vector<string> &contig_list, int round){

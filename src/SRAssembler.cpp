@@ -551,10 +551,43 @@ string SRAssembler:: get_index_fasta_file_name(int round){
 					cmd = "cat " + left_file + " " + right_file + " >> " + joined_file;
 					logger->debug(cmd);
 					run_shell_command(cmd);
-				}else
+				} else {
 					cmd = "cat " + left_file + " >> " + joined_file;
 					logger->debug(cmd);
 					run_shell_command(cmd);
+				}
+			}
+			return joined_file;
+		}
+	}
+	return query_file;
+}
+string SRAssembler:: get_masked_index_fasta_file_name(int round){
+	if (round > 1){
+		if (assembly_round < round) {
+			string masked_fasta = get_contig_file_name(round-1) + ".masked";
+			run_shell_command("printf '\e[38;5;002mUSING MASKED FASTA FOR INDEX\e[0m\n'");
+			return masked_fasta;
+		} else {
+			string joined_file = tmp_dir + "/matched_reads_joined.fasta";
+			string cmd;
+			for (unsigned i=0;i<this->libraries.size();i++){
+				string left_file = tmp_dir + "/matched_reads_left_" + "l" + int2str(i+1) + ".fasta";
+				string right_file = tmp_dir + "/matched_reads_right_" + "l" + int2str(i+1) + ".fasta";
+				if (libraries[i].get_file_extension() == "fastq") {
+					fastq2fasta(tmp_dir + "/matched_reads_left_" + "l" + int2str(i+1) + ".fastq", left_file);
+					if (libraries[i].get_paired_end())
+						fastq2fasta(tmp_dir + "/matched_reads_right_" + "l" + int2str(i+1) + ".fastq", right_file);
+				}
+				if (libraries[i].get_paired_end()){
+					cmd = "cat " + left_file + " " + right_file + " >> " + joined_file;
+					logger->debug(cmd);
+					run_shell_command(cmd);
+				} else {
+					cmd = "cat " + left_file + " >> " + joined_file;
+					logger->debug(cmd);
+					run_shell_command(cmd);
+				}
 			}
 			return joined_file;
 		}
@@ -666,7 +699,7 @@ Logger* SRAssembler::get_logger(){
 
 void SRAssembler::create_index(int round) {
 	Aligner* aligner = get_aligner(round);
-	aligner->create_index(get_index_name(round), get_type(round), get_index_fasta_file_name(round));
+	aligner->create_index(get_index_name(round), get_type(round), get_masked_index_fasta_file_name(round));
 }
 
 string SRAssembler:: get_type(int round){

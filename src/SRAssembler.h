@@ -54,6 +54,7 @@ protected:
 	void create_index(int round);
 	std::string get_index_name(int round);
 	std::string get_index_fasta_file_name(int round);
+	std::string get_masked_index_fasta_file_name(int round);
 	std::string get_contig_file_name(int round);
 	std::string get_mapped_reads_file_name(int round);
 	std::string get_output_file_name(int round, int lib_idx, int idx);
