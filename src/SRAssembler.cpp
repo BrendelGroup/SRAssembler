@@ -25,7 +25,7 @@ SRAssembler::~SRAssembler() {
 }
 
 int SRAssembler::init(int argc, char * argv[], int rank, int size) {
-    //set the default values
+	//set the default values
 	init_match_length = INIT_MATCH_LENGTH_PROTEIN;
 	recur_match_length = RECUR_MATCH_LENGTH;
 	mismatch_allowed = MISMATCH_ALLOWED_PROTEIN;
@@ -71,7 +71,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int size) {
 	usage.append("-q: Required; FASTA-formatted query file.\n");
 	usage.append("-t: Query file type; options: 'protein', 'cdna' [Default: " + QUERY_TYPE + "].\n");
 	usage.append("-p: Required; SRAssembler parameter configuration file.\n\n");
-	
+
 	usage.append("-l: Required if the -1 option is not used; reads library file.\n");
 	usage.append("-1: Required if the -l option is not used; use this option to specify the single-end reads file\n");
 	usage.append("    or the left-end reads file for paired-end reads.\n");
@@ -79,7 +79,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int size) {
 	usage.append("-z: Insert size of the paired-end reads [Default: " + int2str(INSERT_SIZE) + "].\n");
 	usage.append("-r: Directory in which to store or from which to retrieve the pre-processed reads [Default: output directory/" + READS_DATA + "].\n");
 	usage.append("-o: SRAssembler output directory [Default: current directory].\n\n");
-	
+
 	usage.append("-P: Run the read pre-processing step only, then terminate SRAssembler.\n");
 	usage.append("-x: Number of reads per pre-preprocessed reads file [Default: " + int2str(READS_PER_FILE) + "].\n");
 	usage.append("-A: Assembler program choice; options: 0=>SOAPdenovo2, 1=>ABySS [Default: " + int2str(ASSEMBLER_PROGRAM) + "].\n");
@@ -98,14 +98,14 @@ int SRAssembler::init(int argc, char * argv[], int rank, int size) {
 	usage.append("-M: Maximum contig length to be reported [Default: " + int2str(MAX_CONTIG_LGTH) + "].\n");
 	usage.append("-e: Minimum spliced alignment score for hits [Default: " + double2str(MIN_SCORE) + "].\n");
 	usage.append("-c: Minimum spliced alignment coverage score for hits [Default: " + double2str(MIN_COVERAGE) + "].\n\n");
-	
+
 	usage.append("-n: Maximum number of rounds for chromosome walking [Default: " + int2str(NUM_ROUNDS) + "].\n");
 	usage.append("-a: The number of the round in which to start read assembly [Default: " + int2str(ASSEMBLY_ROUND) + "].\n");
 	usage.append("-b: The number of the round in which to periodically remove unrelated contigs and reads. For example,\n");
 	usage.append("    “-b 3” specifies that SRAssembler will remove unrelated contigs and reads after assembly rounds 3, 6, 9, ... [Default: " + int2str(CLEAN_ROUND) + "].\n");
 	usage.append("-w: Forgo spliced alignment check after intermediate assembly rounds [SRAssembler will continue for the -n specified number of rounds].\n");
 	usage.append("-y: Disable SRAssembler resumption from previous checkpoint [will overwrite existing output].\n\n");
-	
+
 	usage.append("-v: Verbose output.\n");
 	usage.append("-h: Print this usage synopsis.");
 
@@ -231,13 +231,13 @@ int SRAssembler::init(int argc, char * argv[], int rank, int size) {
 				 return -1;
 		  }
 	}
-    if (argc == 1){
-    	show_usage();
-    	return -1;
-    }
+	if (argc == 1){
+		show_usage();
+		return -1;
+	}
 	tmp_dir = out_dir + "/tmp";
 	if (data_dir == "")
-	    data_dir = out_dir + "/" + READS_DATA;
+		data_dir = out_dir + "/" + READS_DATA;
 	preprocessed_exist = file_exists(data_dir);
 	results_dir = out_dir + "/output";
 	intermediate_dir = results_dir + "/intermediates";
@@ -447,7 +447,7 @@ void SRAssembler::do_preprocessing(int lib_idx, int file_part){
 	string left_src_read = lib.get_prefix_split_src_file(lib.get_left_read()) + suffix;
 	string right_src_read = "";
 	if (lib.get_paired_end())
-	    right_src_read = lib.get_prefix_split_src_file(lib.get_right_read()) + suffix;
+		right_src_read = lib.get_prefix_split_src_file(lib.get_right_read()) + suffix;
 	ifstream left_file(left_src_read.c_str());
 	ifstream right_file;
 	if (lib.get_paired_end()){
@@ -464,7 +464,7 @@ void SRAssembler::do_preprocessing(int lib_idx, int file_part){
 	ofstream split_read_fastq_file;
 	split_read_fasta_file.open(lib.get_split_file_name(file_part, FORMAT_FASTA).c_str(), ios_base::out);
 	if (lib.get_format() == FORMAT_FASTQ)
-	    split_read_fastq_file.open(lib.get_split_file_name(file_part, FORMAT_FASTQ).c_str(), ios_base::out);
+		split_read_fastq_file.open(lib.get_split_file_name(file_part, FORMAT_FASTQ).c_str(), ios_base::out);
 	while (getline(left_file, left_header)) {
 		// get read data point, which includes 4 lines
 		string lead_chr = (lib.get_format() == FORMAT_FASTQ)? "@" : ">";
@@ -535,7 +535,7 @@ string SRAssembler:: get_index_name(int round){
 string SRAssembler:: get_index_fasta_file_name(int round){
 	if (round > 1){
 		if (assembly_round < round)
-		    return get_contig_file_name(round-1);
+			return get_contig_file_name(round-1);
 		else {
 			string joined_file = tmp_dir + "/matched_reads_joined.fasta";
 			string cmd;
@@ -577,7 +577,7 @@ int SRAssembler::do_alignment(int round, int lib_idx, int idx) {
 	string program_name = aligner->get_program_name();
 	if (round == 1) {
 		program_name += "_" + get_type(1) + "_init";
-	} else {	
+	} else {
 		program_name += "_extend_contig";
 	}
 	logger->info("... using Vmatch criteria: " + program_name);
@@ -682,7 +682,7 @@ int SRAssembler::get_mismatch_allowed(int round) {
 }
 
 string SRAssembler::get_output_file_name(int round, int lib_idx, int idx){
-    return tmp_dir + "/vmatch_" + "r" + int2str(round) + "_" + "l" + int2str(lib_idx+1) + "_" + "s" + int2str(idx) + "";
+	return tmp_dir + "/vmatch_" + "r" + int2str(round) + "_" + "l" + int2str(lib_idx+1) + "_" + "s" + int2str(idx) + "";
 }
 
 void SRAssembler::merge_mapped_files(int round){
@@ -779,7 +779,7 @@ void SRAssembler::save_mapped_reads(int round){
 	string mapped_file = get_mapped_reads_file_name(round);
 	ofstream mapped_file_stream(mapped_file.c_str());
 	for (unordered_set<string>::iterator it = mapped_reads.begin();it != mapped_reads.end(); ++it)
-	     mapped_file_stream << *it << endl;
+		 mapped_file_stream << *it << endl;
 	mapped_file_stream.close();
 }
 
@@ -841,7 +841,7 @@ int main(int argc, char * argv[] ) {
 	finalized();
 	if (rank == 0) {
 		string str = "Execution time: " + int2str(time(0) - now) + " seconds";
-        srassembler->get_logger()->info(str);
+		srassembler->get_logger()->info(str);
 	}
 	return 0;
 }

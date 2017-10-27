@@ -84,37 +84,37 @@ void Library::set_right_read(string right_read){
 }
 
 string Library::get_matched_left_read_name(){
-    return tmp_dir + "/matched_reads_left_" + "l" + int2str(lib_idx+1) + "." + this->file_extension;
+	return tmp_dir + "/matched_reads_left_" + "l" + int2str(lib_idx+1) + "." + this->file_extension;
 }
 
 string Library::get_matched_right_read_name(){
-    return tmp_dir + "/matched_reads_right_" + "l" + int2str(lib_idx+1) + "." + this->file_extension;
+	return tmp_dir + "/matched_reads_right_" + "l" + int2str(lib_idx+1) + "." + this->file_extension;
 }
 string Library::get_matched_left_read_name(int round){
-    return tmp_dir + "/matched_reads_left_" + "r" + int2str(round) + "_" + "l" + int2str(lib_idx+1) + "." + this->file_extension;
+	return tmp_dir + "/matched_reads_left_" + "r" + int2str(round) + "_" + "l" + int2str(lib_idx+1) + "." + this->file_extension;
 }
 
 string Library::get_matched_right_read_name(int round){
-    return tmp_dir + "/matched_reads_right_" + "r" + int2str(round) + "_" + "l" + int2str(lib_idx+1) + "." + this->file_extension;
+	return tmp_dir + "/matched_reads_right_" + "r" + int2str(round) + "_" + "l" + int2str(lib_idx+1) + "." + this->file_extension;
 }
 string Library::get_matched_left_read_name(int round, int idx){
-    return tmp_dir + "/matched_reads_left_" + "r" + int2str(round) + "_" + "l" + int2str(lib_idx+1) + "_" + "s" + int2str(idx) + "." + this->file_extension;
+	return tmp_dir + "/matched_reads_left_" + "r" + int2str(round) + "_" + "l" + int2str(lib_idx+1) + "_" + "s" + int2str(idx) + "." + this->file_extension;
 }
 
 string Library::get_matched_right_read_name(int round, int idx){
-    if (paired_end)
-	    return tmp_dir + "/matched_reads_right_" + "r" + int2str(round) + "_" + "l" + int2str(lib_idx+1) + "_" + "s" + int2str(idx) + "." + this->file_extension;
-    return "";
+	if (paired_end)
+		return tmp_dir + "/matched_reads_right_" + "r" + int2str(round) + "_" + "l" + int2str(lib_idx+1) + "_" + "s" + int2str(idx) + "." + this->file_extension;
+	return "";
 }
 
 string Library::get_joined_read_name(int round, int idx, int file_type){
 	string extension = (file_type == FORMAT_FASTQ)? "fastq" : "fasta";
-    return tmp_dir + "/matched_reads_joined_" + "r" + int2str(round) + "_" + "l" + int2str(lib_idx+1) + "_" + "s" + int2str(idx) + "." + extension;
+	return tmp_dir + "/matched_reads_joined_" + "r" + int2str(round) + "_" + "l" + int2str(lib_idx+1) + "_" + "s" + int2str(idx) + "." + extension;
 }
 
 string Library::get_split_file_name(int idx, int file_type){
-    string extension = (file_type == FORMAT_FASTQ)? "fastq" : "fasta";
-    return data_dir + "/lib" + int2str(lib_idx+1) + "/" + get_file_base_name(left_read) + "_" + int2str(idx) + "." + extension;
+	string extension = (file_type == FORMAT_FASTQ)? "fastq" : "fasta";
+	return data_dir + "/lib" + int2str(lib_idx+1) + "/" + get_file_base_name(left_read) + "_" + int2str(idx) + "." + extension;
 }
 
 string Library::get_prefix_split_src_file(string src_read){

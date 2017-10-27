@@ -18,7 +18,7 @@ bool AbyssAssembler::is_available(){
 	int ret = system("abyss-pe > /dev/null 2>&1");
 	if (WEXITSTATUS(ret) != 0 && WEXITSTATUS(ret) != 2) {
 		cout << "Cannot find ABySS, check your PATH variable!" << WEXITSTATUS(ret) << endl;
-	    return false;
+		return false;
 	}
 	return true;
 }
@@ -39,7 +39,7 @@ void AbyssAssembler::do_assembly(int kmer, const vector<Library>& libraries, con
 			single_files += lib.get_matched_left_read_name() + " ";
 	}
 	if (lib_list != ""){
-	    lib_list = "lib='" + lib_list + "'";
+		lib_list = "lib='" + lib_list + "'";
 	}
 	single_files = "se='" + single_files + "'";
 	string cmd = "abyss-pe contigs k=" + int2str(kmer) + " name=" + output_file + " " + lib_list + " " + paired_files + " " + single_files + ">> " + logger->get_log_file() + " 2>&1";

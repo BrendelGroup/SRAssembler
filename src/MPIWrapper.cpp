@@ -27,41 +27,41 @@ mpi_code get_mpi_code(int code_value){
 void mpi_send( const char* msg, const int& to ) {
 #ifdef MPIMODE
 	int len = strlen( ( char* )msg );
-    MPI::COMM_WORLD.Send( &len, 1,   MPI::INT,  to, ( int )1 );
-    MPI::COMM_WORLD.Send(  msg, len, MPI::CHAR, to, ( int )1 );
+	MPI::COMM_WORLD.Send( &len, 1,   MPI::INT,  to, ( int )1 );
+	MPI::COMM_WORLD.Send(  msg, len, MPI::CHAR, to, ( int )1 );
 #endif
 }
 
 void mpi_receive( char* msg, int& from ) {
 #ifdef MPIMODE
-   int         len;
-   MPI::Status status;
+	int len;
+	MPI::Status status;
 
-   MPI::COMM_WORLD.Recv( &len, 1, MPI::INT, MPI::ANY_SOURCE,MPI::ANY_TAG,  status );
-   from = ( ( int )status.Get_source(  ) );
-   MPI::COMM_WORLD.Recv(  msg, len, MPI::CHAR, from, MPI::ANY_TAG );
-   msg[len] = '\0';
+	MPI::COMM_WORLD.Recv( &len, 1, MPI::INT, MPI::ANY_SOURCE,MPI::ANY_TAG,  status );
+	from = ( ( int )status.Get_source(  ) );
+	MPI::COMM_WORLD.Recv(  msg, len, MPI::CHAR, from, MPI::ANY_TAG );
+	msg[len] = '\0';
 #endif
 }
 void mpi_send( const int& code, const int& to ) {
 #ifdef MPIMODE
-   MPI::COMM_WORLD.Send( &code, 1,   MPI::INT,  to, ( int )1 );
+	MPI::COMM_WORLD.Send( &code, 1,   MPI::INT,  to, ( int )1 );
 #endif
 }
 void mpi_bcast(const int& code) {
-   int size = mpi_get_size();
-   int rank = mpi_get_rank();
-   for (int i=0;i<size;i++)
-	   if (rank != i)
-	       mpi_send(code, i);
+	int size = mpi_get_size();
+	int rank = mpi_get_rank();
+	for (int i=0;i<size;i++)
+		if (rank != i)
+			mpi_send(code, i);
 	//MPI::COMM_WORLD.Bcast( &code, 1,   MPI::INT, 0);
 }
 void mpi_receive( int& code, int& from ) {
 #ifdef MPIMODE
-   MPI::Status status;
+	MPI::Status status;
 
-   MPI::COMM_WORLD.Recv( &code, 1, MPI::INT, MPI::ANY_SOURCE,MPI::ANY_TAG,  status );
-   from = ( ( int )status.Get_source(  ) );
+	MPI::COMM_WORLD.Recv( &code, 1, MPI::INT, MPI::ANY_SOURCE,MPI::ANY_TAG,  status );
+	from = ( ( int )status.Get_source(  ) );
 #endif
 }
 void mpi_init(int argc, char * argv[] ) {

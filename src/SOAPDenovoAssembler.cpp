@@ -20,7 +20,7 @@ bool SOAPDenovoAssembler::is_available(){
 	int ret_127 = system("SOAPdenovo-127mer > /dev/null 2>&1");
 	if (WEXITSTATUS(ret_127) != 0 && WEXITSTATUS(ret_127) != 1) {
 		cout << "Cannot find SOAPdenovo-127mer, check your PATH variable!" << endl;
-	    return false;
+		return false;
 	}
 	int ret_63 = system("SOAPdenovo-63mer > /dev/null 2>&1");
 	if (WEXITSTATUS(ret_63) != 0 && WEXITSTATUS(ret_63) != 1) {

@@ -40,7 +40,7 @@ bool SnapGeneFinder::is_available(){
 	int ret = system("snap > /dev/null 2>&1");
 	if (WEXITSTATUS(ret) != 1) {
 		logger->info("Cannot find snap, check your PATH variable!");
-	    return false;
+		return false;
 	}
 	return true;
 }

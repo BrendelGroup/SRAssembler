@@ -22,7 +22,7 @@ int SRAssemblerMaster::init(int argc, char * argv[], int rank, int size) {
 	if (!get_spliced_aligner()->is_available()) return -1;
 	this->start_round = (over_write)?1:get_start_round();
 	if (this->start_round == 1)
-	    create_folders();
+		create_folders();
 	cmd = "Command: ";
 	for (int i=0; i<argc;i++){
 		cmd.append(argv[i]).append(" ");
@@ -376,40 +376,40 @@ void SRAssemblerMaster::do_walking(){
 		int read_count = get_total_read_count(round);
 		logger->info("Found matched reads: " + int2str(read_count));
 		if (assembly_round <= round){
-		    int longest_contig = do_assembly(round);
-		    summary_best += int2str(read_count) + "\n";
-		    bool no_reads = true;
-		    for (unsigned int lib_idx=0; lib_idx < this->libraries.size(); lib_idx++){
+			int longest_contig = do_assembly(round);
+			summary_best += int2str(read_count) + "\n";
+			bool no_reads = true;
+			for (unsigned int lib_idx=0; lib_idx < this->libraries.size(); lib_idx++){
 				if (get_file_size(libraries[lib_idx].get_matched_left_read_name()) > 0) {
 					no_reads = false;
 					break;
 				}
-		    }
-		    // if no reads found, stop
-		    if (no_reads){
-		    	logger->info("The walking is terminated: No new reads found after removing reads associated with the assembled contigs.");
+			}
+			// if no reads found, stop
+			if (no_reads){
+				logger->info("The walking is terminated: No new reads found after removing reads associated with the assembled contigs.");
 				break;
-		    }
-		    // if no contigs found, stop
-		    if (get_file_size(get_contig_file_name(round)) == 0) {
+			}
+			// if no contigs found, stop
+			if (get_file_size(get_contig_file_name(round)) == 0) {
 				logger->info("The walking is terminated: No contigs found.");
 				break;
 			}
-		    logger->info("Round " + int2str(round) + " is done!");
-		    if (round == num_rounds) {
-		    	logger->info("The walking is terminated: The maximum round (" + int2str(num_rounds) + ") has been reached.");
-		       	break;
-		    }
-		    if (longest_contig == 0) {
-		    	assembly_round = round + 1;
-		    	clean_tmp_files(round-1);
-		    	round++;
-		    	continue;
-		    }
-		    //if reach the max round, stop
+			logger->info("Round " + int2str(round) + " is done!");
+			if (round == num_rounds) {
+				logger->info("The walking is terminated: The maximum round (" + int2str(num_rounds) + ") has been reached.");
+			   	break;
+			}
+			if (longest_contig == 0) {
+				assembly_round = round + 1;
+				clean_tmp_files(round-1);
+				round++;
+				continue;
+			}
+			//if reach the max round, stop
 
-		    bool cleaned = false;
-		    //do spliced alignment and remove the query sequences already assembled
+			bool cleaned = false;
+			//do spliced alignment and remove the query sequences already assembled
 			if (round > 1 && check_gene_assembled){
 				string_map query_map = do_spliced_alignment(round);
 				//string_map query_map = this->get_spliced_aligner()->get_aligned_query_list();
@@ -428,18 +428,18 @@ void SRAssemblerMaster::do_walking(){
 					break;
 				}
 				if (contig_list.size() > 0) {
-				    remove_hit_contigs(contig_list, round);
-				    if (get_file_size(get_contig_file_name(round)) == 0){
-				    	logger->info("The walking is terminated: All contigs have enough coverage and score.");
-				    	break;
-				    }
-				    clean_unmapped_reads(round);
-				    cleaned = true;
+					remove_hit_contigs(contig_list, round);
+					if (get_file_size(get_contig_file_name(round)) == 0){
+						logger->info("The walking is terminated: All contigs have enough coverage and score.");
+						break;
+					}
+					clean_unmapped_reads(round);
+					cleaned = true;
 				}
 			}
-		    if (clean_round > 2 && !cleaned)
-		    	if (round % clean_round == 0)
-		    		clean_unmapped_reads(round);
+			if (clean_round > 2 && !cleaned)
+				if (round % clean_round == 0)
+					clean_unmapped_reads(round);
 		} else {
 			logger->info("Round " + int2str(round) + " is done!");
 			if (round == num_rounds) {
@@ -544,7 +544,7 @@ void SRAssemblerMaster::load_saved_contigs(){
 	string fn = get_saved_contig_file_name();
 	this->contig_number = 1;
 	if (start_round == 1)
-	    run_shell_command("rm -rf " + fn);
+		run_shell_command("rm -rf " + fn);
 	else {
 		if (file_exists(fn)){
 			ifstream fs(fn.c_str());
@@ -595,7 +595,7 @@ int SRAssemblerMaster::do_assembly(int round) {
 				 completed++;
 				 if (i <= total_k) {
 					 send_code(from, ACTION_ASSEMBLY, round, start_k + (i-1)*step_k, 0);
-				     i++;
+					 i++;
 				 }
 			}
 		}
@@ -763,7 +763,7 @@ void SRAssemblerMaster::process_long_contigs(int round, int k) {
 			Library lib = this->libraries[lib_idx];
 			string type_option = (lib.get_format() == FORMAT_FASTQ)? "-q" : "-f";
 			if (lib.get_paired_end())
-			    cmd = "bowtie " + type_option + " -v 2 --suppress 2,3,4,5,6,7 " + tmp_dir + "/long_contig " + lib.get_matched_left_read_name() + "," + lib.get_matched_right_read_name() + " " + reads_on_contigs + " >> " + logger->get_log_file();
+				cmd = "bowtie " + type_option + " -v 2 --suppress 2,3,4,5,6,7 " + tmp_dir + "/long_contig " + lib.get_matched_left_read_name() + "," + lib.get_matched_right_read_name() + " " + reads_on_contigs + " >> " + logger->get_log_file();
 			else
 				cmd = "bowtie "  + type_option + " -v 2 --suppress 2,3,4,5,6,7 " + tmp_dir + "/long_contig " + lib.get_matched_left_read_name() + " " + reads_on_contigs + " >> " + logger->get_log_file();
 			logger->debug(cmd);
@@ -881,10 +881,10 @@ void SRAssemblerMaster::remove_hit_contigs(vector<string> &contig_list, int roun
 	while (getline(contig_file_stream, line)){
 		if (line.substr(0,1) == ">"){
 			if (seq != "") {
-			    if (hit_seq)
-			    	saved_contig_file << ">contig" + int2str(contig_number++) + header.substr(header.find_first_of(" ")) + "\n" + seq + "\n";
-			    else
-				    tmp_file_stream << ">" << header << endl << seq << endl;
+				if (hit_seq)
+					saved_contig_file << ">contig" + int2str(contig_number++) + header.substr(header.find_first_of(" ")) + "\n" + seq + "\n";
+				else
+					tmp_file_stream << ">" << header << endl << seq << endl;
 			}
 			header = line.substr(1);
 			string contig_id = header.substr(0, header.find_first_of(" "));
@@ -962,10 +962,10 @@ void SRAssemblerMaster::prepare_final_contig_file(int round){
 				vector<string> header_tokens;
 				tokenize(header.substr(1), header_tokens, " ");
 				header = ">contig" + int2str(contig_number++) + " ";
-			    for (unsigned int i=1;i<header_tokens.size();i++){
-				     header = header + header_tokens[i] + " ";
-			    }
-			    final_contig << header << endl << seq << endl;
+				for (unsigned int i=1;i<header_tokens.size();i++){
+					 header = header + header_tokens[i] + " ";
+				}
+				final_contig << header << endl << seq << endl;
 			}
 			header = line;
 			seq = "";
