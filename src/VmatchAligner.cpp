@@ -35,7 +35,7 @@ unordered_set<string> VmatchAligner::get_hit_list(const string& output_file) {
  * Parameters:
  * output_file: the Vmatch alignment report file
  * mapped_reads: the reads currently found in this node
- * source_read: the reads file name for this part
+ * source_read: the split reads file name for this part
  * out_left_read: the matched left-end reads file name
  * out_right_read: the matched left-end reads file name
  * joined_read: the matched joined reads file name
@@ -47,15 +47,20 @@ int VmatchAligner::parse_output(const string& output_file, unordered_set<string>
 	logger->debug("parsing output file " + output_file);
 	ifstream report_file_stream(output_file.c_str());
 	string seq_id;
+	// current_mapped_reads are the reads that show up in this run of parse_output()
 	boost::unordered_set<string> current_mapped_reads;
 	int found_new_read = 0;
 	//parse the output file and get the mapped reads have not found yet
 	string line;
 	while (getline(report_file_stream, line)) {
 		if (line[0] != '#'){
+			// The line should be a Vmatch output line. The read ID is column 6 when doing reads as query.
 			vector<string> tokens;
 			tokenize(line, tokens, " ");
 			string seq_id = tokens[5];
+			/* boost::unordered_set.find() produces past-the-end pointer if a key isn't found
+			 * so we can confirm that a read isn't previously found with this if statement
+			 */
 			if (mapped_reads.find(seq_id) == mapped_reads.end()) {
 				found_new_read = 1;
 				current_mapped_reads.insert(seq_id);
@@ -64,7 +69,10 @@ int VmatchAligner::parse_output(const string& output_file, unordered_set<string>
 		}
 	}
 	report_file_stream.close();
+	// The mapped reads for this have now been found.
+
 	//fetch sequences
+	// paired_end set to true if out_right_read not empty string
 	bool paired_end = (out_right_read != "");
 	ifstream source_read_stream(source_read.c_str());
 	ofstream out_left_read_stream(out_left_read.c_str());
@@ -85,15 +93,18 @@ int VmatchAligner::parse_output(const string& output_file, unordered_set<string>
 		string lead_chr = (format == FORMAT_FASTQ)? "@" : ">";
 		if (left_header.substr(0,1) == lead_chr){
 			unsigned int pos = left_header.find_first_of(" ");
-			if (pos ==string::npos)
+			if (pos == string::npos)
 				left_seq_id = left_header;
 			else
 				left_seq_id = left_header.substr(1, pos-1);
 			getline(source_read_stream, left_seq);
+			// This can be removed if we don't use FASTQ internally
 			if (format == FORMAT_FASTQ) {
 				getline(source_read_stream, plus);
 				getline(source_read_stream, left_qual);
 			}
+			// Is FASTA_interleaved a thing? If so, variable name should be changed
+			//TODO How do we determine if interleaved? It would be nice if SRAssembler could do either format.
 			if (paired_end && fastq_format == FASTQ_INTERLEAVED) {
 				getline(source_read_stream, right_header);
 				pos = right_header.find_first_of(" ");
@@ -102,6 +113,7 @@ int VmatchAligner::parse_output(const string& output_file, unordered_set<string>
 				else
 					right_seq_id = right_header.substr(1, pos-1);
 				getline(source_read_stream, right_seq);
+				// At this point if format is not FASTQ an error should be thrown
 				if (format == FORMAT_FASTQ) {
 					getline(source_read_stream, plus);
 					getline(source_read_stream, right_qual);
@@ -182,6 +194,10 @@ void VmatchAligner::do_alignment(const string& index_name, const string& type, i
 			else
 				param_list += " -" + it->first + " " + it->second;
 	}
+	/*TODO
+	 * change these commands to search the read index using the contigs.
+	 * Check to see if the output order is still sorted and can be easily collapsed with uniq
+	 */
 	string cmd = "vmatch " + align_type + " -q " + reads_file + " -d" + " -l " + int2str(match_length) + " " + e_option + " " + param_list + " -showdesc 0 -nodist -noevalue -noscore -noidentity " + index_name + " | awk '{print $1,$2,$3,$4,$5,$6}' | uniq -f5 > " + output_file;
 	logger->debug(cmd);
 	run_shell_command(cmd);

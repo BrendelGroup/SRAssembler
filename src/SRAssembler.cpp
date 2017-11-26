@@ -533,12 +533,17 @@ string SRAssembler:: get_index_name(int round){
    return tmp_dir + "/round" + int2str(round);
 }
 string SRAssembler:: get_index_fasta_file_name(int round){
+/* It appears that this function is deceptively named.
+ * It does not just return a string naming a fasta file that contains all of the matched reads.
+ * This function is also responsible for assembling the contents of that file.
+ */
 	if (round > 1){
 		if (assembly_round < round)
 			return get_contig_file_name(round-1);
 		else {
 			string joined_file = tmp_dir + "/matched_reads_joined.fasta";
 			string cmd;
+			// For each library, append the matched reads to the matched_reads_joined.fasta
 			for (unsigned i=0;i<this->libraries.size();i++){
 				string left_file = tmp_dir + "/matched_reads_left_" + "l" + int2str(i+1) + ".fasta";
 				string right_file = tmp_dir + "/matched_reads_right_" + "l" + int2str(i+1) + ".fasta";

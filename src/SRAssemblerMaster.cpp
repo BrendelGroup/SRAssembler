@@ -322,19 +322,25 @@ void SRAssemblerMaster::do_walking(){
 		return;
 	}
 	output_summary_header();
-	while(1){
+	while(true){
 		logger->info("Starting round " + int2str(round) + " ...");
 		int new_reads_count = 0;
+
+		// Original SRAssembler indexes the contigs
 		create_index(round);
+
+		// For each library
 		for (unsigned l=0;l<this->libraries.size();l++){
 			int completed = 0;
 			Library lib = this->libraries[l];
+			// If not parallelized, start a new alignment every 1/2 second?
 			if (size == 1){
 				for (i=1; i<=lib.get_num_parts(); i++){
 					sleep(0.5);
 					new_reads_count += do_alignment(round, l, i);
 				}
 			} else {
+				// If there are more split read files than processors
 				if (lib.get_num_parts() < size){
 					for (i=1; i<=lib.get_num_parts(); i++){
 						sleep(0.5);
@@ -347,8 +353,8 @@ void SRAssemblerMaster::do_walking(){
 						new_reads_count += found_new_reads;
 						completed++;
 					}
-				}
-				else {
+				// If there are fewer split read files than processors
+				} else {
 					for (i=1;i<size;i++){
 						sleep(0.5);
 						send_code(i, ACTION_ALIGNMENT, round, i, l);

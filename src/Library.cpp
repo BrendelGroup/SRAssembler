@@ -87,18 +87,20 @@ string Library::get_matched_left_read_name(){
 	return tmp_dir + "/matched_reads_left_" + "l" + int2str(lib_idx+1) + "." + this->file_extension;
 }
 
-string Library::get_matched_right_read_name(){
-	return tmp_dir + "/matched_reads_right_" + "l" + int2str(lib_idx+1) + "." + this->file_extension;
-}
 string Library::get_matched_left_read_name(int round){
 	return tmp_dir + "/matched_reads_left_" + "r" + int2str(round) + "_" + "l" + int2str(lib_idx+1) + "." + this->file_extension;
 }
 
-string Library::get_matched_right_read_name(int round){
-	return tmp_dir + "/matched_reads_right_" + "r" + int2str(round) + "_" + "l" + int2str(lib_idx+1) + "." + this->file_extension;
-}
 string Library::get_matched_left_read_name(int round, int idx){
 	return tmp_dir + "/matched_reads_left_" + "r" + int2str(round) + "_" + "l" + int2str(lib_idx+1) + "_" + "s" + int2str(idx) + "." + this->file_extension;
+}
+
+string Library::get_matched_right_read_name(){
+	return tmp_dir + "/matched_reads_right_" + "l" + int2str(lib_idx+1) + "." + this->file_extension;
+}
+
+string Library::get_matched_right_read_name(int round){
+	return tmp_dir + "/matched_reads_right_" + "r" + int2str(round) + "_" + "l" + int2str(lib_idx+1) + "." + this->file_extension;
 }
 
 string Library::get_matched_right_read_name(int round, int idx){
@@ -108,6 +110,7 @@ string Library::get_matched_right_read_name(int round, int idx){
 }
 
 string Library::get_joined_read_name(int round, int idx, int file_type){
+//TODO: I think that this is a deprecated function. It doesn't appear to be used anywhere.
 	string extension = (file_type == FORMAT_FASTQ)? "fastq" : "fasta";
 	return tmp_dir + "/matched_reads_joined_" + "r" + int2str(round) + "_" + "l" + int2str(lib_idx+1) + "_" + "s" + int2str(idx) + "." + extension;
 }
