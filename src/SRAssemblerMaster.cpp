@@ -169,58 +169,59 @@ void SRAssemblerMaster::show_usage(){
 }
 
 void SRAssemblerMaster::do_preprocessing(){
-	 logger->info("Now pre-processing the reads files ...");
-	 string cmd;
-	 logger->debug("Checking the existence of split reads data ...");
-	 for (unsigned l=0;l<this->libraries.size();l++) {
-		 Library* lib = &this->libraries[l];
-		 lib->set_num_parts(1);
-		 //test if files are generated before
-		 if (file_exists(lib->get_split_file_name(1, lib->get_format()))){
-			 long total_read_count = get_read_count(lib->get_split_file_name(1, lib->get_format()), lib->get_format());
-			 if (lib->get_paired_end())
-				 total_read_count /= 2;
-			 logger->debug("total_read_count: " + int2str(total_read_count));
-			 if (total_read_count <= reads_per_file){
-				 logger->info("Using previously split files for read library " + int2str(l+1));
-				 lib->set_num_parts(get_file_count(data_dir + "/lib" + int2str(l+1) + "/" + get_file_base_name(lib->get_left_read()) + "_*." + lib->get_file_extension()));
-				 broadcast_code(ACTION_TOTAL_PARTS, l, lib->get_num_parts(), 0);
-				 //broadcast_code(ACTION_EXIT, 0, 0);
-				 continue;
-			 }
-		 }
+	logger->info("Now pre-processing the reads files ...");
+	string cmd;
+	logger->debug("Checking the existence of split reads data ...");
+	for (unsigned l=0;l<this->libraries.size();l++) {
+		Library* lib = &this->libraries[l];
+		lib->set_num_parts(1);
+		//test if files are generated before
+		if (file_exists(lib->get_split_file_name(1, lib->get_format()))){
+			long total_read_count = get_read_count(lib->get_split_file_name(1, lib->get_format()), lib->get_format());
+			if (lib->get_paired_end())
+				total_read_count /= 2;
+			logger->debug("total_read_count: " + int2str(total_read_count));
+			if (total_read_count <= reads_per_file){
+				logger->info("Using previously split files for read library " + int2str(l+1));
+				lib->set_num_parts(get_file_count(data_dir + "/lib" + int2str(l+1) + "/" + get_file_base_name(lib->get_left_read()) + "_*." + lib->get_file_extension()));
+				broadcast_code(ACTION_TOTAL_PARTS, l, lib->get_num_parts(), 0);
+				//broadcast_code(ACTION_EXIT, 0, 0);
+				continue;
+			}
+		}
+		// File splitting is handled by the actual library.
+		logger->info("Splitting read library " + int2str(l+1) + " ...");
+		cmd = "rm -f " + data_dir + "/lib" + int2str(l+1) + "/" + get_file_base_name(lib->get_left_read()) + "*";      //delete old files
+		logger->debug(cmd);
+		run_shell_command(cmd);
+		// Why would you name a variable 'from'?
+		int from;
+		int i = 0;
+		int code_value;
+		mpi_code code;
+		if (lib->get_paired_end() && mpiSize > 2){
+			send_code(1, ACTION_SPLIT, l, 1, 0);
+			system("sleep 0.5");
+			send_code(2, ACTION_SPLIT, l, 2, 0);
+			mpi_receive(code_value, from);
+			mpi_receive(code_value, from);
+		}
+		else {
+			//'LEFT_READ' and 'RIGHT_READ' are constants
+			lib->do_split_files(LEFT_READ, this->reads_per_file);
+			if (lib->get_paired_end())
+				lib->do_split_files(RIGHT_READ, this->reads_per_file);
+		}
+		lib->set_num_parts(get_file_count(lib->get_prefix_split_src_file(lib->get_left_read()) + "*"));
+		logger->info("We have " + int2str(lib->get_num_parts()) +" split files");
 
-		 logger->info("Splitting read library " + int2str(l+1) + " ...");
-		 cmd = "rm -f " + data_dir + "/lib" + int2str(l+1) + "/" + get_file_base_name(lib->get_left_read()) + "*";      //delete old files
-		 logger->debug(cmd);
-		 run_shell_command(cmd);
-		 // Why would you name a variable 'from'?
-		 int from;
-		 int i = 0;
-		 int code_value;
-		 mpi_code code;
-		 if (lib->get_paired_end() && mpiSize > 2){
-			 send_code(1, ACTION_SPLIT, l, 1, 0);
-			 system("sleep 0.5");
-			 send_code(2, ACTION_SPLIT, l, 2, 0);
-			 mpi_receive(code_value, from);
-			 mpi_receive(code_value, from);
-		 }
-		 else {
-			 lib->do_split_files(LEFT_READ, this->reads_per_file);
-			 if (lib->get_paired_end())
-				 lib->do_split_files(RIGHT_READ, this->reads_per_file);
-		 }
-		 lib->set_num_parts(get_file_count(lib->get_prefix_split_src_file(lib->get_left_read()) + "*"));
-		 logger->info("We have " + int2str(lib->get_num_parts()) +" split files");
+		broadcast_code(ACTION_TOTAL_PARTS, l, lib->get_num_parts(), 0);
+		int completed = 0;
 
-		 broadcast_code(ACTION_TOTAL_PARTS, l, lib->get_num_parts(), 0);
-		 int completed = 0;
-
-		 if (mpiSize == 1){
+		if (mpiSize == 1){
 			for (i=1; i<=lib->get_num_parts(); i++)
 				SRAssembler::do_preprocessing(l, i);
-		 } else {
+		} else {
 			if (lib->get_num_parts() < mpiSize){
 				for (i=1; i<=lib->get_num_parts(); i++){
 					//system("sleep 0.5");
@@ -247,61 +248,61 @@ void SRAssemblerMaster::do_preprocessing(){
 					}
 				}
 			}
-		 }
-	 }
-	 logger->info("Preprocessing done.");
+		}
+	}
+	logger->info("Preprocessing done.");
 }
 
 int SRAssemblerMaster::get_start_round(){
 	int start_round = 1;
 	if (file_exists(tmp_dir)){
-		 for (int i=this->num_rounds;i>1;i--){
-			 bool found_previous = true;
-			 int mpiSize = (this->mpiSize == 0)? 1: this->mpiSize;
-			 for (int j=0;j<mpiSize;j++) {
-				 // if reads file and next round index file exist (means assembled), we can continue from here.
-				 for (unsigned int lib_idx=0;lib_idx<this->libraries.size();lib_idx++){
-					 Library lib = this->libraries[lib_idx];
-					 found_previous = file_exists(lib.get_matched_left_read_name(i));
-					 if (lib.get_paired_end())
+		for (int i=this->num_rounds;i>1;i--){
+			bool found_previous = true;
+			int mpiSize = (this->mpiSize == 0)? 1: this->mpiSize;
+			for (int j=0;j<mpiSize;j++) {
+				// if reads file and next round index file exist (means assembled), we can continue from here.
+				for (unsigned int lib_idx=0;lib_idx<this->libraries.size();lib_idx++){
+					Library lib = this->libraries[lib_idx];
+					found_previous = file_exists(lib.get_matched_left_read_name(i));
+					if (lib.get_paired_end())
 						found_previous = file_exists(lib.get_matched_right_read_name(i));
-					 found_previous = file_exists(get_index_fasta_file_name(i+1));
-				 }
-			 }
-			 if (found_previous) {
-				 start_round = i+1;
-				 if (start_round > this->num_rounds)
-					 return start_round;
-				 logger->info("Previous results found. SRAssembler starts from round " + int2str(start_round));
-				 //clean the temp results if it is not complete.
-				 run_shell_command("rm -f " + tmp_dir + "/matched_reads_left_" + "r" + int2str(start_round) + "*");
-				 run_shell_command("rm -f " + tmp_dir + "/matched_reads_right_" + "r" + int2str(start_round) + "*");
-				 for (unsigned int lib_idx=0;lib_idx<this->libraries.size();lib_idx++){
-					 Library lib = this->libraries[lib_idx];
-					 run_shell_command("cp " + lib.get_matched_left_read_name(i) + " " + lib.get_matched_left_read_name());
-					 if(lib.get_paired_end()){
-						 run_shell_command("cp " + lib.get_matched_right_read_name(i) + " " + lib.get_matched_right_read_name());
-					 }
-				 }
-				 if (mpiSize > 1){
+					found_previous = file_exists(get_index_fasta_file_name(i+1));
+				}
+			}
+			if (found_previous) {
+				start_round = i+1;
+				if (start_round > this->num_rounds)
+					return start_round;
+				logger->info("Previous results found. SRAssembler starts from round " + int2str(start_round));
+				//clean the temp results if it is not complete.
+				run_shell_command("rm -f " + tmp_dir + "/matched_reads_left_" + "r" + int2str(start_round) + "*");
+				run_shell_command("rm -f " + tmp_dir + "/matched_reads_right_" + "r" + int2str(start_round) + "*");
+				for (unsigned int lib_idx=0;lib_idx<this->libraries.size();lib_idx++){
+					Library lib = this->libraries[lib_idx];
+					run_shell_command("cp " + lib.get_matched_left_read_name(i) + " " + lib.get_matched_left_read_name());
+					if(lib.get_paired_end()){
+						run_shell_command("cp " + lib.get_matched_right_read_name(i) + " " + lib.get_matched_right_read_name());
+					}
+				}
+				if (mpiSize > 1){
 					for (int i=1;i<mpiSize;i++)
-						  send_code(i, ACTION_LOAD_PREVIOUS, start_round - 1, 0, 0);
+						 send_code(i, ACTION_LOAD_PREVIOUS, start_round - 1, 0, 0);
 					int completed = 0;
 					int code_value = 0;
 					int from = 0;
 					while(completed < mpiSize - 1){
-						   mpi_receive(code_value, from);
-						   completed++;
+						  mpi_receive(code_value, from);
+						  completed++;
 					}
-				 }
-				 else
+				}
+				else
 					load_mapped_reads(start_round - 1);
-				 load_long_contigs();
-				 break;
-			 }
-		 }
-	 }
-	 return start_round;
+				load_long_contigs();
+				break;
+			}
+		}
+	}
+	return start_round;
 }
 
 void SRAssemblerMaster::do_walking(){
@@ -424,8 +425,8 @@ void SRAssemblerMaster::do_walking(){
 				BOOST_FOREACH(string_map::value_type item, query_map) {
 					contig_list.push_back(item.second);
 					for (int i=this->query_list.size()-1;i>=0;i--){
-						   if (query_list[i] == item.first){
-							   query_list.erase(query_list.begin()+i);
+						  if (query_list[i] == item.first){
+							  query_list.erase(query_list.begin()+i);
 						}
 					}
 				}
@@ -598,12 +599,12 @@ int SRAssemblerMaster::do_assembly(int round) {
 				send_code(i, ACTION_ASSEMBLY, round, start_k + (i-1)*step_k, 0);
 			}
 			while(completed < total_k){
-				 mpi_receive(code_value, from);
-				 completed++;
-				 if (i <= total_k) {
-					 send_code(from, ACTION_ASSEMBLY, round, start_k + (i-1)*step_k, 0);
-					 i++;
-				 }
+				mpi_receive(code_value, from);
+				completed++;
+				if (i <= total_k) {
+					send_code(from, ACTION_ASSEMBLY, round, start_k + (i-1)*step_k, 0);
+					i++;
+				}
 			}
 		}
 	}
@@ -937,7 +938,7 @@ void SRAssemblerMaster::remove_no_hit_contigs(unordered_set<string> &contig_list
 	while (getline(contig_file_stream, line)){
 		if (line.substr(0,1) == ">"){
 			if (hit_seq)
-			  	tmp_file_stream << ">" << header << endl << seq << endl;
+			 	tmp_file_stream << ">" << header << endl << seq << endl;
 			header = line.substr(1);
 			string contig_id = header.substr(0, header.find_first_of(" "));
 			hit_seq = (find(contig_list.begin(), contig_list.end(), contig_id) != contig_list.end());
@@ -978,7 +979,7 @@ void SRAssemblerMaster::prepare_final_contig_file(int round){
 				tokenize(header.substr(1), header_tokens, " ");
 				header = ">contig" + int2str(contig_number++) + " ";
 				for (unsigned int i=1;i<header_tokens.size();i++){
-					 header = header + header_tokens[i] + " ";
+					header = header + header_tokens[i] + " ";
 				}
 				final_contig << header << endl << seq << endl;
 			}
@@ -993,37 +994,37 @@ void SRAssemblerMaster::prepare_final_contig_file(int round){
 		tokenize(header.substr(1), header_tokens, " ");
 		string header = ">contig" + int2str(contig_number++) + " ";
 		for (unsigned int i=1;i<header_tokens.size();i++){
-			 header = header + header_tokens[i] + " ";
+			header = header + header_tokens[i] + " ";
 		}
 		final_contig << header << endl << seq << endl;
 	}
 }
 
 void SRAssemblerMaster::create_folders(){
-	 string cmd;
-	 if (file_exists(tmp_dir)){
-		 cmd = "rm -rf " + tmp_dir;
-		 run_shell_command(cmd);
-	 }
-	 if (file_exists(results_dir)){
-	 	 cmd = "rm -rf " + results_dir;
-	 	 run_shell_command(cmd);
-	 }
-	 if (file_exists(intermediate_dir)){
-	 	 cmd = "rm -rf " + intermediate_dir;
-	 	 run_shell_command(cmd);
-	 }
-	 for (unsigned i=0;i<this->libraries.size();i++){
+	string cmd;
+	if (file_exists(tmp_dir)){
+		cmd = "rm -rf " + tmp_dir;
+		run_shell_command(cmd);
+	}
+	if (file_exists(results_dir)){
+		cmd = "rm -rf " + results_dir;
+		run_shell_command(cmd);
+	}
+	if (file_exists(intermediate_dir)){
+		cmd = "rm -rf " + intermediate_dir;
+		run_shell_command(cmd);
+	}
+	for (unsigned i=0;i<this->libraries.size();i++){
 		string dir = data_dir + "/lib" + int2str(i+1);
 		cmd = "mkdir -p " + dir;
 		run_shell_command(cmd);
-	 }
-	 cmd = "mkdir " + results_dir;
-	 run_shell_command(cmd);
-	 cmd = "mkdir " + intermediate_dir;
-	 run_shell_command(cmd);
-	 cmd = "mkdir " + tmp_dir;
-	 run_shell_command(cmd);
+	}
+	cmd = "mkdir " + results_dir;
+	run_shell_command(cmd);
+	cmd = "mkdir " + intermediate_dir;
+	run_shell_command(cmd);
+	cmd = "mkdir " + tmp_dir;
+	run_shell_command(cmd);
 }
 
 void SRAssemblerMaster::remove_no_hit_contigs(int round){
