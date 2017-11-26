@@ -172,8 +172,8 @@ void SRAssemblerMaster::do_preprocessing(){
 	logger->info("Now pre-processing the reads files ...");
 	string cmd;
 	logger->debug("Checking the existence of split reads data ...");
-	for (unsigned l=0;l<this->libraries.size();l++) {
-		Library* lib = &this->libraries[l];
+	for (unsigned lib_index=0;lib_index<this->libraries.size();lib_index++) {
+		Library* lib = &this->libraries[lib_index];
 		lib->set_num_parts(1);
 		//test if files are generated before
 		if (file_exists(lib->get_split_file_name(1, lib->get_format()))){
@@ -182,27 +182,27 @@ void SRAssemblerMaster::do_preprocessing(){
 				total_read_count /= 2;
 			logger->debug("total_read_count: " + int2str(total_read_count));
 			if (total_read_count <= reads_per_file){
-				logger->info("Using previously split files for read library " + int2str(l+1));
-				lib->set_num_parts(get_file_count(data_dir + "/lib" + int2str(l+1) + "/" + get_file_base_name(lib->get_left_read()) + "_*." + lib->get_file_extension()));
-				broadcast_code(ACTION_TOTAL_PARTS, l, lib->get_num_parts(), 0);
+				logger->info("Using previously split files for read library " + int2str(lib_index+1));
+				lib->set_num_parts(get_file_count(data_dir + "/lib" + int2str(lib_index+1) + "/" + get_file_base_name(lib->get_left_read()) + "_*." + lib->get_file_extension()));
+				broadcast_code(ACTION_TOTAL_PARTS, lib_index, lib->get_num_parts(), 0);
 				//broadcast_code(ACTION_EXIT, 0, 0);
 				continue;
 			}
 		}
 		// File splitting is handled by the actual library.
-		logger->info("Splitting read library " + int2str(l+1) + " ...");
-		cmd = "rm -f " + data_dir + "/lib" + int2str(l+1) + "/" + get_file_base_name(lib->get_left_read()) + "*";      //delete old files
+		logger->info("Splitting read library " + int2str(lib_index+1) + " ...");
+		cmd = "rm -f " + data_dir + "/lib" + int2str(lib_index+1) + "/" + get_file_base_name(lib->get_left_read()) + "*";      //delete old files
 		logger->debug(cmd);
 		run_shell_command(cmd);
 		// Why would you name a variable 'from'?
 		int from;
-		int i = 0;
+		int part = 0;
 		int code_value;
 		mpi_code code;
 		if (lib->get_paired_end() && mpiSize > 2){
-			send_code(1, ACTION_SPLIT, l, 1, 0);
+			send_code(1, ACTION_SPLIT, lib_index, 1, 0);
 			system("sleep 0.5");
-			send_code(2, ACTION_SPLIT, l, 2, 0);
+			send_code(2, ACTION_SPLIT, lib_index, 2, 0);
 			mpi_receive(code_value, from);
 			mpi_receive(code_value, from);
 		}
@@ -215,17 +215,17 @@ void SRAssemblerMaster::do_preprocessing(){
 		lib->set_num_parts(get_file_count(lib->get_prefix_split_src_file(lib->get_left_read()) + "*"));
 		logger->info("We have " + int2str(lib->get_num_parts()) +" split files");
 
-		broadcast_code(ACTION_TOTAL_PARTS, l, lib->get_num_parts(), 0);
+		broadcast_code(ACTION_TOTAL_PARTS, lib_index, lib->get_num_parts(), 0);
 		int completed = 0;
 
 		if (mpiSize == 1){
-			for (i=1; i<=lib->get_num_parts(); i++)
-				SRAssembler::do_preprocessing(l, i);
+			for (part=1; part<=lib->get_num_parts(); part++)
+				SRAssembler::do_preprocessing(lib_index, part);
 		} else {
 			if (lib->get_num_parts() < mpiSize){
-				for (i=1; i<=lib->get_num_parts(); i++){
+				for (part=1; part<=lib->get_num_parts(); part++){
 					//system("sleep 0.5");
-					send_code(i, ACTION_PRE_PROCESSING, l, i, 0);
+					send_code(part, ACTION_PRE_PROCESSING, lib_index, part, 0);
 				}
 				while(completed < lib->get_num_parts()){
 					mpi_receive(code_value, from);
@@ -233,18 +233,18 @@ void SRAssemblerMaster::do_preprocessing(){
 				}
 			}
 			else {
-				for (i=1;i<mpiSize;i++){
+				for (part=1;part<mpiSize;part++){
 					//system("sleep 0.5");
-					send_code(i, ACTION_PRE_PROCESSING, l, i, 0);
+					send_code(part, ACTION_PRE_PROCESSING, lib_index, part, 0);
 				}
 				while (completed < lib->get_num_parts()){
 					mpi_receive(code_value, from);
 					code = get_mpi_code(code_value);
 					completed++;
-					if (i <= lib->get_num_parts()){
-						//cout << "seneding to " << from << ". lib: " << l << ". part:" << i << endl;
-						send_code(from, ACTION_PRE_PROCESSING, l, i, 0);
-						i++;
+					if (part <= lib->get_num_parts()){
+						//cout << "seneding to " << from << ". lib: " << lib_index << ". part:" << part << endl;
+						send_code(from, ACTION_PRE_PROCESSING, lib_index, part, 0);
+						part++;
 					}
 				}
 			}
