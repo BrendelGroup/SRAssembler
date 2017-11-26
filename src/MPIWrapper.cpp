@@ -49,9 +49,9 @@ void mpi_send( const int& code, const int& to ) {
 #endif
 }
 void mpi_bcast(const int& code) {
-	int size = mpi_get_size();
+	int mpiSize = mpi_get_size();
 	int rank = mpi_get_rank();
-	for (int i=0;i<size;i++)
+	for (int i=0;i<mpiSize;i++)
 		if (rank != i)
 			mpi_send(code, i);
 	//MPI::COMM_WORLD.Bcast( &code, 1,   MPI::INT, 0);

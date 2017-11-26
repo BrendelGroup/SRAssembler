@@ -24,7 +24,7 @@ SRAssembler::~SRAssembler() {
 	// TODO Auto-generated destructor stub
 }
 
-int SRAssembler::init(int argc, char * argv[], int rank, int size) {
+int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 	//set the default values
 	init_match_length = INIT_MATCH_LENGTH_PROTEIN;
 	recur_match_length = RECUR_MATCH_LENGTH;
@@ -55,7 +55,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int size) {
 	max_contig_lgth = MAX_CONTIG_LGTH;
 	bool k_format = true;
 	this->rank = rank;
-	this->size = size;
+	this->mpiSize = mpiSize;
 	unsigned int insert_size = INSERT_SIZE;
 	string left_read = "";
 	string right_read = "";
@@ -823,7 +823,7 @@ void SRAssembler::save_mapped_reads(int round){
 
 void SRAssembler::load_mapped_reads(int round){
 	string mapped_file = get_mapped_reads_file_name(round);
-	logger->info("Loading the mapped reads of round " + int2str(round) + " (" + int2str(rank) + "/" + int2str(size-1) + ")");
+	logger->info("Loading the mapped reads of round " + int2str(round) + " (" + int2str(rank) + "/" + int2str(mpiSize-1) + ")");
 	ifstream mapped_file_stream(mapped_file.c_str());
 	string seq_id;
 	while (getline(mapped_file_stream, seq_id)){
@@ -852,16 +852,16 @@ void finalized(){
 int main(int argc, char * argv[] ) {
 
 	time_t now = time(0);
-	int rank ,size;
+	int rank, mpiSize;
 
 	SRAssembler* srassembler = NULL;
 	try {
 		mpi_init(argc,argv);
-		size=mpi_get_size();
+		mpiSize=mpi_get_size();
 		rank=mpi_get_rank();
 
 		srassembler = SRAssembler::getInstance(rank);
-		int ret = srassembler->init(argc, argv, rank, size);
+		int ret = srassembler->init(argc, argv, rank, mpiSize);
 		if (ret == -1) {
 			throw -1;
 		}

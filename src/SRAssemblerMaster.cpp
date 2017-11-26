@@ -11,9 +11,9 @@ SRAssemblerMaster::SRAssemblerMaster() {
 	// TODO Auto-generated constructor stub
 }
 
-int SRAssemblerMaster::init(int argc, char * argv[], int rank, int size) {
+int SRAssemblerMaster::init(int argc, char * argv[], int rank, int mpiSize) {
 	string cmd;
-	int ret = SRAssembler::init(argc, argv, rank, size);
+	int ret = SRAssembler::init(argc, argv, rank, mpiSize);
 	if (ret == -1)
 		return ret;
 	if (!get_aligner(Aligner::PROTEIN_ALIGNER)->is_available()) return -1;
@@ -199,7 +199,7 @@ void SRAssemblerMaster::do_preprocessing(){
 		 int i = 0;
 		 int code_value;
 		 mpi_code code;
-		 if (lib->get_paired_end() && size > 2){
+		 if (lib->get_paired_end() && mpiSize > 2){
 			 send_code(1, ACTION_SPLIT, l, 1, 0);
 			 system("sleep 0.5");
 			 send_code(2, ACTION_SPLIT, l, 2, 0);
@@ -217,11 +217,11 @@ void SRAssemblerMaster::do_preprocessing(){
 		 broadcast_code(ACTION_TOTAL_PARTS, l, lib->get_num_parts(), 0);
 		 int completed = 0;
 
-		 if (size == 1){
+		 if (mpiSize == 1){
 			for (i=1; i<=lib->get_num_parts(); i++)
 				SRAssembler::do_preprocessing(l, i);
 		 } else {
-			if (lib->get_num_parts() < size){
+			if (lib->get_num_parts() < mpiSize){
 				for (i=1; i<=lib->get_num_parts(); i++){
 					//system("sleep 0.5");
 					send_code(i, ACTION_PRE_PROCESSING, l, i, 0);
@@ -232,7 +232,7 @@ void SRAssemblerMaster::do_preprocessing(){
 				}
 			}
 			else {
-				for (i=1;i<size;i++){
+				for (i=1;i<mpiSize;i++){
 					//system("sleep 0.5");
 					send_code(i, ACTION_PRE_PROCESSING, l, i, 0);
 				}
@@ -257,8 +257,8 @@ int SRAssemblerMaster::get_start_round(){
 	if (file_exists(tmp_dir)){
 		 for (int i=this->num_rounds;i>1;i--){
 			 bool found_previous = true;
-			 int size = (this->size == 0)? 1: this->size;
-			 for (int j=0;j<size;j++) {
+			 int mpiSize = (this->mpiSize == 0)? 1: this->mpiSize;
+			 for (int j=0;j<mpiSize;j++) {
 				 // if reads file and next round index file exist (means assembled), we can continue from here.
 				 for (unsigned int lib_idx=0;lib_idx<this->libraries.size();lib_idx++){
 					 Library lib = this->libraries[lib_idx];
@@ -283,13 +283,13 @@ int SRAssemblerMaster::get_start_round(){
 						 run_shell_command("cp " + lib.get_matched_right_read_name(i) + " " + lib.get_matched_right_read_name());
 					 }
 				 }
-				 if (size > 1){
-					for (int i=1;i<size;i++)
+				 if (mpiSize > 1){
+					for (int i=1;i<mpiSize;i++)
 						  send_code(i, ACTION_LOAD_PREVIOUS, start_round - 1, 0, 0);
 					int completed = 0;
 					int code_value = 0;
 					int from = 0;
-					while(completed < size - 1){
+					while(completed < mpiSize - 1){
 						   mpi_receive(code_value, from);
 						   completed++;
 					}
@@ -311,7 +311,7 @@ void SRAssemblerMaster::do_walking(){
 		return;
 	}
 	logger->info("Start chromosome walking ...");
-	logger->info("Total processors: " + int2str(size));
+	logger->info("Total processors: " + int2str(mpiSize));
 	int from;
 	int i = 0;
 	int code_value;
@@ -335,14 +335,14 @@ void SRAssemblerMaster::do_walking(){
 			int completed = 0;
 			Library lib = this->libraries[l];
 			// If not parallelized, start a new alignment every 1/2 second?
-			if (size == 1){
+			if (mpiSize == 1){
 				for (i=1; i<=lib.get_num_parts(); i++){
 					sleep(0.5);
 					new_reads_count += do_alignment(round, l, i);
 				}
 			} else {
 				// If there are more split read files than processors
-				if (lib.get_num_parts() < size){
+				if (lib.get_num_parts() < mpiSize){
 					for (i=1; i<=lib.get_num_parts(); i++){
 						sleep(0.5);
 						send_code(i, ACTION_ALIGNMENT, round, i, l);
@@ -356,7 +356,7 @@ void SRAssemblerMaster::do_walking(){
 					}
 				// If there are fewer split read files than processors
 				} else {
-					for (i=1;i<size;i++){
+					for (i=1;i<mpiSize;i++){
 						sleep(0.5);
 						send_code(i, ACTION_ALIGNMENT, round, i, l);
 					}
@@ -367,7 +367,7 @@ void SRAssemblerMaster::do_walking(){
 						int file_idx = code.value2;
 						new_reads_count += found_new_reads;
 						completed++;
-						int next_file_idx = file_idx + size -1;
+						int next_file_idx = file_idx + mpiSize -1;
 						if (next_file_idx <= lib.get_num_parts())
 							send_code(from, ACTION_ALIGNMENT, round, next_file_idx, l);
 					}
@@ -578,11 +578,11 @@ int SRAssemblerMaster::do_assembly(int round) {
 	int i = 0;
 	int completed = 0;
 	int code_value;
-	if (size == 1){
+	if (mpiSize == 1){
 		for (i=1; i<=total_k; i++)
 			SRAssembler::do_assembly(round, start_k + (i-1)*step_k);
 	} else {
-		if (total_k < size-1){
+		if (total_k < mpiSize-1){
 			for (i=1; i<=total_k; i++){
 				sleep(0.5);
 				send_code(i, ACTION_ASSEMBLY, round, start_k + (i-1)*step_k, 0);
@@ -593,7 +593,7 @@ int SRAssemblerMaster::do_assembly(int round) {
 			}
 		}
 		else {
-			for (i=1;i<size;i++){
+			for (i=1;i<mpiSize;i++){
 				sleep(0.5);
 				send_code(i, ACTION_ASSEMBLY, round, start_k + (i-1)*step_k, 0);
 			}

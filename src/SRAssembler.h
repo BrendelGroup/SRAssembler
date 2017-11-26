@@ -37,7 +37,7 @@ class SRAssembler {
 public:
 	SRAssembler();
 	virtual ~SRAssembler();
-	virtual int init(int argc, char * argv[], int rank, int size);
+	virtual int init(int argc, char * argv[], int rank, int mpiSize);
 	virtual void do_preprocessing()=0;
 	virtual void do_walking()=0;
 	virtual void show_usage()=0;
@@ -95,7 +95,7 @@ protected:
 	int start_k;
 	int end_k;
 	int step_k;
-	int size;
+	int mpiSize;
 	int rank;
 	int fastq_format;
 	int start_round;
