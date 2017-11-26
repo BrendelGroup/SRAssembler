@@ -194,6 +194,7 @@ void SRAssemblerMaster::do_preprocessing(){
 		 cmd = "rm -f " + data_dir + "/lib" + int2str(l+1) + "/" + get_file_base_name(lib->get_left_read()) + "*";      //delete old files
 		 logger->debug(cmd);
 		 run_shell_command(cmd);
+		 // Why would you name a variable 'from'?
 		 int from;
 		 int i = 0;
 		 int code_value;

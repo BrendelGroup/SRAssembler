@@ -32,6 +32,9 @@ unordered_set<string> VmatchAligner::get_hit_list(const string& output_file) {
 }
 /*
  * Parse Vmatch output file.
+ * First this function takes the Vmatch output files and pulls the read IDs out of the MATCH lines
+ * Then it reads through ALL of the reads for that library and pulls out the reads whose IDs were found
+ * TODO change the read search into something using an index.
  * Parameters:
  * output_file: the Vmatch alignment report file
  * mapped_reads: the reads currently found in this node
@@ -69,7 +72,7 @@ int VmatchAligner::parse_output(const string& output_file, unordered_set<string>
 		}
 	}
 	report_file_stream.close();
-	// The mapped reads for this have now been found.
+	// The mapped read IDs for this have now been found.
 
 	//fetch sequences
 	// paired_end set to true if out_right_read not empty string
@@ -119,6 +122,8 @@ int VmatchAligner::parse_output(const string& output_file, unordered_set<string>
 					getline(source_read_stream, right_qual);
 				}
 			}
+			// If seq_id IS in current_mapped_reads, add read (or read pair) to the output reads
+			//TODO speed this up by using indexing? Just a dictionary of the reads would be faster.
 			if (current_mapped_reads.find(left_seq_id) != current_mapped_reads.end() || (paired_end && current_mapped_reads.find(right_seq_id) != current_mapped_reads.end())){
 				if (paired_end){
 					if (fastq_format == FASTQ_INTERLEAVED){
