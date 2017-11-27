@@ -119,6 +119,11 @@ string int2str (const int n) {
 	ss << n;
 	return ss.str();
 }
+string int2str (const int n, const int length) {
+	stringstream ss;
+	ss << setw(length) << setfill('0') << n;
+	return ss.str();
+}
 string long2str(const int n){
 	stringstream ss;
 	ss << n;
@@ -188,7 +193,7 @@ string get_file_name(const string& path) {
 string get_file_base_name(const string& path) {
 	int last_slash = path.find_last_of("/");
 	int last_dot = path.find_last_of(".");
-	return (last_dot == -1 || last_slash > last_dot)? path.substr(last_slash + 1):path.substr(last_slash + 1, last_dot - last_slash -1);
+	return (last_dot == -1 || last_slash > last_dot)? path.substr(last_slash + 1):path.substr(last_slash + 1, last_dot - last_slash - 1);
 }
 
 string trim(const string& str) {

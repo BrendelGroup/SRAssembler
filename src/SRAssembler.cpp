@@ -435,15 +435,18 @@ int SRAssembler::get_file_count(string search_pattern){
 	return str2int(run_shell_command_with_return(cmd));
 }
 
+// As far as I can tell this produces interleaved FASTA and interleaved FASTQ files from the split files produced by the library's do_split_files() function.
 void SRAssembler::do_preprocessing(int lib_idx, int file_part){
 	Library lib = this->libraries[lib_idx];
 
 	logger->info("preprocessing lib " + int2str(lib_idx + 1) + ", reads file (" + int2str(file_part) + "/" + int2str(lib.get_num_parts()) + ")");
-	char suffixc[3];
-	suffixc[0] = (char)(((file_part-1) / 26) + 97);
-	suffixc[1] = (char)(((file_part-1) % 26) + 97);
-	suffixc[2] = '\0';
-	string suffix(suffixc);
+	// What if instead of this we just use split to give reasonable suffixes?
+	//char suffixc[3];
+	//suffixc[0] = (char)(((file_part-1) / 26) + 97);
+	//suffixc[1] = (char)(((file_part-1) % 26) + 97);
+	//suffixc[2] = '\0';
+
+	string suffix = int2str(file_part, 4); // Setting suffix length to 4 for now.
 	string left_src_read = lib.get_prefix_split_src_file(lib.get_left_read()) + suffix;
 	string right_src_read = "";
 	if (lib.get_paired_end())
@@ -461,7 +464,7 @@ void SRAssembler::do_preprocessing(int lib_idx, int file_part){
 	string right_qual = "";
 	string plus;
 	ofstream split_read_fasta_file;
-	ofstream split_read_fastq_file;
+	ofstream split_read_fastq_file; // Don't need this
 	split_read_fasta_file.open(lib.get_split_file_name(file_part, FORMAT_FASTA).c_str(), ios_base::out);
 	if (lib.get_format() == FORMAT_FASTQ)
 		split_read_fastq_file.open(lib.get_split_file_name(file_part, FORMAT_FASTQ).c_str(), ios_base::out);

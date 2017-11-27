@@ -189,7 +189,6 @@ void SRAssemblerMaster::do_preprocessing(){
 				continue;
 			}
 		}
-		// File splitting is handled by the actual library.
 		logger->info("Splitting read library " + int2str(lib_index+1) + " ...");
 		cmd = "rm -f " + data_dir + "/lib" + int2str(lib_index+1) + "/" + get_file_base_name(lib->get_left_read()) + "*";      //delete old files
 		logger->debug(cmd);
@@ -199,6 +198,7 @@ void SRAssemblerMaster::do_preprocessing(){
 		int part = 0;
 		int code_value;
 		mpi_code code;
+		// File splitting is handled by the actual library. It does not seem to take file type into acount.
 		if (lib->get_paired_end() && mpiSize > 2){
 			send_code(1, ACTION_SPLIT, lib_index, 1, 0);
 			system("sleep 0.5");
