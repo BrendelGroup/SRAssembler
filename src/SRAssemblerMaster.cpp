@@ -876,7 +876,8 @@ void SRAssemblerMaster::process_long_contigs(int round, int k) {
 	string contig_file;
 	contig_file = get_index_fasta_file_name(round+1);
 	string masked_file = contig_file + ".masked";
-	cmd = "printf '\e[38;5;002mPROCESS_LONG_CONTIGS\e[0m\n'; dustmasker -in " + contig_file + " -outfmt fasta -out - | sed '/^[^>]/s/[a-z]/N/g' > " + masked_file;
+	//cmd = "printf '\e[38;5;002mPROCESS_LONG_CONTIGS\e[0m\n'; dustmasker -in " + contig_file + " -outfmt fasta -out - | sed '/^[^>]/s/[a-z]/N/g' > " + masked_file;
+	cmd = "dustmasker -in " + contig_file + " -outfmt fasta -out - | sed '/^[^>]/s/[a-z]/N/g' > " + masked_file;
 	run_shell_command(cmd);
 }
 

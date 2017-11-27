@@ -55,6 +55,7 @@ int VmatchAligner::parse_output(const string& output_file, unordered_set<string>
 	int found_new_read = 0;
 	//parse the output file and get the mapped reads have not found yet
 	string line;
+	// Find mapped read IDs
 	while (getline(report_file_stream, line)) {
 		if (line[0] != '#'){
 			// The line should be a Vmatch output line. The read ID is column 6 when doing reads as query.
@@ -77,8 +78,10 @@ int VmatchAligner::parse_output(const string& output_file, unordered_set<string>
 	//fetch sequences
 	// paired_end set to true if out_right_read not empty string
 	bool paired_end = (out_right_read != "");
+
 	ifstream source_read_stream(source_read.c_str());
 	ofstream out_left_read_stream(out_left_read.c_str());
+	//run_shell_command("printf '\e[38;5;002m" "OUT_LEFT_READ_STREAM:" + out_left_read + "\e[0m\n'");
 	ofstream out_right_read_stream;
 	if (paired_end)
 		out_right_read_stream.open(out_right_read.c_str(), ios_base::out);
@@ -94,12 +97,15 @@ int VmatchAligner::parse_output(const string& output_file, unordered_set<string>
 		string left_seq_id = "";
 		string right_seq_id = "";
 		string lead_chr = (format == FORMAT_FASTQ)? "@" : ">";
+		//string lead_chr = ">";
 		if (left_header.substr(0,1) == lead_chr){
 			unsigned int pos = left_header.find_first_of(" ");
 			if (pos == string::npos)
 				left_seq_id = left_header;
 			else
 				left_seq_id = left_header.substr(1, pos-1);
+
+			//run_shell_command("printf '\e[38;5;002mLEFT_SEQ_ID:" + left_seq_id + "\e[0m\n'");
 			getline(source_read_stream, left_seq);
 			// This can be removed if we don't use FASTQ internally
 			if (format == FORMAT_FASTQ) {
@@ -116,7 +122,6 @@ int VmatchAligner::parse_output(const string& output_file, unordered_set<string>
 				else
 					right_seq_id = right_header.substr(1, pos-1);
 				getline(source_read_stream, right_seq);
-				// At this point if format is not FASTQ an error should be thrown
 				if (format == FORMAT_FASTQ) {
 					getline(source_read_stream, plus);
 					getline(source_read_stream, right_qual);
@@ -125,11 +130,15 @@ int VmatchAligner::parse_output(const string& output_file, unordered_set<string>
 			// If seq_id IS in current_mapped_reads, add read (or read pair) to the output reads
 			//TODO speed this up by using indexing? Just a dictionary of the reads would be faster.
 			if (current_mapped_reads.find(left_seq_id) != current_mapped_reads.end() || (paired_end && current_mapped_reads.find(right_seq_id) != current_mapped_reads.end())){
+				//run_shell_command("printf '\e[38;5;002m" "got a hit" "\e[0m\n'");
 				if (paired_end){
+					//run_shell_command("printf '\e[38;5;002m" "got a paired-end hit" "\e[0m\n'");
 					if (fastq_format == FASTQ_INTERLEAVED){
+						//run_shell_command("printf '\e[38;5;002m" "got an interleaved paired-end hit" "\e[0m\n'");
 						//out_left_read_stream << "@" << left_seq_id << "_1" << endl << left_seq << endl << "+" << endl << left_qual << endl;
 						//out_right_read_stream << "@" << right_seq_id << "_2" << endl << right_seq << endl << "+" << endl << right_qual << endl;
 						if (format == FORMAT_FASTA){
+							//run_shell_command("printf '\e[38;5;002m" "got an interleaved paired-end FASTA hit" "\e[0m\n'");
 							out_left_read_stream << ">" << left_seq_id << endl << left_seq << endl;
 							out_right_read_stream << ">" << right_seq_id << endl << right_seq << endl;
 						} else {

@@ -440,12 +440,6 @@ void SRAssembler::do_preprocessing(int lib_idx, int file_part){
 	Library lib = this->libraries[lib_idx];
 
 	logger->info("preprocessing lib " + int2str(lib_idx + 1) + ", reads file (" + int2str(file_part) + "/" + int2str(lib.get_num_parts()) + ")");
-	// What if instead of this we just use split to give reasonable suffixes?
-	//char suffixc[3];
-	//suffixc[0] = (char)(((file_part-1) / 26) + 97);
-	//suffixc[1] = (char)(((file_part-1) % 26) + 97);
-	//suffixc[2] = '\0';
-
 	string suffix = int2str(file_part, 4); // Setting suffix length to 4 for now.
 	string left_src_read = lib.get_prefix_split_src_file(lib.get_left_read()) + suffix;
 	string right_src_read = "";
@@ -574,7 +568,7 @@ string SRAssembler:: get_masked_index_fasta_file_name(int round){
 	if (round > 1){
 		if (assembly_round < round) {
 			string masked_fasta = get_contig_file_name(round-1) + ".masked";
-			run_shell_command("printf '\e[38;5;002mUSING MASKED FASTA FOR INDEX\e[0m\n'");
+			//run_shell_command("printf '\e[38;5;002mUSING MASKED FASTA FOR INDEX\e[0m\n'");
 			return masked_fasta;
 		} else {
 			string joined_file = tmp_dir + "/matched_reads_joined.fasta";
@@ -624,6 +618,7 @@ int SRAssembler::do_alignment(int round, int lib_idx, int idx) {
 	logger->info("... using Vmatch criteria: " + program_name);
 	Params params = this->read_param_file(program_name);
 	aligner->do_alignment(get_index_name(round), get_type(round), get_match_length(round), get_mismatch_allowed(round), lib.get_split_file_name(idx, aligner->get_format()), params, get_output_file_name(round, lib_idx, idx));
+	// Change to always look in FASTA reads file as source.
 	int ret = aligner->parse_output(get_output_file_name(round, lib_idx, idx), mapped_reads, lib.get_split_file_name(idx, lib.get_format()), lib.get_matched_left_read_name(round, idx), lib.get_matched_right_read_name(round, idx), fastq_format,  lib.get_format());
 	save_mapped_reads(round);
 	return ret;
@@ -817,6 +812,7 @@ Assembly_stats SRAssembler::get_assembly_stats(int round, int k){
 }
 
 void SRAssembler::save_mapped_reads(int round){
+	run_shell_command("printf '\e[38;5;002m" "save_mapped_reads INVOKED" "\e[0m\n'");
 	string mapped_file = get_mapped_reads_file_name(round);
 	ofstream mapped_file_stream(mapped_file.c_str());
 	for (unordered_set<string>::iterator it = mapped_reads.begin();it != mapped_reads.end(); ++it)
@@ -825,6 +821,7 @@ void SRAssembler::save_mapped_reads(int round){
 }
 
 void SRAssembler::load_mapped_reads(int round){
+	run_shell_command("printf '\e[38;5;002m" "load_mapped_reads INVOKED" "\e[0m\n'");
 	string mapped_file = get_mapped_reads_file_name(round);
 	logger->info("Loading the mapped reads of round " + int2str(round) + " (" + int2str(rank) + "/" + int2str(mpiSize-1) + ")");
 	ifstream mapped_file_stream(mapped_file.c_str());

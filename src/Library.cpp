@@ -132,7 +132,11 @@ string Library::get_prefix_split_src_file(string src_read){
 //}
 void Library::do_split_files(int read_type, int reads_per_file){
 	string read_file = (read_type == LEFT_READ)? this->left_read:this->right_read;
-	string cmd = "split --numeric-suffixes=1 --suffix-length=4 --elide-empty-files --lines=" + int2str(reads_per_file * 4) + " " + read_file + " " + get_prefix_split_src_file(read_file);
+	// multiplier is based on the number of lines in a read. Assumes FASTQ to start.
+	int multiplier = 4;
+	if (get_format() == FORMAT_FASTA)
+		multiplier = 2;
+	string cmd = "split --numeric-suffixes=1 --suffix-length=4 --elide-empty-files --lines=" + int2str(reads_per_file * multiplier) + " " + read_file + " " + get_prefix_split_src_file(read_file);
 	logger->debug(cmd);
 	run_shell_command(cmd);
 }
