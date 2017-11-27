@@ -685,7 +685,7 @@ void SRAssemblerMaster::process_long_contigs(int round, int k) {
 	string long_contig_file = tmp_dir + "/long_contig_original.fasta";
 	string long_contig_trimmed_file = tmp_dir + "/long_contig.fasta";
 	string saved_contig_file_name = get_saved_contig_file_name();
-	boost::unordered_set<string> candicate_ids;
+	boost::unordered_set<string> candidate_ids;
 	boost::unordered_set<string> long_contig_ids;
 	ofstream out_long_contig_trimmed;
 	out_long_contig_trimmed.open((long_contig_trimmed_file.c_str()), ofstream::app);
@@ -693,13 +693,13 @@ void SRAssemblerMaster::process_long_contigs(int round, int k) {
 	saved_contig_file.open(saved_contig_file_name.c_str(), fstream::app);
 	string line;
 	if (file_exists(long_contig_candidate_file) && get_file_size(long_contig_candidate_file) > 0){
-		this->get_aligner(round)->align_long_contigs(long_contig_candidate_file, tmp_dir, this->get_assembly_file_name(round, k), this->max_contig_lgth, candicate_ids, long_contig_ids);
+		this->get_aligner(round)->align_long_contigs(long_contig_candidate_file, tmp_dir, this->get_assembly_file_name(round, k), this->max_contig_lgth, candidate_ids, long_contig_ids);
 		//add candidate contigs to accepted long contigs
 		ifstream candidate_file(long_contig_candidate_file.c_str());
 		while (getline(candidate_file, line)){
 			vector<string> tokens;
 			tokenize(line.substr(1), tokens, " ");
-			if (candicate_ids.find(tokens[0]) != candicate_ids.end()){
+			if (candidate_ids.find(tokens[0]) != candidate_ids.end()){
 				string contig_fasta = ">contig" + int2str(contig_number++) + " length " + int2str(this->max_contig_lgth) + " ";
 				for (unsigned int i=3;i<tokens.size();i++){
 					contig_fasta = contig_fasta + tokens[i] + " ";
@@ -716,7 +716,7 @@ void SRAssemblerMaster::process_long_contigs(int round, int k) {
 
 	ifstream in_contig(get_assembly_file_name(round, k).c_str());
 	ofstream out_contig(get_index_fasta_file_name(round+1).c_str());
-	ofstream out_candicate_contig(long_contig_candidate_next_file.c_str());
+	ofstream out_candidate_contig(long_contig_candidate_next_file.c_str());
 	ofstream out_long_contig;
 	out_long_contig.open((long_contig_file.c_str()));
 	string header = "";
@@ -733,7 +733,7 @@ void SRAssemblerMaster::process_long_contigs(int round, int k) {
 						out_contig << header << endl << seq << endl;
 					}
 					if (seq.length() > this->max_contig_lgth) {
-						out_candicate_contig << header << endl << seq.substr((seq.length() - max_contig_lgth) / 2,max_contig_lgth) << endl;
+						out_candidate_contig << header << endl << seq.substr((seq.length() - max_contig_lgth) / 2,max_contig_lgth) << endl;
 					}
 				}
 			}
@@ -751,12 +751,12 @@ void SRAssemblerMaster::process_long_contigs(int round, int k) {
 		if (seq.length() > this->ini_contig_size)
 			out_contig << header << endl << seq << endl;
 		if (seq.length() > this->max_contig_lgth) {
-			out_candicate_contig << header << endl << seq.substr((seq.length() - max_contig_lgth) / 2,max_contig_lgth) << endl;
+			out_candidate_contig << header << endl << seq.substr((seq.length() - max_contig_lgth) / 2,max_contig_lgth) << endl;
 		}
 	}
 	in_contig.close();
 	out_contig.close();
-	out_candicate_contig.close();
+	out_candidate_contig.close();
 	out_long_contig.close();
 
 	if (long_contig_ids.size() > 0){

@@ -440,7 +440,7 @@ void SRAssembler::do_preprocessing(int lib_idx, int file_part){
 	Library lib = this->libraries[lib_idx];
 
 	logger->info("preprocessing lib " + int2str(lib_idx + 1) + ", reads file (" + int2str(file_part) + "/" + int2str(lib.get_num_parts()) + ")");
-	string suffix = int2str(file_part, 4); // Setting suffix length to 4 for now.
+	string suffix = int2str(file_part, 10); // Setting suffix length to 10 for now.
 	string left_src_read = lib.get_prefix_split_src_file(lib.get_left_read()) + suffix;
 	string right_src_read = "";
 	if (lib.get_paired_end())
@@ -458,7 +458,7 @@ void SRAssembler::do_preprocessing(int lib_idx, int file_part){
 	string right_qual = "";
 	string plus;
 	ofstream split_read_fasta_file;
-	ofstream split_read_fastq_file; // Don't need this
+	ofstream split_read_fastq_file; // Shouldn't need this
 	split_read_fasta_file.open(lib.get_split_file_name(file_part, FORMAT_FASTA).c_str(), ios_base::out);
 	if (lib.get_format() == FORMAT_FASTQ)
 		split_read_fastq_file.open(lib.get_split_file_name(file_part, FORMAT_FASTQ).c_str(), ios_base::out);
@@ -509,6 +509,10 @@ void SRAssembler::do_preprocessing(int lib_idx, int file_part){
 		right_file.close();
 	string cmd = "rm " + left_src_read + " " + right_src_read;
 	run_shell_command(cmd);
+	// Create the Vmatch mkvtree indexes
+	Aligner* aligner = get_aligner(0);  // Round 0 means DNA Aligner
+	// create_index(index_name, dna or protein, fasta_file_name)
+	aligner->create_index(lib.get_read_part_index_name(file_part), "dna", lib.get_split_file_name(file_part, FORMAT_FASTA));
 }
 void SRAssembler::send_code(const int& to, const int& action, const int& value1, const int& value2, const int& value3){
 	mpi_code code;
@@ -526,14 +530,16 @@ void SRAssembler::broadcast_code(const int& action, const int& value1, const int
 	code.value3 = value3;
 	mpi_bcast(get_mpi_code_value(code));
 }
+//TODO This may become unnecessary
 string SRAssembler:: get_index_name(int round){
    return tmp_dir + "/round" + int2str(round);
 }
-string SRAssembler:: get_index_fasta_file_name(int round){
+
 /* It appears that this function is deceptively named.
  * It does not just return a string naming a fasta file that contains all of the matched reads.
  * This function is also responsible for assembling the contents of that file.
  */
+string SRAssembler:: get_index_fasta_file_name(int round){
 	if (round > 1){
 		if (assembly_round < round)
 			return get_contig_file_name(round-1);

@@ -39,6 +39,7 @@ public:
 	string get_file_extension();
 	string get_joined_read_name(int round, int idx, int file_type);
 	string get_split_file_name(int idx, int file_type);
+	string get_read_part_index_name(int file_part);
 	string get_prefix_split_src_file(string src_read);
 	void do_split_files(int read_type, int reads_per_file);
 private:

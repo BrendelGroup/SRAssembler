@@ -191,12 +191,16 @@ void VmatchAligner::create_index(const string& index_name, const string& type, c
 }
 
 void VmatchAligner::do_alignment(const string& index_name, const string& type, int match_length, int mismatch_allowed, const string& reads_file, const Params& params, const string& output_file) {
+	// Is this a protein query (round 1 only)? If not, empty string.
 	string align_type = (type == "protein") ? "-dnavsprot 1": "";
+	// Are mismatches allowed? If not, empty string.
 	string e_option = "";
 	if (mismatch_allowed > 0)
 		e_option = " -e " + int2str(mismatch_allowed);
+	// Other parameters are set up here.
 	string param_list = "";
 	for ( Params::const_iterator it = params.begin(); it != params.end(); ++it ){
+			// Is "-e" option handled here, or above? Something seems vestigial.
 			if (it->first == "e") {
 				if (str2int(it->second) > 0){
 					e_option = " -e " + it->second;

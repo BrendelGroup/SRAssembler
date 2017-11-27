@@ -120,6 +120,10 @@ string Library::get_split_file_name(int idx, int file_type){
 	return data_dir + "/lib" + int2str(lib_idx+1) + "/" + get_file_base_name(left_read) + "_" + int2str(idx) + "." + extension;
 }
 
+string Library::get_read_part_index_name(int file_part){
+	return data_dir + "/lib" + int2str(lib_idx+1) + "/" + get_file_base_name(left_read) + "_" + int2str(file_part);
+}
+
 string Library::get_prefix_split_src_file(string src_read){
 	return tmp_dir + "/" + get_file_base_name(src_read) + "_" + int2str(lib_idx+1) + "_split_";
 }
@@ -136,7 +140,8 @@ void Library::do_split_files(int read_type, int reads_per_file){
 	int multiplier = 4;
 	if (get_format() == FORMAT_FASTA)
 		multiplier = 2;
-	string cmd = "split --numeric-suffixes=1 --suffix-length=4 --elide-empty-files --lines=" + int2str(reads_per_file * multiplier) + " " + read_file + " " + get_prefix_split_src_file(read_file);
+	// 10-digit numeric suffixes starting with 0000000001, no empty files produced
+	string cmd = "split --numeric-suffixes=1 --suffix-length=10 --elide-empty-files --lines=" + int2str(reads_per_file * multiplier) + " " + read_file + " " + get_prefix_split_src_file(read_file);
 	logger->debug(cmd);
 	run_shell_command(cmd);
 }
