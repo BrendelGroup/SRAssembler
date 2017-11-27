@@ -314,7 +314,7 @@ void SRAssemblerMaster::do_walking(){
 	logger->info("Start chromosome walking ...");
 	logger->info("Total processors: " + int2str(mpiSize));
 	int from;
-	int i = 0;
+	int read_part = 0;
 	int code_value;
 	mpi_code code;
 	int round = this->start_round;
@@ -332,21 +332,21 @@ void SRAssemblerMaster::do_walking(){
 		create_index(round);
 
 		// For each library
-		for (unsigned l=0;l<this->libraries.size();l++){
+		for (unsigned lib_idx=0;lib_idx<this->libraries.size();lib_idx++){
 			int completed = 0;
-			Library lib = this->libraries[l];
+			Library lib = this->libraries[lib_idx];
 			// If not parallelized, start a new alignment every 1/2 second?
 			if (mpiSize == 1){
-				for (i=1; i<=lib.get_num_parts(); i++){
+				for (read_part=1; read_part<=lib.get_num_parts(); read_part++){
 					sleep(0.5);
-					new_reads_count += do_alignment(round, l, i);
+					new_reads_count += do_alignment(round, lib_idx, read_part);
 				}
 			} else {
 				// If there are more split read files than processors
 				if (lib.get_num_parts() < mpiSize){
-					for (i=1; i<=lib.get_num_parts(); i++){
+					for (read_part=1; read_part<=lib.get_num_parts(); read_part++){
 						sleep(0.5);
-						send_code(i, ACTION_ALIGNMENT, round, i, l);
+						send_code(read_part, ACTION_ALIGNMENT, round, read_part, lib_idx);
 					}
 					while(completed < lib.get_num_parts()){
 						mpi_receive(code_value, from);
@@ -357,9 +357,9 @@ void SRAssemblerMaster::do_walking(){
 					}
 				// If there are fewer split read files than processors
 				} else {
-					for (i=1;i<mpiSize;i++){
+					for (read_part=1;read_part<mpiSize;read_part++){
 						sleep(0.5);
-						send_code(i, ACTION_ALIGNMENT, round, i, l);
+						send_code(read_part, ACTION_ALIGNMENT, round, read_part, lib_idx);
 					}
 					while (completed < lib.get_num_parts()){
 						mpi_receive(code_value, from);
@@ -368,9 +368,9 @@ void SRAssemblerMaster::do_walking(){
 						int file_idx = code.value2;
 						new_reads_count += found_new_reads;
 						completed++;
-						int next_file_idx = file_idx + mpiSize -1;
+						int next_file_idx = file_idx + mpiSize - 1;
 						if (next_file_idx <= lib.get_num_parts())
-							send_code(from, ACTION_ALIGNMENT, round, next_file_idx, l);
+							send_code(from, ACTION_ALIGNMENT, round, next_file_idx, lib_idx);
 					}
 				}
 			}

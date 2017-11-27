@@ -611,9 +611,9 @@ string SRAssembler:: get_mapped_reads_file_name(int round){
 	return tmp_dir + "/matched_reads_" + "r" + int2str(round) + "_" + "p" + int2str(this->rank) + ".list";
 }
 
-int SRAssembler::do_alignment(int round, int lib_idx, int idx) {
+int SRAssembler::do_alignment(int round, int lib_idx, int read_part) {
 	Library lib = this->libraries[lib_idx];
-	logger->info("Aligning: round = " + int2str(round) + " Lib (" + int2str(lib_idx+1) + "/" + int2str(this->libraries.size()) + "), Reads (" + int2str(idx) + "/" + int2str(lib.get_num_parts()) + ")");
+	logger->info("Aligning: round = " + int2str(round) + " Lib (" + int2str(lib_idx+1) + "/" + int2str(this->libraries.size()) + "), Reads (" + int2str(read_part) + "/" + int2str(lib.get_num_parts()) + ")");
 	Aligner* aligner = get_aligner(round);
 	string program_name = aligner->get_program_name();
 	if (round == 1) {
@@ -623,9 +623,10 @@ int SRAssembler::do_alignment(int round, int lib_idx, int idx) {
 	}
 	logger->info("... using Vmatch criteria: " + program_name);
 	Params params = this->read_param_file(program_name);
-	aligner->do_alignment(get_index_name(round), get_type(round), get_match_length(round), get_mismatch_allowed(round), lib.get_split_file_name(idx, aligner->get_format()), params, get_output_file_name(round, lib_idx, idx));
+	// VmatchAligner::do_alignment(index_name, type, match_length, mismatch_allowed, reads_file, params, output_file)
+	aligner->do_alignment(get_index_name(round), get_type(round), get_match_length(round), get_mismatch_allowed(round), lib.get_split_file_name(read_part, aligner->get_format()), params, get_output_file_name(round, lib_idx, read_part));
 	// Change to always look in FASTA reads file as source.
-	int ret = aligner->parse_output(get_output_file_name(round, lib_idx, idx), mapped_reads, lib.get_split_file_name(idx, lib.get_format()), lib.get_matched_left_read_name(round, idx), lib.get_matched_right_read_name(round, idx), fastq_format,  lib.get_format());
+	int ret = aligner->parse_output(get_output_file_name(round, lib_idx, read_part), mapped_reads, lib.get_split_file_name(read_part, lib.get_format()), lib.get_matched_left_read_name(round, read_part), lib.get_matched_right_read_name(round, read_part), fastq_format,  lib.get_format());
 	save_mapped_reads(round);
 	return ret;
 }
@@ -723,8 +724,8 @@ int SRAssembler::get_mismatch_allowed(int round) {
 	return (round == 1)? mismatch_allowed: 0;
 }
 
-string SRAssembler::get_output_file_name(int round, int lib_idx, int idx){
-	return tmp_dir + "/vmatch_" + "r" + int2str(round) + "_" + "l" + int2str(lib_idx+1) + "_" + "s" + int2str(idx) + "";
+string SRAssembler::get_output_file_name(int round, int lib_idx, int read_part){
+	return tmp_dir + "/vmatch_" + "r" + int2str(round) + "_" + "l" + int2str(lib_idx+1) + "_" + "s" + int2str(read_part) + "";
 }
 
 void SRAssembler::merge_mapped_files(int round){
