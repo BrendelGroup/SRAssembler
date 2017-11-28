@@ -436,11 +436,11 @@ int SRAssembler::get_file_count(string search_pattern){
 }
 
 // As far as I can tell this produces interleaved FASTA and interleaved FASTQ files from the split files produced by the library's do_split_files() function.
-void SRAssembler::do_preprocessing(int lib_idx, int file_part){
+void SRAssembler::do_preprocessing(int lib_idx, int read_part){
 	Library lib = this->libraries[lib_idx];
 
-	logger->info("preprocessing lib " + int2str(lib_idx + 1) + ", reads file (" + int2str(file_part) + "/" + int2str(lib.get_num_parts()) + ")");
-	string suffix = int2str(file_part, 10); // Setting suffix length to 10 for now.
+	logger->info("preprocessing lib " + int2str(lib_idx + 1) + ", reads file (" + int2str(read_part) + "/" + int2str(lib.get_num_parts()) + ")");
+	string suffix = int2str(read_part, 10); // Setting suffix length to 10 for now.
 	string left_src_read = lib.get_prefix_split_src_file(lib.get_left_read()) + suffix;
 	string right_src_read = "";
 	if (lib.get_paired_end())
@@ -459,9 +459,9 @@ void SRAssembler::do_preprocessing(int lib_idx, int file_part){
 	string plus;
 	ofstream split_read_fasta_file;
 	ofstream split_read_fastq_file; // Shouldn't need this
-	split_read_fasta_file.open(lib.get_split_file_name(file_part, FORMAT_FASTA).c_str(), ios_base::out);
+	split_read_fasta_file.open(lib.get_split_file_name(read_part, FORMAT_FASTA).c_str(), ios_base::out);
 	if (lib.get_format() == FORMAT_FASTQ)
-		split_read_fastq_file.open(lib.get_split_file_name(file_part, FORMAT_FASTQ).c_str(), ios_base::out);
+		split_read_fastq_file.open(lib.get_split_file_name(read_part, FORMAT_FASTQ).c_str(), ios_base::out);
 	while (getline(left_file, left_header)) {
 		// get read data point, which includes 4 lines
 		string lead_chr = (lib.get_format() == FORMAT_FASTQ)? "@" : ">";
@@ -512,7 +512,7 @@ void SRAssembler::do_preprocessing(int lib_idx, int file_part){
 	// Create the Vmatch mkvtree indexes
 	Aligner* aligner = get_aligner(0);  // Round 0 means DNA Aligner
 	// create_index(index_name, dna or protein, fasta_file_name)
-	aligner->create_index(lib.get_read_part_index_name(file_part), "dna", lib.get_split_file_name(file_part, FORMAT_FASTA));
+	aligner->create_index(lib.get_read_part_index_name(read_part), "dna", lib.get_split_file_name(read_part, FORMAT_FASTA));
 }
 void SRAssembler::send_code(const int& to, const int& action, const int& value1, const int& value2, const int& value3){
 	mpi_code code;
@@ -539,7 +539,7 @@ string SRAssembler:: get_index_name(int round){
  * It does not just return a string naming a fasta file that contains all of the matched reads.
  * This function is also responsible for assembling the contents of that file.
  */
-string SRAssembler:: get_index_fasta_file_name(int round){
+string SRAssembler:: get_query_fasta_file_name(int round){
 	if (round > 1){
 		if (assembly_round < round)
 			return get_contig_file_name(round-1);
@@ -570,7 +570,7 @@ string SRAssembler:: get_index_fasta_file_name(int round){
 	}
 	return query_file;
 }
-string SRAssembler:: get_masked_index_fasta_file_name(int round){
+string SRAssembler:: get_masked_query_fasta_file_name(int round){
 	if (round > 1){
 		if (assembly_round < round) {
 			string masked_fasta = get_contig_file_name(round-1) + ".masked";
@@ -623,12 +623,21 @@ int SRAssembler::do_alignment(int round, int lib_idx, int read_part) {
 	}
 	logger->info("... using Vmatch criteria: " + program_name);
 	Params params = this->read_param_file(program_name);
-	// VmatchAligner::do_alignment(index_name, type, match_length, mismatch_allowed, reads_file, params, output_file)
-	aligner->do_alignment(get_index_name(round), get_type(round), get_match_length(round), get_mismatch_allowed(round), lib.get_split_file_name(read_part, aligner->get_format()), params, get_output_file_name(round, lib_idx, read_part));
-	// Change to always look in FASTA reads file as source.
-	int ret = aligner->parse_output(get_output_file_name(round, lib_idx, read_part), mapped_reads, lib.get_split_file_name(read_part, lib.get_format()), lib.get_matched_left_read_name(round, read_part), lib.get_matched_right_read_name(round, read_part), fastq_format,  lib.get_format());
-	save_mapped_reads(round);
-	return ret;
+	if (round == 1) { // Reads as queries are necessary when searching against a protein.
+		// VmatchAligner::do_alignment(index_name, type, match_length, mismatch_allowed, query_file, params, output_file)
+		aligner->do_alignment(get_index_name(round), get_type(round), get_match_length(round), get_mismatch_allowed(round), lib.get_split_file_name(read_part, aligner->get_format()), params, get_output_file_name(round, lib_idx, read_part));
+		// Change to always look in FASTA reads file as source.
+		int ret = aligner->parse_output(get_output_file_name(round, lib_idx, read_part), mapped_reads, lib.get_split_file_name(read_part, lib.get_format()), lib.get_matched_left_read_name(round, read_part), lib.get_matched_right_read_name(round, read_part), fastq_format,  lib.get_format());
+		save_mapped_reads(round);
+		return ret;
+	} else {
+		// VmatchAligner::do_alignment(index_name, type, match_length, mismatch_allowed, query_file, params, output_file)
+		aligner->do_alignment(lib.get_read_part_index_name(read_part), get_type(round), get_match_length(round), get_mismatch_allowed(round), get_masked_query_fasta_file_name(round), params, get_output_file_name(round, lib_idx, read_part));
+		// VmatchAligner::parse_output(output_file, mapped_reads, read_source, out_left_read, out_right_read, fastq_format, format)
+		int ret = aligner->parse_output(get_output_file_name(round, lib_idx, read_part), mapped_reads, lib.get_split_file_name(read_part, lib.get_format()), lib.get_matched_left_read_name(round, read_part), lib.get_matched_right_read_name(round, read_part), fastq_format,  lib.get_format());
+		save_mapped_reads(round);
+		return ret;
+	}
 }
 
 void SRAssembler::do_assembly(int round, int k) {
@@ -709,7 +718,7 @@ Logger* SRAssembler::get_logger(){
 
 void SRAssembler::create_index(int round) {
 	Aligner* aligner = get_aligner(round);
-	aligner->create_index(get_index_name(round), get_type(round), get_masked_index_fasta_file_name(round));
+	aligner->create_index(get_index_name(round), get_type(round), get_masked_query_fasta_file_name(round));
 }
 
 string SRAssembler:: get_type(int round){

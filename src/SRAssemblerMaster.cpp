@@ -266,7 +266,7 @@ int SRAssemblerMaster::get_start_round(){
 					found_previous = file_exists(lib.get_matched_left_read_name(i));
 					if (lib.get_paired_end())
 						found_previous = file_exists(lib.get_matched_right_read_name(i));
-					found_previous = file_exists(get_index_fasta_file_name(i+1));
+					found_previous = file_exists(get_query_fasta_file_name(i+1));
 				}
 			}
 			if (found_previous) {
@@ -715,7 +715,7 @@ void SRAssemblerMaster::process_long_contigs(int round, int k) {
 	}
 
 	ifstream in_contig(get_assembly_file_name(round, k).c_str());
-	ofstream out_contig(get_index_fasta_file_name(round+1).c_str());
+	ofstream out_contig(get_query_fasta_file_name(round+1).c_str());
 	ofstream out_candidate_contig(long_contig_candidate_next_file.c_str());
 	ofstream out_long_contig;
 	out_long_contig.open((long_contig_file.c_str()));
@@ -874,7 +874,7 @@ void SRAssemblerMaster::process_long_contigs(int round, int k) {
 	//TODO This should be more modular
 	string cmd;
 	string contig_file;
-	contig_file = get_index_fasta_file_name(round+1);
+	contig_file = get_contig_file_name(round);
 	string masked_file = contig_file + ".masked";
 	//cmd = "printf '\e[38;5;002mPROCESS_LONG_CONTIGS\e[0m\n'; dustmasker -in " + contig_file + " -outfmt fasta -out - | sed '/^[^>]/s/[a-z]/N/g' > " + masked_file;
 	cmd = "dustmasker -in " + contig_file + " -outfmt fasta -out - | sed '/^[^>]/s/[a-z]/N/g' > " + masked_file;
