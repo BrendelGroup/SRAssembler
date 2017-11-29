@@ -23,7 +23,7 @@ unordered_set<string> VmatchAligner::get_hit_list(const string& output_file) {
 		if (line[0] != '#') {
 			vector<string> tokens;
 			tokenize(line, tokens, " ");
-			string seq_id = tokens[5];
+			string seq_id = tokens[0];
 			current_mapped_reads.insert(seq_id);
 		}
 	}
