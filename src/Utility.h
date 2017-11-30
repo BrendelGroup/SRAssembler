@@ -54,6 +54,6 @@ string get_file_name(const string& path);
 string trim(const string& str);
 string string_format(const std::string fmt, ...);
 void fastq2fasta(const string& fq, const string& fa);
-void remove_duplicate_reads(const string& fn);
+void remove_duplicate_reads(const string& filename, int read_format);
 
 #endif /* UTILITY_H_ */

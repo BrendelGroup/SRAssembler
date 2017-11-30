@@ -222,34 +222,45 @@ string string_format(const string fmt, ...) {
 	}
 }
 
-void remove_duplicate_reads(const string& fn) {
-	boost::unordered_set<string> mapped_reads;
-	string tmp_file = fn + ".tmp";
-	ifstream src_stream(fn.c_str());
-	ofstream tmp_stream(tmp_file.c_str());
-	string lead_chr = "@";
-	string line;
-	while (getline(src_stream, line)){
-		if (line.substr(0,1) == lead_chr){
-			if (mapped_reads.find(line) == mapped_reads.end()) {
-				mapped_reads.insert(line);
-				tmp_stream << line << endl;
-				getline(src_stream, line);
-				tmp_stream << line << endl;
-				getline(src_stream, line);
-				tmp_stream << line << endl;
-				getline(src_stream, line);
-				tmp_stream << line << endl;
-			}
-			else {
-				getline(src_stream, line);
-				getline(src_stream, line);
-				getline(src_stream, line);
-			}
-		}
+// Why isn't this set up for FASTA as well as FASTQ?
+void remove_duplicate_reads(const string& filename, int read_format) {
+	if (read_format == FORMAT_FASTA) {
+	    string tmp_file = filename + ".tmp";
+	    string cmd = "awk '$0 ~ /^>/ && !seen[$0] {getline stuff; while (stuff !~ /^>/) {seen[$0]=(seen[$0]stuff); getline stuff}} END {for (seq in seen) {print seq; print seen[seq];}}' " + filename + " > " + tmp_file;
+	    run_shell_command(cmd);
+	    run_shell_command("cp " + tmp_file + " " + filename);
+	    run_shell_command("rm " + tmp_file);
 	}
-	src_stream.close();
-	tmp_stream.close();
-	run_shell_command("cp " + tmp_file + " " + fn);
-	run_shell_command("rm " + tmp_file);
+	//TODO make this more efficient as above, or possibly remove.
+	else {
+	    boost::unordered_set<string> mapped_reads;
+	    string tmp_file = filename + ".tmp";
+	    ifstream src_stream(filename.c_str());
+	    ofstream tmp_stream(tmp_file.c_str());
+	    string lead_chr = "@";
+	    string line;
+	    while (getline(src_stream, line)){
+		    if (line.substr(0,1) == lead_chr){
+			    if (mapped_reads.find(line) == mapped_reads.end()) {
+				    mapped_reads.insert(line);
+				    tmp_stream << line << endl;
+				    getline(src_stream, line);
+				    tmp_stream << line << endl;
+				    getline(src_stream, line);
+				    tmp_stream << line << endl;
+				    getline(src_stream, line);
+				    tmp_stream << line << endl;
+			    }
+			    else {
+				    getline(src_stream, line);
+				    getline(src_stream, line);
+				    getline(src_stream, line);
+			    }
+		    }
+	    }
+	    src_stream.close();
+	    tmp_stream.close();
+	    run_shell_command("cp " + tmp_file + " " + filename);
+	    run_shell_command("rm " + tmp_file);
+    }
 }
