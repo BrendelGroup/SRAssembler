@@ -183,19 +183,19 @@ void SRAssemblerMaster::do_preprocessing(){
 			logger->debug("total_read_count: " + int2str(total_read_count));
 			if (total_read_count <= reads_per_file){
 				logger->info("Using previously split files for read library " + int2str(lib_index+1));
-				lib->set_num_parts(get_file_count(data_dir + "/lib" + int2str(lib_index+1) + "/" + get_file_base_name(lib->get_left_read()) + "_*." + lib->get_file_extension()));
+				lib->set_num_parts(get_file_count(data_dir + "/lib" + int2str(lib_index+1) + "/" + get_file_base_name(lib->get_left_read()) + "_*." + "fasta"));
 				broadcast_code(ACTION_TOTAL_PARTS, lib_index, lib->get_num_parts(), 0);
 				//broadcast_code(ACTION_EXIT, 0, 0);
 				continue;
 			}
 		}
 		logger->info("Splitting read library " + int2str(lib_index+1) + " ...");
-		//cmd = "rm -f " + data_dir + "/lib" + int2str(lib_index+1) + "/" + get_file_base_name(lib->get_left_read()) + "*";      //delete old files
-		//logger->debug(cmd);
-		//run_shell_command(cmd);
-		//cmd = "rm -f " + data_dir + "/lib" + int2str(lib_index+1) + "/" + get_file_base_name(lib->get_right_read()) + "*";      //delete old files
-		//logger->debug(cmd);
-		//run_shell_command(cmd);
+		//RM cmd = "rm -f " + data_dir + "/lib" + int2str(lib_index+1) + "/" + get_file_base_name(lib->get_left_read()) + "*";      //delete old files
+		//RM logger->debug(cmd);
+		//RM run_shell_command(cmd);
+		//RM cmd = "rm -f " + data_dir + "/lib" + int2str(lib_index+1) + "/" + get_file_base_name(lib->get_right_read()) + "*";      //delete old files
+		//RM logger->debug(cmd);
+		//RM run_shell_command(cmd);
 		// Why would you name a variable 'from'?
 		int from;
 		int part = 0;
@@ -284,8 +284,8 @@ int SRAssemblerMaster::get_start_round(){
 					return start_round;
 				logger->info("Previous results found. SRAssembler starts from round " + int2str(start_round));
 				//clean the temp results if it is not complete.
-				run_shell_command("rm -f " + tmp_dir + "/matched_reads_left_" + "r" + int2str(start_round) + "*");
-				run_shell_command("rm -f " + tmp_dir + "/matched_reads_right_" + "r" + int2str(start_round) + "*");
+				//RM run_shell_command("rm -f " + tmp_dir + "/matched_reads_left_" + "r" + int2str(start_round) + "*");
+				//RM run_shell_command("rm -f " + tmp_dir + "/matched_reads_right_" + "r" + int2str(start_round) + "*");
 				for (unsigned int lib_idx=0;lib_idx<this->libraries.size();lib_idx++){
 					Library lib = this->libraries[lib_idx];
 					run_shell_command("cp " + lib.get_matched_left_read_filename(i) + " " + lib.get_matched_left_read_filename());
@@ -419,7 +419,7 @@ void SRAssemblerMaster::do_walking(){
 			}
 			if (longest_contig == 0) {
 				assembly_round = round + 1;
-				clean_tmp_files(round-1);
+				//RM clean_tmp_files(round-1);
 				round++;
 				continue;
 			}
@@ -465,12 +465,14 @@ void SRAssemblerMaster::do_walking(){
 			}
 		}
 		if (round > 1) {
-			clean_tmp_files(round-1);
+			//RM clean_tmp_files(round-1);
+			;
 		}
 		round++;
 	}
 	if (round > 1) {
-		clean_tmp_files(round-1);
+		//RM clean_tmp_files(round-1);
+		;
 	}
 	// notify all slaves to stop listening
 	broadcast_code(ACTION_EXIT, 0, 0, 0);
@@ -496,7 +498,7 @@ void SRAssemblerMaster::do_walking(){
 	do_spliced_alignment();
 	do_gene_finding();
 	//run_shell_command("mv " + results_dir + "/contigs_* " + intermediate_dir);
-	this->get_spliced_aligner()->clean_files(this->final_contig_file);
+	//RM this->get_spliced_aligner()->clean_files(this->final_contig_file);
 	output_summary(round);
 	output_spliced_alignment();
 	if (file_exists(this->gene_finding_output_file)) {
@@ -505,7 +507,7 @@ void SRAssemblerMaster::do_walking(){
 	ofstream outFile(summary_file.c_str());
 	outFile << output_content << endl;
 	outFile.close();
-	run_shell_command("rm -rf " + query_file + ".*");
+	//RM run_shell_command("rm -rf " + query_file + ".*");
 }
 
 void SRAssemblerMaster::clean_tmp_files(int round){
@@ -536,7 +538,7 @@ void SRAssemblerMaster::clean_tmp_files(int round){
 
 void SRAssemblerMaster::save_query_list(){
 	string fn = tmp_dir + "/query_list";
-	run_shell_command("rm -rf " + fn);
+	//RM run_shell_command("rm -rf " + fn);
 	if (query_list.size() > 0){
 		ofstream fs(fn.c_str());
 		for (unsigned i=0;i<query_list.size();i++)
@@ -561,7 +563,8 @@ void SRAssemblerMaster::load_saved_contigs(){
 	string fn = get_saved_contig_file_name();
 	this->contig_number = 1;
 	if (start_round == 1)
-		run_shell_command("rm -rf " + fn);
+		//RM run_shell_command("rm -rf " + fn);
+		;
 	else {
 		if (file_exists(fn)){
 			ifstream fs(fn.c_str());
@@ -666,7 +669,7 @@ int SRAssemblerMaster::do_assembly(int round) {
 	if (best_k > 0) {
 		process_long_contigs(round, best_k);
 	}
-	get_assembler()->clean_files(tmp_dir);
+	//RM get_assembler()->clean_files(tmp_dir);
 	return max_longest_contig;
 }
 

@@ -691,7 +691,7 @@ string_map SRAssembler::do_spliced_alignment(int round) {
 	string hit_file = tmp_dir + "/hit_contigs_" + "r" + int2str(round) + ".fasta";
 	spliced_aligner->do_spliced_alignment(contig_file, type, this->query_file, this->species, params, output_file, hit_file);
 	string_map query_map = spliced_aligner->get_aligned_contigs(min_score, min_coverage, min_contig_lgth, contig_file, hit_file, output_file);
-	spliced_aligner->clean_files(contig_file);
+	//RM spliced_aligner->clean_files(contig_file);
 	logger->info("Done.");
 	return query_map;
 }
@@ -772,27 +772,27 @@ void SRAssembler::merge_mapped_files(int round){
 		logger->debug(cmd);
 		run_shell_command(cmd);
 		remove_duplicate_reads(lib.get_matched_left_read_filename(), FORMAT_FASTA);
-		cmd = "rm -f " + left_files;
-		logger->debug(cmd);
-		run_shell_command(cmd);
+		//RM cmd = "rm -f " + left_files;
+		//RM logger->debug(cmd);
+		//RM run_shell_command(cmd);
 		if (lib.get_paired_end()) {
 			string right_files = tmp_dir + "/matched_reads_right_" + "r" + int2str(round) + "_" + "lib" + int2str(lib_idx + 1) + "_part*";
 			cmd = "cat " + right_files + " >> " + lib.get_matched_right_read_filename();
 			logger->debug(cmd);
 			run_shell_command(cmd);
 			remove_duplicate_reads(lib.get_matched_right_read_filename(), FORMAT_FASTA);
-			cmd = "rm -f " + right_files;
-			logger->debug(cmd);
-			run_shell_command(cmd);
+			//RM cmd = "rm -f " + right_files;
+			//RM logger->debug(cmd);
+			//RM run_shell_command(cmd);
 		}
 		if (round > 1)
 			run_shell_command("cp " + lib.get_matched_left_read_filename() + " " + lib.get_matched_left_read_filename(round));
 		if (lib.get_paired_end() && round > 1)
 			run_shell_command("cp " + lib.get_matched_right_read_filename() + " " + lib.get_matched_right_read_filename(round));
 	}
-	string cmd = "rm -f " + get_contigs_index_name(round) + ".*";;
-	logger->debug(cmd);
-	run_shell_command(cmd);
+	//RM string cmd = "rm -f " + get_contigs_index_name(round) + ".*";;
+	//RM logger->debug(cmd);
+	//RM run_shell_command(cmd);
 	logger->debug("done.");
 }
 
