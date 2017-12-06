@@ -190,10 +190,12 @@ void SRAssemblerMaster::do_preprocessing(){
 			}
 		}
 		logger->info("Splitting read library " + int2str(lib_index+1) + " ...");
-		cmd = "rm -f " + data_dir + "/lib" + int2str(lib_index+1) + "/" + get_file_base_name(lib->get_left_read()) + "*";      //delete old files
-		cmd = "rm -f " + data_dir + "/lib" + int2str(lib_index+1) + "/" + get_file_base_name(lib->get_right_read()) + "*";      //delete old files
-		logger->debug(cmd);
-		run_shell_command(cmd);
+		//cmd = "rm -f " + data_dir + "/lib" + int2str(lib_index+1) + "/" + get_file_base_name(lib->get_left_read()) + "*";      //delete old files
+		//logger->debug(cmd);
+		//run_shell_command(cmd);
+		//cmd = "rm -f " + data_dir + "/lib" + int2str(lib_index+1) + "/" + get_file_base_name(lib->get_right_read()) + "*";      //delete old files
+		//logger->debug(cmd);
+		//run_shell_command(cmd);
 		// Why would you name a variable 'from'?
 		int from;
 		int part = 0;
@@ -214,11 +216,12 @@ void SRAssemblerMaster::do_preprocessing(){
 				lib->do_split_files(RIGHT_READ, this->reads_per_file);
 		}
 		// We need to count all files because we are not interleaving.
-		if (lib->get_paired_end()) {
-			lib->set_num_parts(get_file_count(lib->get_split_read_prefix(lib->get_left_read()) + "*") + get_file_count(lib->get_split_read_prefix(lib->get_right_read()) + "*"));
-		} else {
-			lib->set_num_parts(get_file_count(lib->get_split_read_prefix(lib->get_left_read()) + "*"));
-		}
+		//if (lib->get_paired_end()) {
+			//lib->set_num_parts(get_file_count(lib->get_split_read_prefix(lib->get_left_read()) + "*") + get_file_count(lib->get_split_read_prefix(lib->get_right_read()) + "*"));
+		//} else {
+			//lib->set_num_parts(get_file_count(lib->get_split_read_prefix(lib->get_left_read()) + "*"));
+		//}
+		lib->set_num_parts(get_file_count(lib->get_split_read_prefix(lib->get_left_read()) + "*"));
 		logger->info("We have " + int2str(lib->get_num_parts()) +" split files");
 
 		broadcast_code(ACTION_TOTAL_PARTS, lib_index, lib->get_num_parts(), 0);

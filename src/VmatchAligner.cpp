@@ -58,18 +58,22 @@ int VmatchAligner::parse_output(const string& output_file, unordered_set<string>
 	int found_new_read = 0;
 	//parse the output file and get the mapped reads have not found yet
 	string line;
+	string cmd;
 	while (getline(report_file_stream, line)) {
 		string seq_number = line;
-		string seq_id = read_part + "," + seq_number;
+		string seq_id = int2str(read_part) + "," + seq_number;
 		// boost::unordered_set.find() produces past-the-end pointer if a key isn't found
 		if (mapped_reads.find(seq_id) == mapped_reads.end()) {
 			found_new_read = 1;
 			current_mapped_reads.insert(seq_number);
 			mapped_reads.insert(seq_id);
 			// Use vseqselect to pull reads out of indexes
-			run_shell_command("vseqselect -seqnum <(printf '" + seq_number + "') " + left_read_index + " | awk '!/^>/ { printf \"%s\", $0; n = \"\n\" } /^>/ { print n $0} >> " + out_left_read);
+			cmd = "bash -c \"vseqselect -seqnum <(printf '" + seq_number + "') " + left_read_index + "\" | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' >> " + out_left_read;
+			logger->debug(cmd);
+			run_shell_command(cmd);
 			if (paired_end) {
-				run_shell_command("vseqselect -seqnum <(printf '" + seq_number + "') " + right_read_index + " | awk '!/^>/ { printf \"%s\", $0; n = \"\n\" } /^>/ { print n $0} >> " + out_right_read);
+				cmd = "bash -c \"vseqselect -seqnum <(printf '" + seq_number + "') " + right_read_index + "\" | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' >> " + out_right_read;
+                run_shell_command(cmd);
 			}
 		}
 	}
@@ -109,10 +113,10 @@ void VmatchAligner::do_alignment(const string& index_name, const string& type, i
 	}
 	string cmd;
 	if (type == "protein" ) {
-		cmd = "vmatch " + align_type + " -q " + query_file + " -d" + " -l " + int2str(match_length) + " " + e_option + " " + param_list + " -showdesc 0 -nodist -noevalue -noscore -noidentity " + index_name + " | awk '$0 !~ /^#.*/ {print $6}' | uniq >> " + output_file;
+		cmd = "vmatch " + align_type + " -q " + query_file + " -d" + " -l " + int2str(match_length) + " " + e_option + " " + param_list + " -nodist -noevalue -noscore -noidentity " + index_name + " | awk '$0 !~ /^#.*/ {print $6}' | uniq >> " + output_file;
 	} else if (type == "cdna" ) {
 		//cmd = "vmatch " + align_type + " -q " + query_file + " -d -p" + " -l " + int2str(match_length) + " " + e_option + " " + param_list + " -nodist -noevalue -noscore -noidentity " + index_name + " | awk '{print $1,$2,$3,$4,$5,$6}' | uniq -f2 >> " + output_file;
-		cmd = "vmatch " + align_type + " -q " + query_file + " -d -p" + " -l " + int2str(match_length) + " " + e_option + " " + param_list + " -showdesc 0 -nodist -noevalue -noscore -noidentity " + index_name + " | awk '$0 !~ /^#.*/ {print $2}' | sort -u >> " + output_file;
+		cmd = "vmatch " + align_type + " -q " + query_file + " -d -p" + " -l " + int2str(match_length) + " " + e_option + " " + param_list + " -nodist -noevalue -noscore -noidentity " + index_name + " | awk '$0 !~ /^#.*/ {print $2}' | sort -u >> " + output_file;
 	}
 	logger->debug(cmd);
 	run_shell_command(cmd);
