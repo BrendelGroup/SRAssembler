@@ -884,6 +884,7 @@ void SRAssemblerMaster::process_long_contigs(int round, int k) {
 	}
 	// For right now masking is done by NCBI's dustmasker.
 	//TODO This should be more modular
+	//TODO Masking is happening before cleaning in cleaning rounds.
 	string cmd;
 	string contig_file;
 	contig_file = get_contig_file_name(round);
@@ -934,11 +935,11 @@ void SRAssemblerMaster::remove_hit_contigs(vector<string> &contig_list, int roun
 	saved_contig_file.close();
 	string cmd = "cp " + tmp_file + " " + contig_file;
 	run_shell_command(cmd);
-	cmd = "rm " + tmp_file;
+	//RM cmd = "rm " + tmp_file;
 	run_shell_command(cmd);
 }
 
-void SRAssemblerMaster::remove_no_hit_contigs(unordered_set<string> &contig_list, int round){
+void SRAssemblerMaster::remove_no_hit_contigs(unordered_set<string> &hit_list, int round){
 	logger->debug("remove contigs without hits against query sequences in round " + int2str(round));
 	string contig_file = get_contig_file_name(round);
 	string tmp_file = tmp_dir + "/contig_tmp_" + "r" + int2str(round) + ".fasta";
@@ -948,14 +949,17 @@ void SRAssemblerMaster::remove_no_hit_contigs(unordered_set<string> &contig_list
 	ifstream contig_file_stream(contig_file.c_str());
 	ofstream tmp_file_stream(tmp_file.c_str());
 	bool hit_seq = false;
+	int contig_number = 0;
 	while (getline(contig_file_stream, line)){
 		if (line.substr(0,1) == ">"){
-			if (hit_seq)
+			string contig_id = int2str(contig_number);
+			if (hit_seq) {
 			 	tmp_file_stream << ">" << header << endl << seq << endl;
+			}
 			header = line.substr(1);
-			string contig_id = header.substr(0, header.find_first_of(" "));
-			hit_seq = (find(contig_list.begin(), contig_list.end(), contig_id) != contig_list.end());
+			hit_seq = (find(hit_list.begin(), hit_list.end(), contig_id) != hit_list.end());
 			seq = "";
+			contig_number++;
 		}
 		else
 			seq.append(line);
@@ -966,7 +970,7 @@ void SRAssemblerMaster::remove_no_hit_contigs(unordered_set<string> &contig_list
 	tmp_file_stream.close();
 	string cmd = "cp " + tmp_file + " " + contig_file;
 	run_shell_command(cmd);
-	cmd = "rm " + tmp_file;
+	//RM cmd = "rm " + tmp_file;
 	run_shell_command(cmd);
 }
 
@@ -1058,6 +1062,7 @@ void SRAssemblerMaster::remove_no_hit_contigs(int round){
 }
 
 void SRAssemblerMaster::clean_unmapped_reads(int round){
+//TODO improve the speed of the read finding. May be able to parse bowtie output directly.
 	remove_no_hit_contigs(round);
 	string contig_file = get_contig_file_name(round);
 	//remove associated reads
@@ -1067,7 +1072,8 @@ void SRAssemblerMaster::clean_unmapped_reads(int round){
 	run_shell_command(cmd);
 	for (unsigned int lib_idx=0; lib_idx < this->libraries.size(); lib_idx++){
 		Library lib = this->libraries[lib_idx];
-		string type_option = (lib.get_format() == FORMAT_FASTQ)? "-q" : "-f";
+		//string type_option = (lib.get_format() == FORMAT_FASTQ)? "-q" : "-f";
+		string type_option = "-f";
 		string reads_on_contigs = tmp_dir + "/matched_reads" + int2str(lib_idx+1) + ".sam";
 		if (lib.get_paired_end())
 			cmd = "bowtie " + type_option + " -v 2 --suppress 2,3,4,5,6,7 " + index_name + " " + lib.get_matched_left_read_filename() + "," + lib.get_matched_right_read_filename() + " " + reads_on_contigs + " >> " + logger->get_log_file();
@@ -1086,8 +1092,8 @@ void SRAssemblerMaster::clean_unmapped_reads(int round){
 		reads_file.close();
 		string left_matched = lib.get_matched_left_read_filename();
 		string right_matched = lib.get_matched_right_read_filename();
-		string left_processed = tmp_dir + "/matched_reads_processed_left." + lib.get_file_extension();
-		string right_processed = tmp_dir + "/matched_reads_processed_right." + lib.get_file_extension();
+		string left_processed = tmp_dir + "/matched_reads_processed_left." + "fasta";
+		string right_processed = tmp_dir + "/matched_reads_processed_right." + "fasta";
 
 		ifstream left_matched_stream(left_matched.c_str());
 		ofstream left_processed_stream(left_processed.c_str());
@@ -1109,7 +1115,7 @@ void SRAssemblerMaster::clean_unmapped_reads(int round){
 			string right_seq_id = "";
 			if (left_header.length()==0)
 				continue;
-			string lead_chr = (lib.get_format() == FORMAT_FASTQ)? "@" : ">";
+			string lead_chr = ">";
 			if (left_header.substr(0,1) == lead_chr){
 				size_t pos = left_header.find_first_of(" ");
 				if (pos ==string::npos)
@@ -1118,17 +1124,9 @@ void SRAssemblerMaster::clean_unmapped_reads(int round){
 					left_seq_id = left_header.substr(1, pos-1);
 				left_seq_id.erase(left_seq_id.find_last_not_of("\n\r\t")+1);
 				getline(left_matched_stream, left_seq);
-				if (lib.get_format() == FORMAT_FASTQ) {
-					getline(left_matched_stream, plus);
-					getline(left_matched_stream, left_qual);
-				}
 				if (lib.get_paired_end()){
 					getline(right_matched_stream, right_header);
 					getline(right_matched_stream, right_seq);
-					if (lib.get_format() == FORMAT_FASTQ) {
-						getline(right_matched_stream, plus);
-						getline(right_matched_stream, right_qual);
-					}
 					pos = right_header.find_first_of(" ");
 					if (pos ==string::npos)
 						right_seq_id = right_header.substr(1);
@@ -1137,15 +1135,9 @@ void SRAssemblerMaster::clean_unmapped_reads(int round){
 					right_seq_id.erase(right_seq_id.find_last_not_of("\n\r\t")+1);
 				}
 				if (mapped_reads.find(left_seq_id) != mapped_reads.end() && (lib.get_paired_end() || mapped_reads.find(right_seq_id) != mapped_reads.end())){
-					if (lib.get_format() == FORMAT_FASTQ)
-						left_processed_stream << left_header << endl << left_seq << endl << "+" << endl << left_qual << endl;
-					else
-						left_processed_stream << left_header << endl << left_seq << endl;
+					left_processed_stream << left_header << endl << left_seq << endl;
 					if (lib.get_paired_end()){
-						if (lib.get_format() == FORMAT_FASTQ)
-							right_processed_stream << right_header << endl << right_seq << endl << "+" << endl << right_qual << endl;
-						else
-							right_processed_stream << right_header << endl << right_seq << endl;
+						right_processed_stream << right_header << endl << right_seq << endl;
 					}
 				}
 			}
@@ -1169,7 +1161,7 @@ void SRAssemblerMaster::clean_unmapped_reads(int round){
 			run_shell_command(cmd);
 		}
 	}
-	cmd = "rm -f " + index_name + "*";
+	//RM cmd = "rm -f " + index_name + "*";
 	logger->debug(cmd);
 	run_shell_command(cmd);
 }

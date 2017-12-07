@@ -226,6 +226,7 @@ string string_format(const string fmt, ...) {
 void remove_duplicate_reads(const string& filename, int read_format) {
 	if (read_format == FORMAT_FASTA) {
 	    string tmp_file = filename + ".tmp";
+	    //TODO this does not return them in order
 	    string cmd = "awk '$0 ~ /^>/ && !seen[$0] {getline seq; seen[$0]=seq;} END {for (read in seen) {print read; print seen[read];}}' " + filename + " > " + tmp_file;
 	    run_shell_command(cmd);
 	    run_shell_command("cp " + tmp_file + " " + filename);

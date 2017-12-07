@@ -558,6 +558,7 @@ string SRAssembler:: get_contigs_index_name(int round){
  * It does not just return a string naming a fasta file that contains all of the matched reads.
  * This function is also responsible for assembling the contents of that file.
  */
+ //TODO break into multiple functions, this is ridiculous
 string SRAssembler:: get_query_fasta_file_name(int round){
 	if (round > 1){
 		if (assembly_round < round)
@@ -771,7 +772,8 @@ void SRAssembler::merge_mapped_files(int round){
 		string cmd = "cat " + left_files + " >> " + lib.get_matched_left_read_filename();
 		logger->debug(cmd);
 		run_shell_command(cmd);
-		remove_duplicate_reads(lib.get_matched_left_read_filename(), FORMAT_FASTA);
+		// Should there ever be duplicate reads?
+		//remove_duplicate_reads(lib.get_matched_left_read_filename(), FORMAT_FASTA);
 		//RM cmd = "rm -f " + left_files;
 		//RM logger->debug(cmd);
 		//RM run_shell_command(cmd);
@@ -780,7 +782,8 @@ void SRAssembler::merge_mapped_files(int round){
 			cmd = "cat " + right_files + " >> " + lib.get_matched_right_read_filename();
 			logger->debug(cmd);
 			run_shell_command(cmd);
-			remove_duplicate_reads(lib.get_matched_right_read_filename(), FORMAT_FASTA);
+			// I don't think there should ever be duplicate reads.
+			//remove_duplicate_reads(lib.get_matched_right_read_filename(), FORMAT_FASTA);
 			//RM cmd = "rm -f " + right_files;
 			//RM logger->debug(cmd);
 			//RM run_shell_command(cmd);

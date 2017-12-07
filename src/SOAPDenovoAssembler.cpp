@@ -42,13 +42,13 @@ void SOAPDenovoAssembler::do_assembly(int kmer, const vector<Library>& libraries
 		outFile << "rank=" << (i+1) << endl;
 		if (lib.get_paired_end()) {
 			outFile << "avg_ins=" << lib.get_insert_size() << endl;
-			if (lib.get_format() == FORMAT_FASTQ) {
-				outFile << "q1=" << lib.get_matched_left_read_filename() << endl;
-				outFile << "q2=" << lib.get_matched_right_read_filename() << endl;
-			} else {
-				outFile << "f1=" << lib.get_matched_left_read_filename() << endl;
-				outFile << "f2=" << lib.get_matched_right_read_filename() << endl;
-			}
+			//if (lib.get_format() == FORMAT_FASTQ) {
+				//outFile << "q1=" << lib.get_matched_left_read_filename() << endl;
+				//outFile << "q2=" << lib.get_matched_right_read_filename() << endl;
+			//} else {
+			outFile << "f1=" << lib.get_matched_left_read_filename() << endl;
+			outFile << "f2=" << lib.get_matched_right_read_filename() << endl;
+			//}
 			if (lib.get_reversed()) {
 				outFile << "reverse_seq=1" << endl;
 			}
