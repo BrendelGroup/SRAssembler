@@ -53,9 +53,9 @@ void SOAPDenovoAssembler::do_assembly(int kmer, const vector<Library>& libraries
 				outFile << "reverse_seq=1" << endl;
 			}
 		} else {
-			if (lib.get_format() == FORMAT_FASTQ)
-				outFile << "q=" << lib.get_matched_left_read_filename() << endl;
-			else
+			//if (lib.get_format() == FORMAT_FASTQ)
+				//outFile << "q=" << lib.get_matched_left_read_filename() << endl;
+			//else
 				outFile << "f=" << lib.get_matched_left_read_filename() << endl;
 		}
 	}

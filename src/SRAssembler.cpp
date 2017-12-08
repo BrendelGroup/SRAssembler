@@ -570,11 +570,6 @@ string SRAssembler:: get_query_fasta_file_name(int round){
 			for (unsigned i=0;i<this->libraries.size();i++){
 				string left_file = tmp_dir + "/matched_reads_left_" + "lib" + int2str(i+1) + ".fasta";
 				string right_file = tmp_dir + "/matched_reads_right_" + "lib" + int2str(i+1) + ".fasta";
-				if (libraries[i].get_file_extension() == "fastq") {
-					fastq2fasta(tmp_dir + "/matched_reads_left_" + "lib" + int2str(i+1) + ".fastq", left_file);
-					if (libraries[i].get_paired_end())
-						fastq2fasta(tmp_dir + "/matched_reads_right_" + "lib" + int2str(i+1) + ".fastq", right_file);
-				}
 				if (libraries[i].get_paired_end()){
 					cmd = "cat " + left_file + " " + right_file + " >> " + joined_file;
 					logger->debug(cmd);
@@ -602,11 +597,6 @@ string SRAssembler:: get_masked_query_fasta_file_name(int round){
 			for (unsigned i=0;i<this->libraries.size();i++){
 				string left_file = tmp_dir + "/matched_reads_left_" + "lib" + int2str(i+1) + ".fasta";
 				string right_file = tmp_dir + "/matched_reads_right_" + "lib" + int2str(i+1) + ".fasta";
-				if (libraries[i].get_file_extension() == "fastq") {
-					fastq2fasta(tmp_dir + "/matched_reads_left_" + "lib" + int2str(i+1) + ".fastq", left_file);
-					if (libraries[i].get_paired_end())
-						fastq2fasta(tmp_dir + "/matched_reads_right_" + "lib" + int2str(i+1) + ".fastq", right_file);
-				}
 				if (libraries[i].get_paired_end()){
 					cmd = "cat " + left_file + " " + right_file + " >> " + joined_file;
 					logger->debug(cmd);
@@ -802,7 +792,8 @@ void SRAssembler::merge_mapped_files(int round){
 int SRAssembler::get_total_read_count(int round){
 	int count = 0;
 	for (unsigned short int lib_idx=0; lib_idx< this->libraries.size();lib_idx++) {
-		count += get_read_count(this->libraries[lib_idx].get_matched_left_read_filename(), this->libraries[lib_idx].get_format());
+		//count += get_read_count(this->libraries[lib_idx].get_matched_left_read_filename(), this->libraries[lib_idx].get_format());
+		count += get_read_count(this->libraries[lib_idx].get_matched_left_read_filename(), FORMAT_FASTA);
 	}
 
 	return count;

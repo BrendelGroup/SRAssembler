@@ -268,16 +268,18 @@ int SRAssemblerMaster::get_start_round(){
 		for (int i=this->num_rounds;i>1;i--){
 			bool found_previous = true;
 			int mpiSize = (this->mpiSize == 0)? 1: this->mpiSize;
-			for (int j=0;j<mpiSize;j++) {
+			// Why is this a for loop?
+			//for (int j=0;j<mpiSize;j++) {
 				// if reads file and next round index file exist (means assembled), we can continue from here.
 				for (unsigned int lib_idx=0;lib_idx<this->libraries.size();lib_idx++){
 					Library lib = this->libraries[lib_idx];
-					found_previous = file_exists(lib.get_matched_left_read_filename(i));
-					if (lib.get_paired_end())
-						found_previous = file_exists(lib.get_matched_right_read_filename(i));
+					// Why do we keep re-assigning found_previous?
+					//found_previous = file_exists(lib.get_matched_left_read_filename(i));
+					//if (lib.get_paired_end())
+						//found_previous = file_exists(lib.get_matched_right_read_filename(i));
 					found_previous = file_exists(get_query_fasta_file_name(i+1));
 				}
-			}
+			//}
 			if (found_previous) {
 				start_round = i+1;
 				if (start_round > this->num_rounds)
@@ -781,11 +783,12 @@ void SRAssemblerMaster::process_long_contigs(int round, int k) {
 		//cmd = "bowtie -n 0 -X 500 --suppress 2,3,4,5,6,7 " + tmp_dir + "/long_contig " + tmp_dir + "/matched_reads_left.fastq," + tmp_dir + "/matched_reads_right.fastq  " + reads_on_contigs + " >> " + logger->get_log_file() + " 2>&1";
 		for (unsigned int lib_idx=0; lib_idx < this->libraries.size(); lib_idx++){
 			Library lib = this->libraries[lib_idx];
-			string type_option = (lib.get_format() == FORMAT_FASTQ)? "-q" : "-f";
+			//string type_option = (lib.get_format() == FORMAT_FASTQ)? "-q" : "-f";
+			string type_option = "-f";
 			if (lib.get_paired_end())
-				cmd = "bowtie " + type_option + " -v 2 --suppress 2,3,4,5,6,7 " + tmp_dir + "/long_contig " + lib.get_matched_left_read_filename() + "," + lib.get_matched_right_read_filename() + " " + reads_on_contigs + " >> " + logger->get_log_file();
+				cmd = "bowtie " + type_option + " -v 2 --suppress 2,3,4,5,6,7 " + tmp_dir + "/long_contig " + lib.get_matched_left_read_filename() + "," + lib.get_matched_right_read_filename() + " " + reads_on_contigs + " >> " + logger->get_log_file() + " 2>&1";
 			else
-				cmd = "bowtie "  + type_option + " -v 2 --suppress 2,3,4,5,6,7 " + tmp_dir + "/long_contig " + lib.get_matched_left_read_filename() + " " + reads_on_contigs + " >> " + logger->get_log_file();
+				cmd = "bowtie "  + type_option + " -v 2 --suppress 2,3,4,5,6,7 " + tmp_dir + "/long_contig " + lib.get_matched_left_read_filename() + " " + reads_on_contigs + " >> " + logger->get_log_file() + " 2>&1";
 			logger->debug(cmd);
 			run_shell_command(cmd);
 
@@ -821,7 +824,7 @@ void SRAssemblerMaster::process_long_contigs(int round, int k) {
 			while (getline(left_matched_stream, left_header)){
 				string left_seq_id = "";
 				string right_seq_id = "";
-				string lead_chr = (lib.get_format() == FORMAT_FASTQ)? "@" : ">";
+				string lead_chr = ">";
 				if (left_header.substr(0,1) == lead_chr){
 					unsigned int pos = left_header.find_first_of(" ");
 					if (pos ==string::npos)
@@ -830,17 +833,9 @@ void SRAssemblerMaster::process_long_contigs(int round, int k) {
 						left_seq_id = left_header.substr(1, pos-1);
 					left_seq_id.erase(left_seq_id.find_last_not_of("\n\r\t")+1);
 					getline(left_matched_stream, left_seq);
-					if (lib.get_format() == FORMAT_FASTQ) {
-						getline(left_matched_stream, plus);
-						getline(left_matched_stream, left_qual);
-					}
 					if (lib.get_paired_end()){
 						getline(right_matched_stream, right_header);
 						getline(right_matched_stream, right_seq);
-						if (lib.get_format() == FORMAT_FASTQ) {
-							getline(right_matched_stream, plus);
-							getline(right_matched_stream, right_qual);
-						}
 						pos = right_header.find_first_of(" ");
 						if (pos ==string::npos)
 							right_seq_id = right_header;
@@ -849,15 +844,9 @@ void SRAssemblerMaster::process_long_contigs(int round, int k) {
 						right_seq_id.erase(right_seq_id.find_last_not_of(" \n\r\t")+1);
 					}
 					if (mapped_reads.find(left_seq_id) == mapped_reads.end() && (lib.get_paired_end() && mapped_reads.find(right_seq_id) == mapped_reads.end())){
-						if (lib.get_format() == FORMAT_FASTQ)
-							left_processed_stream << left_header << endl << left_seq << endl << "+" << endl << left_qual << endl;
-						else
-							left_processed_stream << left_header << endl << left_seq << endl;
+						left_processed_stream << left_header << endl << left_seq << endl;
 						if (lib.get_paired_end()){
-							if (lib.get_format() == FORMAT_FASTQ)
-								right_processed_stream << right_header << endl << right_seq << endl << "+" << endl << right_qual << endl;
-							else
-								right_processed_stream << right_header << endl << right_seq << endl;
+							right_processed_stream << right_header << endl << right_seq << endl;
 						}
 					}
 				}
@@ -1076,9 +1065,9 @@ void SRAssemblerMaster::clean_unmapped_reads(int round){
 		string type_option = "-f";
 		string reads_on_contigs = tmp_dir + "/matched_reads" + int2str(lib_idx+1) + ".sam";
 		if (lib.get_paired_end())
-			cmd = "bowtie " + type_option + " -v 2 --suppress 2,3,4,5,6,7 " + index_name + " " + lib.get_matched_left_read_filename() + "," + lib.get_matched_right_read_filename() + " " + reads_on_contigs + " >> " + logger->get_log_file();
+			cmd = "bowtie " + type_option + " -v 2 --suppress 2,3,4,5,6,7 " + index_name + " " + lib.get_matched_left_read_filename() + "," + lib.get_matched_right_read_filename() + " " + reads_on_contigs + " >> " + logger->get_log_file() + " 2>&1";
 		else
-			cmd = "bowtie "  + type_option + " -v 2 --suppress 2,3,4,5,6,7 " + index_name + " " + lib.get_matched_left_read_filename() + " " + reads_on_contigs + " >> " + logger->get_log_file();
+			cmd = "bowtie "  + type_option + " -v 2 --suppress 2,3,4,5,6,7 " + index_name + " " + lib.get_matched_left_read_filename() + " " + reads_on_contigs + " >> " + logger->get_log_file() + " 2>&1";
 		logger->debug(cmd);
 		run_shell_command(cmd);
 		//read sam file
