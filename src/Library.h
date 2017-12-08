@@ -37,7 +37,7 @@ public:
 	string get_matched_left_read_filename(int round, int idx);
 	string get_matched_right_read_filename(int round, int idx);
 	string get_file_extension();
-	string get_split_file_name(int idx, int file_type);
+	string get_split_file_name(int file_part, int read_direction);
 	string get_read_part_index_name(int file_part, int read_direction);
 	string get_split_read_prefix(string src_read);
 	void do_split_files(int read_type, int reads_per_file);

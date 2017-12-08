@@ -66,6 +66,7 @@ protected:
 	void do_split_files(string read_file);
 	void preprocess_read_part(int lib_idx, int file_part);
 	int get_file_count(std::string);
+	int count_preprocessed_reads(int lib_idx);
 	void merge_mapped_files(int round);
 	Assembly_stats get_assembly_stats(int round, int k);
 	void save_mapped_reads(int round);

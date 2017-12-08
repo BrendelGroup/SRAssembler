@@ -435,6 +435,13 @@ int SRAssembler::get_file_count(string search_pattern){
 	return str2int(run_shell_command_with_return(cmd));
 }
 
+int SRAssembler::count_preprocessed_reads(int lib_idx){
+	// This uses a system call to count the lines in all the fasta files in the split reads directory
+	string cmd = "wc -l " + data_dir + "/lib" + int2str(lib_idx+1) + "/*part*.fasta | tail -n 1 | cut -d' ' -f3";
+	logger->debug(cmd);
+	return str2int(run_shell_command_with_return(cmd));
+}
+
 // As far as I can tell this produces interleaved FASTA and interleaved FASTQ files from the split files produced by the library's do_split_files() function.
 //void SRAssembler::preprocess_read_part(int lib_idx, int read_part){
 	//Library lib = this->libraries[lib_idx];
