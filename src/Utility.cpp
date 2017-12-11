@@ -119,6 +119,11 @@ string int2str (const int n) {
 	ss << n;
 	return ss.str();
 }
+string int2str (const int n, const int length) {
+	stringstream ss;
+	ss << setw(length) << setfill('0') << n;
+	return ss.str();
+}
 string long2str(const int n){
 	stringstream ss;
 	ss << n;
@@ -188,7 +193,7 @@ string get_file_name(const string& path) {
 string get_file_base_name(const string& path) {
 	int last_slash = path.find_last_of("/");
 	int last_dot = path.find_last_of(".");
-	return (last_dot == -1 || last_slash > last_dot)? path.substr(last_slash + 1):path.substr(last_slash + 1, last_dot - last_slash -1);
+	return (last_dot == -1 || last_slash > last_dot)? path.substr(last_slash + 1):path.substr(last_slash + 1, last_dot - last_slash - 1);
 }
 
 string trim(const string& str) {
@@ -217,34 +222,46 @@ string string_format(const string fmt, ...) {
 	}
 }
 
-void remove_duplicate_reads(const string& fn) {
-	boost::unordered_set<string> mapped_reads;
-	string tmp_file = fn + ".tmp";
-	ifstream src_stream(fn.c_str());
-	ofstream tmp_stream(tmp_file.c_str());
-	string lead_chr = "@";
-	string line;
-	while (getline(src_stream, line)){
-		if (line.substr(0,1) == lead_chr){
-			if (mapped_reads.find(line) == mapped_reads.end()) {
-				mapped_reads.insert(line);
-				tmp_stream << line << endl;
-				getline(src_stream, line);
-				tmp_stream << line << endl;
-				getline(src_stream, line);
-				tmp_stream << line << endl;
-				getline(src_stream, line);
-				tmp_stream << line << endl;
-			}
-			else {
-				getline(src_stream, line);
-				getline(src_stream, line);
-				getline(src_stream, line);
-			}
-		}
+// Why isn't this set up for FASTA as well as FASTQ?
+void remove_duplicate_reads(const string& filename, int read_format) {
+	if (read_format == FORMAT_FASTA) {
+	    string tmp_file = filename + ".tmp";
+	    //TODO this does not return them in order
+	    string cmd = "awk '$0 ~ /^>/ && !seen[$0] {getline seq; seen[$0]=seq;} END {for (read in seen) {print read; print seen[read];}}' " + filename + " > " + tmp_file;
+	    run_shell_command(cmd);
+	    run_shell_command("cp " + tmp_file + " " + filename);
+	    run_shell_command("rm " + tmp_file);
 	}
-	src_stream.close();
-	tmp_stream.close();
-	run_shell_command("cp " + tmp_file + " " + fn);
-	run_shell_command("rm " + tmp_file);
+	//TODO make this more efficient as above, or possibly remove.
+	else {
+	    boost::unordered_set<string> mapped_reads;
+	    string tmp_file = filename + ".tmp";
+	    ifstream src_stream(filename.c_str());
+	    ofstream tmp_stream(tmp_file.c_str());
+	    string lead_chr = "@";
+	    string line;
+	    while (getline(src_stream, line)){
+		    if (line.substr(0,1) == lead_chr){
+			    if (mapped_reads.find(line) == mapped_reads.end()) {
+				    mapped_reads.insert(line);
+				    tmp_stream << line << endl;
+				    getline(src_stream, line);
+				    tmp_stream << line << endl;
+				    getline(src_stream, line);
+				    tmp_stream << line << endl;
+				    getline(src_stream, line);
+				    tmp_stream << line << endl;
+			    }
+			    else {
+				    getline(src_stream, line);
+				    getline(src_stream, line);
+				    getline(src_stream, line);
+			    }
+		    }
+	    }
+	    src_stream.close();
+	    tmp_stream.close();
+	    run_shell_command("cp " + tmp_file + " " + filename);
+	    run_shell_command("rm " + tmp_file);
+    }
 }

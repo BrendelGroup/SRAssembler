@@ -37,7 +37,7 @@ class SRAssembler {
 public:
 	SRAssembler();
 	virtual ~SRAssembler();
-	virtual int init(int argc, char * argv[], int rank, int size);
+	virtual int init(int argc, char * argv[], int rank, int mpiSize);
 	virtual void do_preprocessing()=0;
 	virtual void do_walking()=0;
 	virtual void show_usage()=0;
@@ -52,20 +52,21 @@ protected:
 	void do_assembly(int, int);
 	int do_assembly(int);
 	void create_index(int round);
-	std::string get_index_name(int round);
-	std::string get_index_fasta_file_name(int round);
-	std::string get_masked_index_fasta_file_name(int round);
+	std::string get_contigs_index_name(int round);
+	std::string get_query_fasta_file_name(int round);
+	std::string get_masked_query_fasta_file_name(int round);
 	std::string get_contig_file_name(int round);
 	std::string get_mapped_reads_file_name(int round);
-	std::string get_output_file_name(int round, int lib_idx, int idx);
+	std::string get_vmatch_output_filename(int round, int lib_idx, int idx);
 	std::string get_type(int round);
 	int get_match_length(int round);
 	int get_mismatch_allowed(int round);
 	std::string get_assembly_file_name(int round, int k);
 	std::string get_assembled_scaf_file_name(int round, int k);
 	void do_split_files(string read_file);
-	void do_preprocessing(int lib_idx, int file_part);
+	void preprocess_read_part(int lib_idx, int file_part);
 	int get_file_count(std::string);
+	int count_preprocessed_reads(int lib_idx);
 	void merge_mapped_files(int round);
 	Assembly_stats get_assembly_stats(int round, int k);
 	void save_mapped_reads(int round);
@@ -95,7 +96,7 @@ protected:
 	int start_k;
 	int end_k;
 	int step_k;
-	int size;
+	int mpiSize;
 	int rank;
 	int fastq_format;
 	int start_round;
@@ -123,6 +124,7 @@ protected:
 	std::string aligned_contig_file;
 	std::string final_long_contig_file;
 	std::string summary_file;
+	std::string mapped_readnumbers_file;
 	boost::unordered_set<std::string> mapped_reads;
 	std::vector<Library> libraries;
 	Logger* logger;

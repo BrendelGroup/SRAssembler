@@ -83,47 +83,66 @@ void Library::set_right_read(string right_read){
 	this->right_read = right_read;
 }
 
-string Library::get_matched_left_read_name(){
-	return tmp_dir + "/matched_reads_left_" + "l" + int2str(lib_idx+1) + "." + this->file_extension;
+string Library::get_matched_left_read_filename(){
+	return tmp_dir + "/matched_reads_left_" + "lib" + int2str(lib_idx+1) + ".fasta";
 }
 
-string Library::get_matched_right_read_name(){
-	return tmp_dir + "/matched_reads_right_" + "l" + int2str(lib_idx+1) + "." + this->file_extension;
-}
-string Library::get_matched_left_read_name(int round){
-	return tmp_dir + "/matched_reads_left_" + "r" + int2str(round) + "_" + "l" + int2str(lib_idx+1) + "." + this->file_extension;
+string Library::get_matched_left_read_filename(int round){
+	return tmp_dir + "/matched_reads_left_" + "r" + int2str(round) + "_" + "lib" + int2str(lib_idx+1) + ".fasta";
 }
 
-string Library::get_matched_right_read_name(int round){
-	return tmp_dir + "/matched_reads_right_" + "r" + int2str(round) + "_" + "l" + int2str(lib_idx+1) + "." + this->file_extension;
-}
-string Library::get_matched_left_read_name(int round, int idx){
-	return tmp_dir + "/matched_reads_left_" + "r" + int2str(round) + "_" + "l" + int2str(lib_idx+1) + "_" + "s" + int2str(idx) + "." + this->file_extension;
+string Library::get_matched_left_read_filename(int round, int part){
+	return tmp_dir + "/matched_reads_left_" + "r" + int2str(round) + "_" + "lib" + int2str(lib_idx+1) + "_" + "part" + int2str(part) + ".fasta";
 }
 
-string Library::get_matched_right_read_name(int round, int idx){
+string Library::get_matched_right_read_filename(){
+	return tmp_dir + "/matched_reads_right_" + "lib" + int2str(lib_idx+1) + ".fasta";
+}
+
+string Library::get_matched_right_read_filename(int round){
+	return tmp_dir + "/matched_reads_right_" + "r" + int2str(round) + "_" + "lib" + int2str(lib_idx+1) + ".fasta";
+}
+
+string Library::get_matched_right_read_filename(int round, int part){
 	if (paired_end)
-		return tmp_dir + "/matched_reads_right_" + "r" + int2str(round) + "_" + "l" + int2str(lib_idx+1) + "_" + "s" + int2str(idx) + "." + this->file_extension;
+		return tmp_dir + "/matched_reads_right_" + "r" + int2str(round) + "_" + "lib" + int2str(lib_idx+1) + "_" + "part" + int2str(part) + ".fasta";
 	return "";
 }
 
-string Library::get_joined_read_name(int round, int idx, int file_type){
-	string extension = (file_type == FORMAT_FASTQ)? "fastq" : "fasta";
-	return tmp_dir + "/matched_reads_joined_" + "r" + int2str(round) + "_" + "l" + int2str(lib_idx+1) + "_" + "s" + int2str(idx) + "." + extension;
+string Library::get_split_file_name(int file_part, int read_direction){
+	string read_file = (read_direction == LEFT_READ)? this->left_read:this->right_read;
+	return data_dir + "/lib" + int2str(lib_idx+1) + "/" + get_file_base_name(read_file) + "_" + "part" + int2str(file_part) + ".fasta";
 }
 
-string Library::get_split_file_name(int idx, int file_type){
-	string extension = (file_type == FORMAT_FASTQ)? "fastq" : "fasta";
-	return data_dir + "/lib" + int2str(lib_idx+1) + "/" + get_file_base_name(left_read) + "_" + int2str(idx) + "." + extension;
+string Library::get_read_part_index_name(int file_part, int read_direction){
+	string read_file = (read_direction == LEFT_READ)? this->left_read:this->right_read;
+	return data_dir + "/lib" + int2str(lib_idx+1) + "/" + get_file_base_name(read_file) + "_" + "part" + int2str(file_part);
 }
 
-string Library::get_prefix_split_src_file(string src_read){
-	return tmp_dir + "/" + get_file_base_name(src_read) + "_" + int2str(lib_idx+1) + "_split_";
+string Library::get_split_read_prefix(string src_read){
+	return data_dir + "/lib" + int2str(lib_idx+1) + "/" + get_file_base_name(src_read) + "_" + "part";
 }
 
-void Library::do_split_files(int read_type, int reads_per_file){
-	string read_file = (read_type == LEFT_READ)? this->left_read:this->right_read;
-	string cmd = "split -l " + int2str(reads_per_file * 4) + " " + read_file + " " + get_prefix_split_src_file(read_file);
+//void Library::do_split_files(int read_direction, int reads_per_file){
+	//string read_file = (read_direction == LEFT_READ)? this->left_read:this->right_read;
+	//string cmd = "split -l " + int2str(reads_per_file * 4) + " " + read_file + " " + get_split_read_prefix(read_file);
+	//logger->debug(cmd);
+	//run_shell_command(cmd);
+//}
+void Library::do_split_files(int read_direction, int reads_per_file){
+	//run_shell_command("printf '\e[38;5;002m" "do_split_files INVOKED" "\e[0m\n'");
+	string read_file = (read_direction == LEFT_READ)? this->left_read:this->right_read;
+	string cmd;
+	// multiplier is based on the number of lines in a read. Assumes FASTQ to start.
+	if (get_format() == FORMAT_FASTQ) {
+		//run_shell_command("printf '\e[38;5;002m" "split FASTQ files" "\e[0m\n'");
+		// Use sed magic to turn fastq into fasta. Assumes single-line reads.
+		// Use awk to split in a controllable way that gives nice suffixes
+		cmd = "< " + read_file + " sed -n -e '1~4s/^@/>/p;2~4p' | awk -v prefix=" + get_split_read_prefix(read_file) + " -v lines=" + int2str(reads_per_file * 2) + " 'NR%lines==1 {++i; file = prefix i \".fasta\"} {print > file}'";
+	} else {
+		//run_shell_command("printf '\e[38;5;002m" "split FASTA files" "\e[0m\n'");
+		cmd = "< " + read_file + " awk -v prefix=" + get_split_read_prefix(read_file) + " -v lines=" + int2str(reads_per_file * 2) + " 'NR%lines==1 {++i; file = prefix i \".fasta\"} {print > file}'";
+	}
 	logger->debug(cmd);
 	run_shell_command(cmd);
 }

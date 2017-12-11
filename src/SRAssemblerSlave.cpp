@@ -12,8 +12,8 @@ SRAssemblerSlave::SRAssemblerSlave() {
 
 }
 
-int SRAssemblerSlave::init(int argc, char * argv[], int rank, int size) {
-	return SRAssembler::init(argc, argv, rank, size);
+int SRAssemblerSlave::init(int argc, char * argv[], int rank, int mpiSize) {
+	return SRAssembler::init(argc, argv, rank, mpiSize);
 }
 
 void SRAssemblerSlave::print_message(const string& msg){
@@ -60,7 +60,7 @@ void SRAssemblerSlave::process_message(){
 			send_code(from, ACTION_RETURN, 0, 0, 0);
 		}
 		if (action == ACTION_PRE_PROCESSING){  //do_split
-			SRAssembler::do_preprocessing(value1, value2);
+			SRAssembler::preprocess_read_part(value1, value2);
 			send_code(from, ACTION_RETURN, 0, value2, 0);
 		}
 		if (action == ACTION_ASSEMBLY){  //do_assmebly
