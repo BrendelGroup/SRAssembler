@@ -58,6 +58,7 @@ int VmatchAligner::parse_output(const string& output_file, unordered_set<string>
 	string line;
 	string cmd;
 	string tmpvseqselectfile = out_left_read + "-tmp";
+	run_shell_command("touch " + tmpvseqselectfile);
 
 	while (getline(report_file_stream, line)) {
 		string seq_number = line;
@@ -73,6 +74,7 @@ int VmatchAligner::parse_output(const string& output_file, unordered_set<string>
 	}
 	report_file_stream.close();
 
+	// This creates errors if the tmpvseqselectfile wasn't created because no reads were found
 	cmd = "bash -c \"vseqselect -seqnum " + tmpvseqselectfile + " " + left_read_index + "\" | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' >> " + out_left_read;
 	logger->debug(cmd);
 	run_shell_command(cmd);

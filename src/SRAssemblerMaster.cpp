@@ -175,15 +175,16 @@ void SRAssemblerMaster::do_preprocessing(){
 	for (unsigned lib_index=0;lib_index<this->libraries.size();lib_index++) {
 		Library* lib = &this->libraries[lib_index];
 		lib->set_num_parts(1);
-		//test if files are generated before
-		if (file_exists(lib->get_split_file_name(1, lib->get_format()))){
-			long total_read_count = get_read_count(lib->get_split_file_name(1, lib->get_format()), lib->get_format());
-			if (lib->get_paired_end())
-				total_read_count /= 2;
-			logger->debug("total_read_count: " + int2str(total_read_count));
-			if (total_read_count <= reads_per_file){
+		// test if files are generated before
+		if (file_exists(lib->get_split_file_name(1, LEFT_READ))){
+			//long library_read_count = get_read_count(lib->get_left_read(), lib->get_format()) + get_read_count(lib->get_right_read(), lib->get_format());
+			long split_read_count = count_preprocessed_reads(lib_index);
+			split_read_count /= 2; // Don't count header lines
+			logger->debug("split_read_count: " + int2str(split_read_count));
+			lib->set_num_parts(get_file_count(data_dir + "/lib" + int2str(lib_index+1) + "/" + get_file_base_name(lib->get_left_read()) + "_*." + "fasta"));
+			// Test if split reads have been indexed
+			if (file_exists(lib->get_read_part_index_name(lib->get_num_parts(), LEFT_READ) + ".skp")){
 				logger->info("Using previously split files for read library " + int2str(lib_index+1));
-				lib->set_num_parts(get_file_count(data_dir + "/lib" + int2str(lib_index+1) + "/" + get_file_base_name(lib->get_left_read()) + "_*." + "fasta"));
 				broadcast_code(ACTION_TOTAL_PARTS, lib_index, lib->get_num_parts(), 0);
 				//broadcast_code(ACTION_EXIT, 0, 0);
 				continue;
@@ -221,7 +222,7 @@ void SRAssemblerMaster::do_preprocessing(){
 		//} else {
 			//lib->set_num_parts(get_file_count(lib->get_split_read_prefix(lib->get_left_read()) + "*"));
 		//}
-		lib->set_num_parts(get_file_count(lib->get_split_read_prefix(lib->get_left_read()) + "*"));
+		lib->set_num_parts(get_file_count(lib->get_split_read_prefix(lib->get_left_read()) + "*.fasta"));
 		logger->info("We have " + int2str(lib->get_num_parts()) +" split files");
 
 		broadcast_code(ACTION_TOTAL_PARTS, lib_index, lib->get_num_parts(), 0);
