@@ -53,31 +53,37 @@ int VmatchAligner::parse_output(const string& output_file, unordered_set<string>
 	logger->debug("parsing output file " + output_file);
 	bool paired_end = (out_right_read != "");
 	ifstream report_file_stream(output_file.c_str());
-	// current_mapped_reads are the reads that show up in this run of parse_output()
-	boost::unordered_set<string> current_mapped_reads;
 	int found_new_read = 0;
 	//parse the output file and get the mapped reads have not found yet
 	string line;
 	string cmd;
+	string tmpvseqselectfile = out_left_read + "-tmp";
+
 	while (getline(report_file_stream, line)) {
 		string seq_number = line;
 		string seq_id = int2str(read_part) + "," + seq_number;
 		// boost::unordered_set.find() produces past-the-end pointer if a key isn't found
 		if (mapped_reads.find(seq_id) == mapped_reads.end()) {
 			found_new_read = 1;
-			current_mapped_reads.insert(seq_number);
 			mapped_reads.insert(seq_id);
-			// Use vseqselect to pull reads out of indexes
-			cmd = "bash -c \"vseqselect -seqnum <(printf '" + seq_number + "') " + left_read_index + "\" | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' >> " + out_left_read;
-			logger->debug(cmd);
+			mapped_reads.insert(seq_id);
+			cmd = "echo " + seq_number + " >> " + tmpvseqselectfile;
 			run_shell_command(cmd);
-			if (paired_end) {
-				cmd = "bash -c \"vseqselect -seqnum <(printf '" + seq_number + "') " + right_read_index + "\" | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' >> " + out_right_read;
-                run_shell_command(cmd);
-			}
 		}
 	}
 	report_file_stream.close();
+
+	cmd = "bash -c \"vseqselect -seqnum " + tmpvseqselectfile + " " + left_read_index + "\" | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' >> " + out_left_read;
+	logger->debug(cmd);
+	run_shell_command(cmd);
+	if (paired_end) {
+		cmd = "bash -c \"vseqselect -seqnum " + tmpvseqselectfile + " " + right_read_index + "\" | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' >> " + out_right_read;
+		logger->debug(cmd);
+		run_shell_command(cmd);
+	}
+	cmd = "\\rm " + tmpvseqselectfile;
+	run_shell_command(cmd);
+
 	return found_new_read;
 }
 
@@ -112,11 +118,11 @@ void VmatchAligner::do_alignment(const string& index_name, const string& type, i
 				param_list += " -" + it->first + " " + it->second;
 	}
 	string cmd;
+	string tmpvmfile = output_file + "-tmp";
 	if (type == "protein" ) {
-		cmd = "vmatch " + align_type + " -q " + query_file + " -d" + " -l " + int2str(match_length) + " " + e_option + " " + param_list + " -nodist -noevalue -noscore -noidentity " + index_name + " | awk '$0 !~ /^#.*/ {print $6}' | uniq >> " + output_file;
+		cmd = "vmatch " + align_type + " -q " + query_file + " -d"    + " -l " + int2str(match_length) + " " + e_option + " " + param_list + " -nodist -noevalue -noscore -noidentity " + index_name + " | awk '$0 !~ /^#.*/ {print $6}' >> " + output_file + "; sort -nu " + output_file + " > " + tmpvmfile + "; \\mv " + tmpvmfile + " " + output_file;
 	} else if (type == "cdna" ) {
-		//cmd = "vmatch " + align_type + " -q " + query_file + " -d -p" + " -l " + int2str(match_length) + " " + e_option + " " + param_list + " -nodist -noevalue -noscore -noidentity " + index_name + " | awk '{print $1,$2,$3,$4,$5,$6}' | uniq -f2 >> " + output_file;
-		cmd = "vmatch " + align_type + " -q " + query_file + " -d -p" + " -l " + int2str(match_length) + " " + e_option + " " + param_list + " -nodist -noevalue -noscore -noidentity " + index_name + " | awk '$0 !~ /^#.*/ {print $2}' | sort -u >> " + output_file;
+		cmd = "vmatch " + align_type + " -q " + query_file + " -d -p" + " -l " + int2str(match_length) + " " + e_option + " " + param_list + " -nodist -noevalue -noscore -noidentity " + index_name + " | awk '$0 !~ /^#.*/ {print $2}' >> " + output_file + "; sort -nu " + output_file + " > " + tmpvmfile + "; \\mv " + tmpvmfile + " " + output_file;
 	}
 	logger->debug(cmd);
 	run_shell_command(cmd);
