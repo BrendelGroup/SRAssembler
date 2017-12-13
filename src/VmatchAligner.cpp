@@ -54,25 +54,25 @@ int VmatchAligner::parse_output(const string& output_file, unordered_set<string>
 	bool paired_end = (out_right_read != "");
 	ifstream report_file_stream(output_file.c_str());
 	int found_new_read = 0;
-	//parse the output file and get the mapped reads have not found yet
+	// parse the output file and get the mapped reads have not found yet
 	string line;
 	string cmd;
 	string tmpvseqselectfile = out_left_read + "-tmp";
-	run_shell_command("touch " + tmpvseqselectfile);
+	ofstream tmp_file_stream(tmpvseqselectfile.c_str());
+	//run_shell_command("touch " + tmpvseqselectfile);
 
 	while (getline(report_file_stream, line)) {
 		string seq_number = line;
 		string seq_id = int2str(read_part) + "," + seq_number;
 		// boost::unordered_set.find() produces past-the-end pointer if a key isn't found
 		if (mapped_reads.find(seq_id) == mapped_reads.end()) {
-			found_new_read = 1;
+			found_new_read += 1;
 			mapped_reads.insert(seq_id);
-			mapped_reads.insert(seq_id);
-			cmd = "echo " + seq_number + " >> " + tmpvseqselectfile;
-			run_shell_command(cmd);
+			tmp_file_stream << seq_number << endl;
 		}
 	}
 	report_file_stream.close();
+	tmp_file_stream.close();
 
 	// This creates errors if the tmpvseqselectfile wasn't created because no reads were found
 	cmd = "bash -c \"vseqselect -seqnum " + tmpvseqselectfile + " " + left_read_index + "\" | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' >> " + out_left_read;
