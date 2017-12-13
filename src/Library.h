@@ -30,16 +30,16 @@ public:
 	void set_paired_end(bool paired_end);
 	void set_left_read(string left_read);
 	void set_right_read(string right_read);
-	string get_matched_left_read_name();
-	string get_matched_right_read_name();
-	string get_matched_left_read_name(int round);
-	string get_matched_right_read_name(int round);
-	string get_matched_left_read_name(int round, int idx);
-	string get_matched_right_read_name(int round, int idx);
+	string get_matched_left_read_filename();
+	string get_matched_right_read_filename();
+	string get_matched_left_read_filename(int round);
+	string get_matched_right_read_filename(int round);
+	string get_matched_left_read_filename(int round, int idx);
+	string get_matched_right_read_filename(int round, int idx);
 	string get_file_extension();
-	string get_joined_read_name(int round, int idx, int file_type);
-	string get_split_file_name(int idx, int file_type);
-	string get_prefix_split_src_file(string src_read);
+	string get_split_file_name(int file_part, int read_direction);
+	string get_read_part_index_name(int file_part, int read_direction);
+	string get_split_read_prefix(string src_read);
 	void do_split_files(int read_type, int reads_per_file);
 private:
 	int lib_idx;

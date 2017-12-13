@@ -20,7 +20,7 @@ bool SOAPDenovoAssembler::is_available(){
 	int ret_127 = system("SOAPdenovo-127mer > /dev/null 2>&1");
 	if (WEXITSTATUS(ret_127) != 0 && WEXITSTATUS(ret_127) != 1) {
 		cout << "Cannot find SOAPdenovo-127mer, check your PATH variable!" << endl;
-	    return false;
+		return false;
 	}
 	int ret_63 = system("SOAPdenovo-63mer > /dev/null 2>&1");
 	if (WEXITSTATUS(ret_63) != 0 && WEXITSTATUS(ret_63) != 1) {
@@ -36,27 +36,27 @@ void SOAPDenovoAssembler::do_assembly(int kmer, const vector<Library>& libraries
 
 	for (unsigned int i=0; i<libraries.size();i++){
 		Library lib = libraries[i];
-		if (get_file_size(lib.get_matched_left_read_name()) == 0) continue;
+		if (get_file_size(lib.get_matched_left_read_filename()) == 0) continue;
 		outFile << "[LIB]" << endl;
 		outFile << "asm_flags=3" << endl;
 		outFile << "rank=" << (i+1) << endl;
 		if (lib.get_paired_end()) {
 			outFile << "avg_ins=" << lib.get_insert_size() << endl;
-			if (lib.get_format() == FORMAT_FASTQ) {
-				outFile << "q1=" << lib.get_matched_left_read_name() << endl;
-				outFile << "q2=" << lib.get_matched_right_read_name() << endl;
-			} else {
-				outFile << "f1=" << lib.get_matched_left_read_name() << endl;
-				outFile << "f2=" << lib.get_matched_right_read_name() << endl;
-			}
+			//if (lib.get_format() == FORMAT_FASTQ) {
+				//outFile << "q1=" << lib.get_matched_left_read_filename() << endl;
+				//outFile << "q2=" << lib.get_matched_right_read_filename() << endl;
+			//} else {
+			outFile << "f1=" << lib.get_matched_left_read_filename() << endl;
+			outFile << "f2=" << lib.get_matched_right_read_filename() << endl;
+			//}
 			if (lib.get_reversed()) {
 				outFile << "reverse_seq=1" << endl;
 			}
 		} else {
-			if (lib.get_format() == FORMAT_FASTQ)
-				outFile << "q=" << lib.get_matched_left_read_name() << endl;
-			else
-				outFile << "f=" << lib.get_matched_left_read_name() << endl;
+			//if (lib.get_format() == FORMAT_FASTQ)
+				//outFile << "q=" << lib.get_matched_left_read_filename() << endl;
+			//else
+				outFile << "f=" << lib.get_matched_left_read_filename() << endl;
 		}
 	}
 	outFile.close();

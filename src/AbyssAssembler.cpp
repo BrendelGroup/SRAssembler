@@ -18,7 +18,7 @@ bool AbyssAssembler::is_available(){
 	int ret = system("abyss-pe > /dev/null 2>&1");
 	if (WEXITSTATUS(ret) != 0 && WEXITSTATUS(ret) != 2) {
 		cout << "Cannot find ABySS, check your PATH variable!" << WEXITSTATUS(ret) << endl;
-	    return false;
+		return false;
 	}
 	return true;
 }
@@ -30,16 +30,16 @@ void AbyssAssembler::do_assembly(int kmer, const vector<Library>& libraries, con
 	string single_files = "";
 	for (unsigned int i=0; i<libraries.size();i++){
 		Library lib = libraries[i];
-		if (get_file_size(lib.get_matched_left_read_name()) == 0) continue;
+		if (get_file_size(lib.get_matched_left_read_filename()) == 0) continue;
 		if (lib.get_paired_end()) {
 			string lib_name = "pe" + int2str(lib.get_insert_size());
 			lib_list +=  lib_name + " ";
-			paired_files += lib_name + "='" + lib.get_matched_left_read_name() + " " + lib.get_matched_right_read_name() + "' ";
+			paired_files += lib_name + "='" + lib.get_matched_left_read_filename() + " " + lib.get_matched_right_read_filename() + "' ";
 		} else
-			single_files += lib.get_matched_left_read_name() + " ";
+			single_files += lib.get_matched_left_read_filename() + " ";
 	}
 	if (lib_list != ""){
-	    lib_list = "lib='" + lib_list + "'";
+		lib_list = "lib='" + lib_list + "'";
 	}
 	single_files = "se='" + single_files + "'";
 	string cmd = "abyss-pe contigs k=" + int2str(kmer) + " name=" + output_file + " " + lib_list + " " + paired_files + " " + single_files + ">> " + logger->get_log_file() + " 2>&1";

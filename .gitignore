@@ -2,3 +2,5 @@ demo/*testout*
 bin/
 src/*.d
 src/*.o
+speedtest/
+demo/reads_data

@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <vector>
 #include <sstream>
+#include <iomanip>      // std::setw
 #include <cstdlib>
 #include <math.h>
 #include <stdio.h>
@@ -37,6 +38,7 @@ void run_shell_command(const string& cmd);
 string run_shell_command_with_return(const string& cmd);
 int str2int(const string &str);
 string int2str(const int n);
+string int2str(const int n, const int length);
 string long2str(const int n);
 double str2double(const string &str);
 string double2str(const double n);
@@ -52,6 +54,6 @@ string get_file_name(const string& path);
 string trim(const string& str);
 string string_format(const std::string fmt, ...);
 void fastq2fasta(const string& fq, const string& fa);
-void remove_duplicate_reads(const string& fn);
+void remove_duplicate_reads(const string& filename, int read_format);
 
 #endif /* UTILITY_H_ */
