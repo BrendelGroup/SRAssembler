@@ -86,7 +86,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 	usage.append("-k: Specifies the k-mer set to be used by the assembler; format: start_k:interval:end_k.\n");
 	usage.append("    Start_k and end_k must be odd integers, and interval must be an even integer, similar to the following example:\n");
 	usage.append("    '15:10:45' specifies that k-mer values 15, 25, 35, 45 will be tested.[Default: " + int2str(START_K) + ":" + int2str(STEP_K) + ":" + int2str(END_K) + "].\n");
-	usage.append("-S: Spliced alignment program; options :0=>GenomeThreader, 1=>GeneSeqer,\n");
+	usage.append("-S: Spliced alignment program; options: 0=>GeneSeqer, 1=>GenomeThreader,\n");
 	usage.append("    2=>Exonerate [Default: " + int2str(SPLICED_ALIGNMENT_PROGRAM) + "].\n");
 	usage.append("-s: Species model for spliced alignment; options (for GenomeThreader and GeneSeqer):\n");
 	usage.append("    'human', 'mouse', 'rat', 'chicken', 'drosophila', 'nematode', 'fission_yeast', 'aspergillus', 'arabidopsis',\n");
@@ -807,7 +807,7 @@ int SRAssembler::get_total_read_count(int round){
 	return count;
 }
 
-Assembly_stats SRAssembler::get_assembly_stats(int round, int k){
+Assembly_stats SRAssembler::get_assembly_stats(int round, int k) {
 	logger->debug("Counting longest contig length:" + get_assembly_file_name(round, k));
 	ifstream contig_file(get_assembly_file_name(round, k).c_str());
 	string line;
@@ -819,9 +819,9 @@ Assembly_stats SRAssembler::get_assembly_stats(int round, int k){
 	stats.n90 = 0;
 	int total_length = 0;
 	unsigned int contig_length = 0;
-	while (getline(contig_file, line)){
-		if (line.substr(0,1) == ">"){
-			if (contig_length > min_contig_lgth){
+	while (getline(contig_file, line)) {
+		if (line.substr(0,1) == ">") {
+			if (contig_length > ini_contig_size) {
 				lens.push_back(contig_length);
 				total_length += contig_length;
 				stats.total_contig++;
@@ -832,7 +832,7 @@ Assembly_stats SRAssembler::get_assembly_stats(int round, int k){
 		} else
 			contig_length += line.length();
 	}
-	if (contig_length > min_contig_lgth){
+	if (contig_length > ini_contig_size) {
 		total_length += contig_length;
 		stats.total_contig++;
 		lens.push_back(contig_length);

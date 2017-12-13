@@ -397,7 +397,7 @@ void SRAssemblerMaster::do_walking(){
 		int read_count = get_total_read_count(round);
 		logger->info("Found matched reads: " + int2str(read_count));
 		if (assembly_round <= round){
-			int longest_contig = do_assembly(round);
+			unsigned int longest_contig = do_assembly(round);
 			summary_best += int2str(read_count) + "\n";
 			bool no_reads = true;
 			for (unsigned int lib_idx=0; lib_idx < this->libraries.size(); lib_idx++){
@@ -421,7 +421,7 @@ void SRAssemblerMaster::do_walking(){
 				logger->info("The walking is terminated: The maximum round (" + int2str(num_rounds) + ") has been reached.");
 				break;
 			}
-			if (longest_contig == 0) {
+			if (longest_contig < min_contig_lgth) {
 				assembly_round = round + 1;
 				//RM HERE
 				clean_tmp_files(round-1);
