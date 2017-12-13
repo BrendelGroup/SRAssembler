@@ -32,7 +32,7 @@ SRAssemblerMaster.cpp \
 SRAssemblerSlave.cpp \
 SplicedAligner.cpp \
 Utility.cpp \
-VmatchBWAfastmapAligner.cpp \
+VmatchAligner.cpp \
 Library.cpp 
 
 OBJS += \
@@ -52,7 +52,7 @@ SRAssemblerMaster.o \
 SRAssemblerSlave.o \
 SplicedAligner.o \
 Utility.o \
-VmatchBWAfastmapAligner.o \
+VmatchAligner.o \
 Library.o 
 
 CPP_DEPS += \
@@ -72,7 +72,7 @@ SRAssemblerMaster.d \
 SRAssemblerSlave.d \
 SplicedAligner.d \
 Utility.d \
-VmatchBWAfastmapAligner.d \
+VmatchAligner.d \
 Library.d \
 
 

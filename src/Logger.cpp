@@ -76,6 +76,6 @@ void Logger::print_message(const string &msg, const string &level, bool to_std_o
 	log_file_stream << buffer << level << " " << msg << endl;
 	log_file_stream.close();
 	if (to_std_out)
-	    cout << buffer << level << " " << msg << endl;
+		cout << buffer << level << " " << msg << endl;
 }
 

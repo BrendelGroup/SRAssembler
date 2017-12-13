@@ -50,20 +50,20 @@ echo "==========================================================================
 ../bin/SRAssembler                 -q input/LOC_Os06g04560.pep -t protein -p SRAssembler.conf -l libraries_200bp.conf                              -r ./reads_data -x 15000 -o Stestout5 -A 0 -S 0 -s arabidopsis -n  7 -y
 
 echo "============================================================================================================"
-echo " Test6: Looking for potentially better alignments ..."
-echo "         Use higher score (-e 0.6) and coverage (-c 0.9) values to declare spliced alignment hits."
-echo "         Only report contigs of at least 7000 nucleotides."
+echo " Test6: Use GenomeThreader as the spliced alignment program (-S 1)."
 echo "============================================================================================================"
 rm -rf Stestout6
 mkdir -p Stestout6
-mpirun -n 8 ../bin/SRAssembler_MPI -q input/LOC_Os06g04560.pep -t protein -p SRAssembler.conf -l libraries_200bp_1kb.conf                          -r ./reads_data -x 15000 -o Stestout6 -A 0 -S 0 -s arabidopsis      -n 20 -e 0.6 -c 0.9 -m 7000
+../bin/SRAssembler                 -q input/LOC_Os06g04560.pep -t protein -p SRAssembler.conf -l libraries_200bp.conf                              -r ./reads_data -x 15000 -o Stestout7 -A 0 -S 1 -s arabidopsis -n 10
 
 echo "============================================================================================================"
-echo " Test7: Use GeneSeqer as the spliced alignment program (-S 1)."
+echo " Test7: Looking for potentially better alignments ..."
+echo "         Use higher score (-e 0.6) and coverage (-c 0.9) values to declare spliced alignment hits."
+echo "         Only report contigs of at least 7000 nucleotides."
 echo "============================================================================================================"
 rm -rf Stestout7
 mkdir -p Stestout7
-../bin/SRAssembler                 -q input/LOC_Os06g04560.pep -t protein -p SRAssembler.conf -l libraries_200bp.conf                              -r ./reads_data -x 15000 -o Stestout7 -A 0 -S 1 -s arabidopsis -n 10
+mpirun -n 8 ../bin/SRAssembler_MPI -q input/LOC_Os06g04560.pep -t protein -p SRAssembler.conf -l libraries_200bp_1kb.conf                          -r ./reads_data -x 15000 -o Stestout6 -A 0 -S 1 -s arabidopsis -n 20 -e 0.6 -c 0.9 -m 7000
 
 echo "============================================================================================================"
 echo " Test8: Use Exonerate as the spliced alignment program (-S 2)."

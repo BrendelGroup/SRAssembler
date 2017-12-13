@@ -45,17 +45,18 @@ void GSQAligner::do_spliced_alignment(const string& genomic_file, const string& 
 		species_str = "generic";
 	if (type == "protein")
 		type_str = "Q";
-	string cmd = "GeneSeqer -L " + genomic_file + " -" + type_str + " " + query_file + " -species " + species_str + " " + param_list + " -O " + output_file + " >> " + logger->get_log_file() + " 2>&1";
+	string cmd = "GeneSeqer -L " + genomic_file + " -" + type_str + " " + query_file + " -species " + species_str + " " + param_list + " -o " + output_file + " >> " + logger->get_log_file() + " 2>&1";
 	logger->debug(cmd);
 	run_shell_command(cmd);
-	//get_aligned_contigs(genomic_file, hit_contig_file, output_file);
 }
 
-string_map GSQAligner::get_aligned_contigs(const double& min_score, const double& min_coverage, const int& min_contig_lgth, const string& all_contig_file, const string& hit_contig_file, const string& alignment_file){
+string_map GSQAligner::get_aligned_contigs(const double& min_score, const double& min_coverage, const unsigned int& min_contig_lgth, const string& all_contig_file, const string& hit_contig_file, const string& alignment_file){
 	ifstream old_contig_fs(all_contig_file.c_str());
 	ifstream alignment_fs(alignment_file.c_str());
 	ofstream new_contig_fs(hit_contig_file.c_str());
 	string line;
+	char currentid[20];
+	unsigned int contig_length;
 	vector<string> contig_list;
 	logger->debug("Finding the aligned contigs");
 	num_matches = 0;
@@ -63,6 +64,10 @@ string_map GSQAligner::get_aligned_contigs(const double& min_score, const double
 	output_string = "<B>" + string_format("%-15s %-8s %-30s %-10s %-15s %-15s %-15s","Contig","Strand","Query","Score","Length","Coverage","G/P/C") + "</B>\n";
 	output_string += "----------------------------------------------------------------------------------------------------------\n";
 	while (getline(alignment_fs, line)) {
+		if (line.substr(0,8) == "Sequence"){
+			sscanf(line.c_str(),"Sequence %*d: %80[^,], from %*d to %d,%*s",currentid,&contig_length);
+			logger->info("... checking contig:\t" + std::string(currentid) + "\tof length:\t" + int2str(contig_length));
+		}
 		if (line.substr(0,5) == "MATCH"){
 			vector<string> tokens;
 			tokenize(line, tokens, "\t");
@@ -78,8 +83,9 @@ string_map GSQAligner::get_aligned_contigs(const double& min_score, const double
 			output_string += string_format("%-15s %-8s %-30s %-10s %-15s %-15s %-15s",contig.c_str(),strand.c_str(),query.c_str(),score.c_str(),length.c_str(),cov.c_str(),type.c_str()) + "\n";
 			num_matches++;
 			output_string += "\n";
+			logger->info("   ... MATCH found with coverage:\t" + cov + " "+ type + "\tscore:\t" + score + "\tlength:\t" + int2str(contig_length));
 			if (type == "P" || type == "C"){
-				if (str2double(cov) > min_coverage && str2double(score) > min_score)
+				if (str2double(score) > min_score && str2double(cov) > min_coverage && contig_length >= min_contig_lgth)
 					aligned_query_list[query] = contig_id;
 			}
 		}

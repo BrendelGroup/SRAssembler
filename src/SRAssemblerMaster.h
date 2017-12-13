@@ -14,7 +14,7 @@
 class SRAssemblerMaster: public SRAssembler {
 public:
 	SRAssemblerMaster();
-	int init(int argc, char * argv[], int rank, int size);
+	int init(int argc, char * argv[], int rank, int mpiSize);
 	void show_usage();
 	void print_message(const string&);
 	int do_assembly(int round);
