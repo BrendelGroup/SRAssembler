@@ -639,24 +639,20 @@ int SRAssembler::do_alignment(int round, int lib_idx, int read_part) {
 		program_name += "_extend_contig";
 	}
 	logger->info("... using Vmatch criteria: " + program_name);
+	//TODO we read this parameter file A LOT. We should import the parameters for each program_name once.
 	Params params = this->read_param_file(program_name);
 	int ret;
 	if (round == 1) { // Reads as queries are necessary when searching against a protein.
-		// VmatchAligner::do_alignment(index_name, type, match_length, mismatch_allowed, query_file, params, output_file)
 		aligner->do_alignment(get_contigs_index_name(round), get_type(round), get_match_length(round), get_mismatch_allowed(round), lib.get_split_file_name(read_part, LEFT_READ), params, get_vmatch_output_filename(round, lib_idx, read_part));
 		if (lib.get_paired_end())
 			aligner->do_alignment(get_contigs_index_name(round), get_type(round), get_match_length(round), get_mismatch_allowed(round), lib.get_split_file_name(read_part, RIGHT_READ), params, get_vmatch_output_filename(round, lib_idx, read_part));
-		// Change to always look in FASTA reads file as source.
 		ret = aligner->parse_output(get_vmatch_output_filename(round, lib_idx, read_part), mapped_reads, read_part, lib.get_read_part_index_name(read_part, LEFT_READ), lib.get_read_part_index_name(read_part, RIGHT_READ), lib.get_matched_left_read_filename(round, read_part), lib.get_matched_right_read_filename(round, read_part));
 		save_mapped_reads(round);
 		return ret;
 	} else {
-		// VmatchAligner::do_alignment(index_name, type, match_length, mismatch_allowed, query_file, params, output_file)
 		aligner->do_alignment(lib.get_read_part_index_name(read_part, LEFT_READ), get_type(round), get_match_length(round), get_mismatch_allowed(round), get_masked_query_fasta_file_name(round), params, get_vmatch_output_filename(round, lib_idx, read_part));
 		if (lib.get_paired_end())
 			aligner->do_alignment(lib.get_read_part_index_name(read_part, RIGHT_READ), get_type(round), get_match_length(round), get_mismatch_allowed(round), get_masked_query_fasta_file_name(round), params, get_vmatch_output_filename(round, lib_idx, read_part));
-		// VmatchAligner::parse_output(output_file, mapped_reads, read_part, read_index out_left_read, out_right_read)
-		// Need a way to get read indexes
 		ret = aligner->parse_output(get_vmatch_output_filename(round, lib_idx, read_part), mapped_reads, read_part, lib.get_read_part_index_name(read_part, LEFT_READ), lib.get_read_part_index_name(read_part, RIGHT_READ), lib.get_matched_left_read_filename(round, read_part), lib.get_matched_right_read_filename(round, read_part));
 		save_mapped_reads(round);
 		return ret;
@@ -858,12 +854,13 @@ Assembly_stats SRAssembler::get_assembly_stats(int round, int k) {
 }
 
 void SRAssembler::save_mapped_reads(int round){
-	//run_shell_command("printf '\e[38;5;002m" "save_mapped_reads INVOKED" "\e[0m\n'");
+	logger->debug("save_mapped_reads INVOKED");
 	string mapped_file = get_mapped_reads_file_name(round);
 	ofstream mapped_file_stream(mapped_file.c_str());
 	for (unordered_set<string>::iterator it = mapped_reads.begin();it != mapped_reads.end(); ++it)
 		 mapped_file_stream << *it << endl;
 	mapped_file_stream.close();
+	logger->debug("save_mapped_reads FINISHED");
 }
 
 void SRAssembler::load_mapped_reads(int round){

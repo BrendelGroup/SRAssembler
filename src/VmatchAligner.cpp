@@ -76,8 +76,6 @@ int VmatchAligner::parse_output(const string& output_file, unordered_set<string>
 			found_new_read += 1;
 			mapped_reads.insert(seq_id);
 			tmp_file_stream << seq_number << endl;
-		} else {
-			cerr << seq_number + " is not new" << endl;
 		}
 	}
 	report_file_stream.close();
@@ -92,7 +90,9 @@ int VmatchAligner::parse_output(const string& output_file, unordered_set<string>
 		logger->debug(cmd);
 		run_shell_command(cmd);
 	}
+	//TODO make this part of a cleanup function.
 	cmd = "\\rm " + tmpvseqselectfile;
+	logger->debug(cmd);
 	run_shell_command(cmd);
 
 	return found_new_read;
