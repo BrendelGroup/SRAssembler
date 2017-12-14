@@ -24,7 +24,7 @@ void SnapGeneFinder::do_gene_finding(const string& genomic_file, const string& s
 			hmm = it->second;
 		param_list += " -" + it->first + " " + it->second;
 	}
-	string cmd = "snap " + hmm + " " + genomic_file + " > " + output_file + " 2>&1";
+	string cmd = "snap " + hmm + " " + genomic_file + " -aa snap.predicted.prt > " + output_file + " 2>&1";
 	logger->debug(cmd);
 	run_shell_command(cmd);
 
