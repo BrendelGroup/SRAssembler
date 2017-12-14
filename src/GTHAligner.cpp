@@ -78,7 +78,7 @@ string_map GTHAligner::get_aligned_contigs(const double& min_score, const double
 			output_string += string_format("%-15s %-8s %-30s %-8s %-10s %-15s %-15s %-15s",contig_id.c_str(),strand.c_str(),query.c_str(),qstrand.c_str(),score.c_str(),length.c_str(),cov.c_str(),type.c_str()) + "\n";
 			num_matches++;
 			output_string += "\n";
-			logger->info("   ... MATCH found with coverage:\t" + cov + "\tscore:\t" + score + "\tlength:\t" + int2str(contig_length));
+			logger->info("   ... MATCH found with coverage:\t" + cov + " " + type + "\tscore:\t" + score + "\tlength:\t" + int2str(contig_length));
 			if (type == "P" || type == "C"){
 				if (str2double(cov) > min_coverage && str2double(score) > min_score && contig_length >= min_contig_lgth)
 					aligned_query_list[query] = contig_id;

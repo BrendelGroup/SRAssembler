@@ -874,7 +874,7 @@ void SRAssembler::load_mapped_reads(int round){
 	}
 	mapped_file_stream.close();
 	int read_count = get_total_read_count(round);
-	logger->info("Found matched reads: " + int2str(read_count));
+	logger->info("Found matched reads from round " + int2str(round) + ": " + int2str(read_count));
 }
 
 SRAssembler* SRAssembler::getInstance(int pid){

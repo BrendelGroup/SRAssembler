@@ -81,7 +81,6 @@ int VmatchAligner::parse_output(const string& output_file, unordered_set<string>
 	report_file_stream.close();
 	tmp_file_stream.close();
 
-	// This creates errors if the tmpvseqselectfile wasn't created because no reads were found
 	cmd = "bash -c \"vseqselect -seqnum " + tmpvseqselectfile + " " + left_read_index + "\" | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' >> " + out_left_read;
 	logger->debug(cmd);
 	run_shell_command(cmd);
@@ -105,7 +104,7 @@ void VmatchAligner::create_index(const string& index_name, const string& type, c
 	logger->debug(cmd);
 	run_shell_command(cmd);
 }
-// Vmatch output is appended to the output file so that left and right read searches for one part go into the same output file
+
 void VmatchAligner::do_alignment(const string& index_name, const string& type, int match_length, int mismatch_allowed, const string& query_file, const Params& params, const string& output_file) {
 	// Is this a protein query (round 1 only)? If not, empty string.
 	string align_type = (type == "protein") ? "-dnavsprot 1": "";
@@ -130,6 +129,7 @@ void VmatchAligner::do_alignment(const string& index_name, const string& type, i
 	}
 	string cmd;
 	string tmpvmfile = output_file + "-tmp";
+// Vmatch output is appended to the output file so that left and right read searches for one part go into the same output file:
 	if (type == "protein" ) {
 		cmd = "vmatch " + align_type + " -q " + query_file + " -d"    + " -l " + int2str(match_length) + " " + e_option + " " + param_list + " -nodist -noevalue -noscore -noidentity " + index_name + " | awk '$0 !~ /^#.*/ {print $6}' >> " + output_file + "; sort -nu " + output_file + " > " + tmpvmfile + "; \\mv " + tmpvmfile + " " + output_file;
 	} else if (type == "cdna" ) {

@@ -423,7 +423,6 @@ void SRAssemblerMaster::do_walking(){
 			}
 			// If we haven't yet found a contig that meets the required length
 			if (longest_contig < min_contig_lgth) {
-				assembly_round = round + 1;
 				//RM HERE
 				clean_tmp_files(round-1);
 				round++;
