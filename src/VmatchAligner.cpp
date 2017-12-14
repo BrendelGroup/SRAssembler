@@ -51,6 +51,10 @@ unordered_set<string> VmatchAligner::get_hit_list(const string& output_file) {
  */
 int VmatchAligner::parse_output(const string& output_file, unordered_set<string>& mapped_reads, int read_part, const string& left_read_index, const string& right_read_index, const string& out_left_read, const string& out_right_read) {
 	logger->debug("parsing output file " + output_file);
+	std::cerr << "mapped_reads size = " << mapped_reads.size() << std::endl;
+	std::cerr << "mapped_reads bucket_count = " << mapped_reads.bucket_count() << std::endl;
+	std::cerr << "mapped_reads load_factor = " << mapped_reads.load_factor() << std::endl;
+	std::cerr << "mapped_reads max_load_factor = " << mapped_reads.max_load_factor() << std::endl;
 	bool paired_end = (out_right_read != "");
 	ifstream report_file_stream(output_file.c_str());
 	int found_new_read = 0;
