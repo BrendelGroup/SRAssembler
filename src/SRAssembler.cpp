@@ -439,7 +439,7 @@ int SRAssembler::count_preprocessed_reads(int lib_idx){
 	// This uses a system call to count the lines in all the fasta files in the split reads directory
 	string cmd = "wc -l " + data_dir + "/lib" + int2str(lib_idx+1) + "/*part*.fasta | tail -n 1 | cut -d' ' -f3";
 	logger->debug(cmd);
-	return str2int(run_shell_command_with_return(cmd));
+	return str2int(run_shell_command_with_return(cmd)) / 2;
 }
 
 // As far as I can tell this produces interleaved FASTA and interleaved FASTQ files from the split files produced by the library's do_split_files() function.
@@ -800,8 +800,11 @@ void SRAssembler::merge_mapped_files(int round){
 int SRAssembler::get_total_read_count(int round){
 	int count = 0;
 	for (unsigned short int lib_idx=0; lib_idx< this->libraries.size();lib_idx++) {
-		//count += get_read_count(this->libraries[lib_idx].get_matched_left_read_filename(), this->libraries[lib_idx].get_format());
-		count += get_read_count(this->libraries[lib_idx].get_matched_left_read_filename(), FORMAT_FASTA);
+		Library lib = this->libraries[lib_idx];
+		count += get_read_count(lib.get_matched_left_read_filename(), FORMAT_FASTA);
+		if (lib.get_paired_end()) {
+			count += get_read_count(lib.get_matched_right_read_filename(), FORMAT_FASTA);
+		}
 	}
 
 	return count;

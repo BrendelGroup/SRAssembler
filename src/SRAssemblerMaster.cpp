@@ -179,7 +179,6 @@ void SRAssemblerMaster::do_preprocessing(){
 		if (file_exists(lib->get_split_file_name(1, LEFT_READ))){
 			//long library_read_count = get_read_count(lib->get_left_read(), lib->get_format()) + get_read_count(lib->get_right_read(), lib->get_format());
 			long split_read_count = count_preprocessed_reads(lib_index);
-			split_read_count /= 2; // Don't count header lines
 			logger->debug("split_read_count: " + int2str(split_read_count));
 			lib->set_num_parts(get_file_count(data_dir + "/lib" + int2str(lib_index+1) + "/" + get_file_base_name(lib->get_left_read()) + "_*." + "fasta"));
 			// Test if split reads have been indexed
@@ -416,11 +415,13 @@ void SRAssemblerMaster::do_walking(){
 				logger->info("The walking is terminated: No contigs found.");
 				break;
 			}
+			// If maximum round is reached, stop
 			logger->info("Round " + int2str(round) + " is done!");
 			if (round == num_rounds) {
 				logger->info("The walking is terminated: The maximum round (" + int2str(num_rounds) + ") has been reached.");
 				break;
 			}
+			// If we haven't yet found a contig that meets the required length
 			if (longest_contig < min_contig_lgth) {
 				assembly_round = round + 1;
 				//RM HERE
