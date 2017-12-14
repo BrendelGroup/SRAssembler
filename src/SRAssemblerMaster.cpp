@@ -422,7 +422,6 @@ void SRAssemblerMaster::do_walking(){
 				break;
 			}
 			if (longest_contig < min_contig_lgth) {
-				assembly_round = round + 1;
 				//RM HERE
 				clean_tmp_files(round-1);
 				round++;
