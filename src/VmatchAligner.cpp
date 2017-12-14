@@ -51,24 +51,24 @@ unordered_set<string> VmatchAligner::get_hit_list(const string& output_file) {
  */
 int VmatchAligner::parse_output(const string& output_file, unordered_set<string>& mapped_reads, int read_part, const string& left_read_index, const string& right_read_index, const string& out_left_read, const string& out_right_read) {
 	logger->debug("parsing output file " + output_file);
-	logger->debug("mapped_reads size = " + mapped_reads.size());
-	logger->debug("mapped_reads bucket_count = " + mapped_reads.bucket_count());
-	logger->debug("mapped_reads load_factor = " + mapped_reads.load_factor());
-	logger->debug("mapped_reads max_load_factor = " + mapped_reads.max_load_factor());
+	logger->debug("mapped_reads size = " + int2str(mapped_reads.size()));
+	logger->debug("mapped_reads bucket_count = " + int2str(mapped_reads.bucket_count()));
+	logger->debug("mapped_reads load_factor = " + int2str(mapped_reads.load_factor()));
+	logger->debug("mapped_reads max_load_factor = " + int2str(mapped_reads.max_load_factor()));
 	bool paired_end = (out_right_read != "");
 	ifstream report_file_stream(output_file.c_str());
 	int found_new_read = 0;
 	// parse the output file and get the mapped reads have not found yet
 	string line;
 	string cmd;
-	part_string = int2str(read_part) //Calculate this once rather than over and over
+	string part_string = int2str(read_part); //Calculate this once rather than over and over
 	string tmpvseqselectfile = out_left_read + "-tmp";
 	ofstream tmp_file_stream(tmpvseqselectfile.c_str());
 	//run_shell_command("touch " + tmpvseqselectfile);
 
 	while (getline(report_file_stream, line)) {
-		logger->debug("seq_number " + seq_number);
 		string seq_number = line;
+		logger->debug("seq_number " + seq_number);
 		string seq_id = part_string + "," + seq_number;
 		// boost::unordered_set.find() produces past-the-end pointer if a key isn't found
 		if (mapped_reads.find(seq_id) == mapped_reads.end()) {
