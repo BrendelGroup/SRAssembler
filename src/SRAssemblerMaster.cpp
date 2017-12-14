@@ -387,6 +387,8 @@ void SRAssemblerMaster::do_walking(){
 				}
 			}
 		}
+		save_mapped_reads(round);
+
 
 		if (new_reads_count == 0) {
 			logger->info("The walking is terminated: No new reads found.");
