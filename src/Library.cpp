@@ -59,6 +59,7 @@ void Library::set_insert_size(int insert_size){
 }
 
 void Library::set_num_parts(int num_parts){
+	cerr << "Set library " + int2str(this->lib_idx + 1) + " to " + int2str(num_parts) + " parts." << endl;
 	this->num_parts = num_parts;
 }
 
