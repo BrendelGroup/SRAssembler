@@ -53,12 +53,12 @@ int VmatchAligner::parse_output(const string& output_file, unordered_set<string>
 	logger->debug("parsing output file " + output_file);
 	logger->debug("mapped_reads size = " + int2str(mapped_reads.size()));
 	logger->debug("mapped_reads bucket_count = " + int2str(mapped_reads.bucket_count()));
-	logger->debug("mapped_reads load_factor = " + int2str(mapped_reads.load_factor()));
-	logger->debug("mapped_reads max_load_factor = " + int2str(mapped_reads.max_load_factor()));
+	//logger->debug("mapped_reads load_factor = " + int2str(mapped_reads.load_factor()));
+	//logger->debug("mapped_reads max_load_factor = " + int2str(mapped_reads.max_load_factor()));
 	bool paired_end = (out_right_read != "");
 	ifstream report_file_stream(output_file.c_str());
 	int found_read = 0;
-	int found_new_read = 0;
+	int new_read_count = 0;
 	// parse the output file and get the mapped reads have not found yet
 	string line;
 	string cmd;
@@ -75,7 +75,11 @@ int VmatchAligner::parse_output(const string& output_file, unordered_set<string>
 		// boost::unordered_set.find() produces past-the-end pointer if a key isn't found
 		if (mapped_reads.find(seq_id) == mapped_reads.end()) {
 			//logger->debug(seq_number + " is new");
-			found_new_read += 1;
+			new_read_count += 1;
+			// We are catching two new reads if the library is paired end
+			if (paired_end) {
+				new_read_count += 1;
+			}
 			mapped_reads.insert(seq_id);
 			tmp_file_stream << seq_number << endl;
 		}
@@ -97,7 +101,7 @@ int VmatchAligner::parse_output(const string& output_file, unordered_set<string>
 	logger->debug(cmd);
 	run_shell_command(cmd);
 
-	return found_new_read;
+	return new_read_count;
 }
 
 void VmatchAligner::create_index(const string& index_name, const string& type, const string& fasta_file) {
@@ -132,9 +136,9 @@ void VmatchAligner::do_alignment(const string& index_name, const string& type, i
 	}
 	string cmd;
 	string tmpvmfile = output_file + "-tmp";
-// Vmatch output is appended to the output file so that left and right read searches for one part go into the same output file:
+	// Vmatch output is appended to the output file so that left and right read searches for one part go into the same output file:
 	if (type == "protein" ) {
-		cmd = "vmatch " + align_type + " -q " + query_file + " -d"    + " -l " + int2str(match_length) + " " + e_option + " " + param_list + " -nodist -noevalue -noscore -noidentity " + index_name + " | awk '$0 !~ /^#.*/ {print $6}' >> " + output_file + "; sort -nu " + output_file + " > " + tmpvmfile + "; \\mv " + tmpvmfile + " " + output_file;
+		cmd = "vmatch " + align_type + " -q " + query_file + " -d" + " -l " + int2str(match_length) + " " + e_option + " " + param_list + " -nodist -noevalue -noscore -noidentity " + index_name + " | awk '$0 !~ /^#.*/ {print $6}' >> " + output_file + "; sort -nu " + output_file + " > " + tmpvmfile + "; \\mv " + tmpvmfile + " " + output_file;
 	} else if (type == "cdna" ) {
 		cmd = "vmatch " + align_type + " -q " + query_file + " -d -p" + " -l " + int2str(match_length) + " " + e_option + " " + param_list + " -nodist -noevalue -noscore -noidentity " + index_name + " | awk '$0 !~ /^#.*/ {print $2}' >> " + output_file + "; sort -nu " + output_file + " > " + tmpvmfile + "; \\mv " + tmpvmfile + " " + output_file;
 	}

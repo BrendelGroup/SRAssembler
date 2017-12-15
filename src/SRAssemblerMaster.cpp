@@ -180,7 +180,8 @@ void SRAssemblerMaster::do_preprocessing(){
 			//long library_read_count = get_read_count(lib->get_left_read(), lib->get_format()) + get_read_count(lib->get_right_read(), lib->get_format());
 			long split_read_count = count_preprocessed_reads(lib_index);
 			logger->debug("split_read_count: " + int2str(split_read_count));
-			lib->set_num_parts(get_file_count(data_dir + "/lib" + int2str(lib_index+1) + "/" + get_file_base_name(lib->get_left_read()) + "_*." + "fasta"));
+			lib->set_num_parts(get_file_count(lib->get_split_read_prefix(lib->get_left_read()) + "*.fasta"));
+			logger->debug("split_files_count: " + int2str(lib->get_num_parts()));
 			// Test if split reads have been indexed
 			if (file_exists(lib->get_read_part_index_name(lib->get_num_parts(), LEFT_READ) + ".skp")){
 				logger->info("Using previously split files for read library " + int2str(lib_index+1));
@@ -190,10 +191,10 @@ void SRAssemblerMaster::do_preprocessing(){
 			}
 		}
 		logger->info("Splitting read library " + int2str(lib_index+1) + " ...");
-		cmd = "rm -f " + data_dir + "/lib" + int2str(lib_index+1) + "/" + get_file_base_name(lib->get_left_read()) + "*";      //delete old files
+		cmd = "rm -f " + data_dir + "/lib" + int2str(lib_index+1) + "/" + get_file_base_name(lib->get_left_read()) + "*"; //delete old files
 		logger->debug(cmd);
 		run_shell_command(cmd);
-		cmd = "rm -f " + data_dir + "/lib" + int2str(lib_index+1) + "/" + get_file_base_name(lib->get_right_read()) + "*";      //delete old files
+		cmd = "rm -f " + data_dir + "/lib" + int2str(lib_index+1) + "/" + get_file_base_name(lib->get_right_read()) + "*"; //delete old files
 		logger->debug(cmd);
 		run_shell_command(cmd);
 		// Why would you name a variable 'from'?
@@ -215,12 +216,6 @@ void SRAssemblerMaster::do_preprocessing(){
 			if (lib->get_paired_end())
 				lib->do_split_files(RIGHT_READ, this->reads_per_file);
 		}
-		// We need to count all files because we are not interleaving.
-		//if (lib->get_paired_end()) {
-			//lib->set_num_parts(get_file_count(lib->get_split_read_prefix(lib->get_left_read()) + "*") + get_file_count(lib->get_split_read_prefix(lib->get_right_read()) + "*"));
-		//} else {
-			//lib->set_num_parts(get_file_count(lib->get_split_read_prefix(lib->get_left_read()) + "*"));
-		//}
 		lib->set_num_parts(get_file_count(lib->get_split_read_prefix(lib->get_left_read()) + "*.fasta"));
 		logger->info("We have " + int2str(lib->get_num_parts()) +" split files");
 
@@ -396,7 +391,8 @@ void SRAssemblerMaster::do_walking(){
 		}
 		merge_mapped_files(round);
 		int read_count = get_total_read_count(round);
-		logger->info("Found matched reads: " + int2str(read_count));
+		logger->info("Found new reads: " + int2str(new_reads_count));
+		logger->info("Total matched reads: " + int2str(read_count));
 		if (assembly_round <= round){
 			unsigned int longest_contig = do_assembly(round);
 			summary_best += int2str(read_count) + "\n";
@@ -795,7 +791,7 @@ void SRAssemblerMaster::process_long_contigs(int round, int k) {
 			if (lib.get_paired_end())
 				cmd = "bowtie " + type_option + " -v 2 --suppress 2,3,4,5,6,7,8 " + tmp_dir + "/long_contig " + lib.get_matched_left_read_filename() + "," + lib.get_matched_right_read_filename() + " " + reads_on_contigs + " >> " + logger->get_log_file() + " 2>&1";
 			else
-				cmd = "bowtie "  + type_option + " -v 2 --suppress 2,3,4,5,6,7,8 " + tmp_dir + "/long_contig " + lib.get_matched_left_read_filename() + " " + reads_on_contigs + " >> " + logger->get_log_file() + " 2>&1";
+				cmd = "bowtie " + type_option + " -v 2 --suppress 2,3,4,5,6,7,8 " + tmp_dir + "/long_contig " + lib.get_matched_left_read_filename() + " " + reads_on_contigs + " >> " + logger->get_log_file() + " 2>&1";
 			logger->debug(cmd);
 			run_shell_command(cmd);
 
@@ -1068,7 +1064,7 @@ void SRAssemblerMaster::clean_unmapped_reads(int round){
 		if (lib.get_paired_end())
 			cmd = "bowtie " + type_option + " -v 2 --suppress 2,3,4,5,6,7,8 " + index_name + " " + lib.get_matched_left_read_filename() + "," + lib.get_matched_right_read_filename() + " " + reads_on_contigs + " >> " + logger->get_log_file() + " 2>&1";
 		else
-			cmd = "bowtie "  + type_option + " -v 2 --suppress 2,3,4,5,6,7,8 " + index_name + " " + lib.get_matched_left_read_filename() + " " + reads_on_contigs + " >> " + logger->get_log_file() + " 2>&1";
+			cmd = "bowtie " + type_option + " -v 2 --suppress 2,3,4,5,6,7,8 " + index_name + " " + lib.get_matched_left_read_filename() + " " + reads_on_contigs + " >> " + logger->get_log_file() + " 2>&1";
 		logger->debug(cmd);
 		run_shell_command(cmd);
 		//read sam file
