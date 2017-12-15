@@ -523,7 +523,6 @@ void SRAssembler::mask_contigs(int round){
 string SRAssembler:: get_query_fasta_file_name_masked(int round){
 	if (round > 1){
 		if (assembly_round < round) {
-			mask_contigs(round-1);
 			string masked_fasta = get_contig_file_name(round-1) + ".masked";
 			return masked_fasta;
 		} else {
@@ -571,13 +570,15 @@ int SRAssembler::do_alignment(int round, int lib_idx, int read_part) {
 	//TODO we read this parameter file A LOT. We should import the parameters for each program_name once.
 	Params params = this->read_param_file(program_name);
 	int new_read_count;
-	if (round == 1) { // Reads as queries are necessary when searching against a protein.
+	// Reads as queries are necessary when searching against a protein.
+	if (round == 1) {
 		aligner->do_alignment(get_contigs_index_name(round), get_type(round), get_match_length(round), get_mismatch_allowed(round), lib.get_split_file_name(read_part, LEFT_READ), params, get_vmatch_output_filename(round, lib_idx, read_part));
 		if (lib.get_paired_end())
 			aligner->do_alignment(get_contigs_index_name(round), get_type(round), get_match_length(round), get_mismatch_allowed(round), lib.get_split_file_name(read_part, RIGHT_READ), params, get_vmatch_output_filename(round, lib_idx, read_part));
 		new_read_count = aligner->parse_output(get_vmatch_output_filename(round, lib_idx, read_part), mapped_reads, read_part, lib.get_read_part_index_name(read_part, LEFT_READ), lib.get_read_part_index_name(read_part, RIGHT_READ), lib.get_matched_left_read_filename(round, read_part), lib.get_matched_right_read_filename(round, read_part));
 		//save_mapped_reads(round);
 		return new_read_count;
+	// After round 1 we use the masked contig file as the query
 	} else {
 		aligner->do_alignment(lib.get_read_part_index_name(read_part, LEFT_READ), get_type(round), get_match_length(round), get_mismatch_allowed(round), get_query_fasta_file_name_masked(round), params, get_vmatch_output_filename(round, lib_idx, read_part));
 		if (lib.get_paired_end())

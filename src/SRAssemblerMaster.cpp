@@ -334,9 +334,13 @@ void SRAssemblerMaster::do_walking(){
 		logger->info("Starting round " + int2str(round) + " ...");
 		int new_reads_count = 0;
 
-		// Index the contigs in round 1 for the dnavsprot vmatch step
-		if (round == 1)
-			create_index(round);
+		// Index the query in round 1 for the dnavsprot vmatch step
+		if (round == 1) {
+			create_index(1);
+		} else {
+		// Mask the previous round's contigs for later searches
+			mask_contigs(round-1);
+		}
 
 		// For each library
 		for (unsigned lib_idx=0;lib_idx<this->libraries.size();lib_idx++){
