@@ -592,9 +592,20 @@ string SRAssembler:: get_query_fasta_file_name(int round){
 	}
 	return query_file;
 }
-string SRAssembler:: get_masked_query_fasta_file_name(int round){
+
+void SRAssembler::mask_contigs(int round){
+	string cmd;
+	string contig_file;
+	contig_file = get_contig_file_name(round);
+	string masked_file = contig_file + ".masked";
+	cmd = "dustmasker -in " + contig_file + " -outfmt fasta -out - | sed '/^[^>]/s/[a-z]/N/g' > " + masked_file;
+	run_shell_command(cmd);
+}
+
+string SRAssembler:: get_query_fasta_file_name_masked(int round){
 	if (round > 1){
 		if (assembly_round < round) {
+			mask_contigs(round-1);
 			string masked_fasta = get_contig_file_name(round-1) + ".masked";
 			//run_shell_command("printf '\e[38;5;002mUSING MASKED FASTA FOR INDEX\e[0m\n'");
 			return masked_fasta;
@@ -625,7 +636,8 @@ string SRAssembler:: get_contig_file_name(int round){
 }
 
 string SRAssembler:: get_mapped_reads_file_name(int round){
-	return tmp_dir + "/matched_reads_" + "r" + int2str(round) + "_" + "rank" + int2str(this->rank) + ".list";
+	//return tmp_dir + "/matched_reads_" + "r" + int2str(round) + "_" + "rank" + int2str(this->rank) + ".list";
+	return tmp_dir + "/matched_reads_" + "r" + int2str(round) + "_" + "rank" + "0" + ".list";
 }
 
 int SRAssembler::do_alignment(int round, int lib_idx, int read_part) {
@@ -650,9 +662,9 @@ int SRAssembler::do_alignment(int round, int lib_idx, int read_part) {
 		//save_mapped_reads(round);
 		return ret;
 	} else {
-		aligner->do_alignment(lib.get_read_part_index_name(read_part, LEFT_READ), get_type(round), get_match_length(round), get_mismatch_allowed(round), get_masked_query_fasta_file_name(round), params, get_vmatch_output_filename(round, lib_idx, read_part));
+		aligner->do_alignment(lib.get_read_part_index_name(read_part, LEFT_READ), get_type(round), get_match_length(round), get_mismatch_allowed(round), get_query_fasta_file_name_masked(round), params, get_vmatch_output_filename(round, lib_idx, read_part));
 		if (lib.get_paired_end())
-			aligner->do_alignment(lib.get_read_part_index_name(read_part, RIGHT_READ), get_type(round), get_match_length(round), get_mismatch_allowed(round), get_masked_query_fasta_file_name(round), params, get_vmatch_output_filename(round, lib_idx, read_part));
+			aligner->do_alignment(lib.get_read_part_index_name(read_part, RIGHT_READ), get_type(round), get_match_length(round), get_mismatch_allowed(round), get_query_fasta_file_name_masked(round), params, get_vmatch_output_filename(round, lib_idx, read_part));
 		ret = aligner->parse_output(get_vmatch_output_filename(round, lib_idx, read_part), mapped_reads, read_part, lib.get_read_part_index_name(read_part, LEFT_READ), lib.get_read_part_index_name(read_part, RIGHT_READ), lib.get_matched_left_read_filename(round, read_part), lib.get_matched_right_read_filename(round, read_part));
 		//save_mapped_reads(round);
 		return ret;
@@ -738,7 +750,7 @@ Logger* SRAssembler::get_logger(){
 
 void SRAssembler::create_index(int round) {
 	Aligner* aligner = get_aligner(round);
-	aligner->create_index(get_contigs_index_name(round), get_type(round), get_masked_query_fasta_file_name(round));
+	aligner->create_index(get_contigs_index_name(round), get_type(round), get_query_fasta_file_name_masked(round));
 }
 
 string SRAssembler:: get_type(int round){

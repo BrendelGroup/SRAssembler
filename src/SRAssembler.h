@@ -54,7 +54,8 @@ protected:
 	void create_index(int round);
 	std::string get_contigs_index_name(int round);
 	std::string get_query_fasta_file_name(int round);
-	std::string get_masked_query_fasta_file_name(int round);
+	void mask_contigs(int round);
+	std::string get_query_fasta_file_name_masked(int round);
 	std::string get_contig_file_name(int round);
 	std::string get_mapped_reads_file_name(int round);
 	std::string get_vmatch_output_filename(int round, int lib_idx, int idx);

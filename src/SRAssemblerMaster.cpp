@@ -878,16 +878,8 @@ void SRAssemblerMaster::process_long_contigs(int round, int k) {
 			}
 		}
 	}
-	// For right now masking is done by NCBI's dustmasker.
-	//TODO This should be more modular
 	//TODO Masking is happening before cleaning in cleaning rounds.
-	string cmd;
-	string contig_file;
-	contig_file = get_contig_file_name(round);
-	string masked_file = contig_file + ".masked";
-	//cmd = "printf '\e[38;5;002mPROCESS_LONG_CONTIGS\e[0m\n'; dustmasker -in " + contig_file + " -outfmt fasta -out - | sed '/^[^>]/s/[a-z]/N/g' > " + masked_file;
-	cmd = "dustmasker -in " + contig_file + " -outfmt fasta -out - | sed '/^[^>]/s/[a-z]/N/g' > " + masked_file;
-	run_shell_command(cmd);
+	//mask_contigs(round);
 }
 
 void SRAssemblerMaster::remove_hit_contigs(vector<string> &contig_list, int round){
