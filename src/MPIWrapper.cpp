@@ -11,15 +11,15 @@
 #include <mpi.h>
 #endif
 
-int get_mpi_code_value(mpi_code code){
-	return 10000000 * code.action + 100000 * code.value1 + 100* code.value2 + code.value3;
+unsigned long get_mpi_code_value(mpi_code code){
+	return 100000000 * code.action + 1000000 * code.value1 + 100* code.value2 + code.value3;
 }
 
 mpi_code get_mpi_code(int code_value){
 	mpi_code code;
-	code.action = code_value / 10000000;
-	code.value1 = code_value / 100000 % 100;
-	code.value2 = code_value /100 % 1000;;
+	code.action = code_value / 100000000;
+	code.value1 = code_value / 1000000 % 100;
+	code.value2 = code_value / 100 % 10000;;
 	code.value3 = code_value % 100;
 	return code;
 }

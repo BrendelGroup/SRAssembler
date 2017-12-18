@@ -50,6 +50,7 @@ void SRAssemblerSlave::process_message(){
 			break;
 		}
 		if (action == ACTION_TOTAL_PARTS){    //action terminated
+			//cerr << "I'm an SRAssemblerSlave who just got action=" + int2str(action) + " and value1 " + int2str(value1) + " and value2 " + int2str(value2) + " and value3 " + int2str(value3) << endl;
 			this->libraries[value1].set_num_parts(value2);
 		}
 		if (action == ACTION_SPLIT){  //do_split
