@@ -925,40 +925,42 @@ void SRAssemblerMaster::remove_hit_contigs(vector<string> &contig_list, int roun
 	run_shell_command(cmd);
 }
 
-void SRAssemblerMaster::remove_no_hit_contigs(unordered_set<string> &hit_list, int round){
+void SRAssemblerMaster::remove_no_hit_contigs(const string& vmatch_outfile, int round){
 	logger->debug("remove contigs without hits against query sequences in round " + int2str(round));
 	string contig_file = get_contig_file_name(round);
-	string tmp_file = tmp_dir + "/contig_tmp_" + "r" + int2str(round) + ".fasta";
-	string line;
-	string header = "";
-	string seq = "";
-	ifstream contig_file_stream(contig_file.c_str());
-	ofstream tmp_file_stream(tmp_file.c_str());
-	bool hit_seq = false;
-	int contig_number = 0;
-	while (getline(contig_file_stream, line)){
-		if (line.substr(0,1) == ">"){
-			string contig_id = int2str(contig_number);
-			if (hit_seq) {
-			 	tmp_file_stream << ">" << header << endl << seq << endl;
-			}
-			header = line.substr(1);
-			hit_seq = (find(hit_list.begin(), hit_list.end(), contig_id) != hit_list.end());
-			seq = "";
-			contig_number++;
-		}
-		else
-			seq.append(line);
-	}
-	if (hit_seq)
-		tmp_file_stream << ">" << header << endl << seq << endl;
-	contig_file_stream.close();
-	tmp_file_stream.close();
-	string cmd = "cp " + tmp_file + " " + contig_file;
-	run_shell_command(cmd);
-	//RM HERE
-	cmd = "rm " + tmp_file;
-	run_shell_command(cmd);
+	cmd = "bash -c \"vseqselect -seqnum " + vmatch_outfile + " " + tmp_dir + "\cindex\" | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' >> " + contig_file;
+
+	//string tmp_file = tmp_dir + "/contig_tmp_" + "r" + int2str(round) + ".fasta";
+	//string line;
+	//string header = "";
+	//string seq = "";
+	//ifstream contig_file_stream(contig_file.c_str());
+	//ofstream tmp_file_stream(tmp_file.c_str());
+	//bool hit_seq = false;
+	//int contig_number = 0;
+	//while (getline(contig_file_stream, line)){
+		//if (line.substr(0,1) == ">"){
+			//string contig_id = int2str(contig_number);
+			//if (hit_seq) {
+			 	//tmp_file_stream << ">" << header << endl << seq << endl;
+			//}
+			//header = line.substr(1);
+			//hit_seq = (find(hit_list.begin(), hit_list.end(), contig_id) != hit_list.end());
+			//seq = "";
+			//contig_number++;
+		//}
+		//else
+			//seq.append(line);
+	//}
+	//if (hit_seq)
+		//tmp_file_stream << ">" << header << endl << seq << endl;
+	//contig_file_stream.close();
+	//tmp_file_stream.close();
+	//string cmd = "cp " + tmp_file + " " + contig_file;
+	//run_shell_command(cmd);
+	////RM HERE
+	//cmd = "rm " + tmp_file;
+	//run_shell_command(cmd);
 }
 
 void SRAssemblerMaster::prepare_final_contig_file(int round){
@@ -1035,15 +1037,19 @@ void SRAssemblerMaster::remove_no_hit_contigs(int round){
 	logger->info("Removing contigs without hits ...");
 	string contig_file = get_contig_file_name(round);
 	Aligner* aligner = get_aligner(round);
+	// Index contigs for easy extraction of hit contigs
+	aligner->create_index(tmp_dir + "/cindex", "dna", contig_file);
+	// Why are we remaking this index every time?
 	aligner->create_index(tmp_dir + "/qindex", type, query_file);
 	string program_name = aligner->get_program_name();
 	program_name += "_" + get_type(1) + "_vs_contig";
 	Params params = read_param_file(program_name);
 	string out_file = tmp_dir + "/query_contig.aln";
 	aligner->do_alignment(tmp_dir + "/qindex", type, get_match_length(1), get_mismatch_allowed(1), contig_file, params, out_file);
-	unordered_set<string> hits = aligner->get_hit_list(out_file);
-	remove_no_hit_contigs(hits, round);
-	string cmd = "rm -f " + tmp_dir + "/qindex*";
+	//unordered_set<string> hits = aligner->get_hit_list(out_file);
+	remove_no_hit_contigs(out_file, round);
+	//string cmd = "rm -f " + tmp_dir + "/qindex*";
+	string cmd = "rm -f " + tmp_dir + "/cindex*";
 	logger->debug(cmd);
 	run_shell_command(cmd);
 }
