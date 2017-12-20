@@ -877,8 +877,6 @@ void SRAssemblerMaster::process_long_contigs(int round, int k) {
 			}
 		}
 	}
-	//TODO Masking is happening before cleaning in cleaning rounds.
-	//mask_contigs(round);
 }
 
 void SRAssemblerMaster::remove_hit_contigs(vector<string> &contig_list, int round){
@@ -1040,6 +1038,7 @@ void SRAssemblerMaster::create_folders(){
 void SRAssemblerMaster::remove_no_hit_contigs(int round){
 	logger->info("Removing contigs without hits ...");
 	string contig_file = get_contig_file_name(round);
+run_shell_command("cp " + contig_file + " " + contig_file + ".original");
 	Aligner* aligner = get_aligner(round);
 	// Index contigs for easy extraction of hit contigs
 	aligner->create_index(tmp_dir + "/cindex", "dna", contig_file);
