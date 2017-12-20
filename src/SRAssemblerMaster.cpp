@@ -203,7 +203,7 @@ void SRAssemblerMaster::do_preprocessing(){
 		// File splitting is handled by the actual library. It does not seem to take file type into acount.
 		if (lib->get_paired_end() && mpiSize > 2){
 			send_code(1, ACTION_SPLIT, lib_index, 1, 0);
-			system("sleep 0.5");
+			//system("sleep 0.5");
 			send_code(2, ACTION_SPLIT, lib_index, 2, 0);
 			mpi_receive(code_value, from);
 			mpi_receive(code_value, from);
@@ -348,14 +348,14 @@ void SRAssemblerMaster::do_walking(){
 			// If not parallelized, start a new alignment every 1/2 second?
 			if (mpiSize == 1){
 				for (read_part=1; read_part<=lib.get_num_parts(); read_part++){
-					sleep(0.5);
+					//sleep(0.5);
 					new_reads_count += do_alignment(round, lib_idx, read_part);
 				}
 			} else {
 				// If there are more split read files than processors
 				if (lib.get_num_parts() < mpiSize){
 					for (read_part=1; read_part<=lib.get_num_parts(); read_part++){
-						sleep(0.5);
+						//sleep(0.5);
 						send_code(read_part, ACTION_ALIGNMENT, round, read_part, lib_idx);
 					}
 					while(completed < lib.get_num_parts()){
@@ -368,7 +368,7 @@ void SRAssemblerMaster::do_walking(){
 				// If there are fewer split read files than processors
 				} else {
 					for (read_part=1;read_part<mpiSize;read_part++){
-						sleep(0.5);
+						//sleep(0.5);
 						send_code(read_part, ACTION_ALIGNMENT, round, read_part, lib_idx);
 					}
 					while (completed < lib.get_num_parts()){
@@ -605,7 +605,7 @@ int SRAssemblerMaster::do_assembly(int round) {
 	} else {
 		if (total_k < mpiSize-1){
 			for (i=1; i<=total_k; i++){
-				sleep(0.5);
+				//sleep(0.5);
 				send_code(i, ACTION_ASSEMBLY, round, start_k + (i-1)*step_k, 0);
 			}
 			while(completed < total_k){
@@ -615,7 +615,7 @@ int SRAssemblerMaster::do_assembly(int round) {
 		}
 		else {
 			for (i=1;i<mpiSize;i++){
-				sleep(0.5);
+				//sleep(0.5);
 				send_code(i, ACTION_ASSEMBLY, round, start_k + (i-1)*step_k, 0);
 			}
 			while(completed < total_k){
