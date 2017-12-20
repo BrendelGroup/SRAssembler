@@ -336,7 +336,9 @@ void SRAssemblerMaster::do_walking(){
 			create_index(1);
 		} else {
 		// Mask the previous round's contigs for later searches
-			mask_contigs(round-1);
+			if (assembly_round < round) {
+				mask_contigs(round-1);
+			}
 		}
 
 		// For each library
@@ -928,7 +930,9 @@ void SRAssemblerMaster::remove_hit_contigs(vector<string> &contig_list, int roun
 void SRAssemblerMaster::remove_no_hit_contigs(const string& vmatch_outfile, int round){
 	logger->debug("remove contigs without hits against query sequences in round " + int2str(round));
 	string contig_file = get_contig_file_name(round);
-	cmd = "bash -c \"vseqselect -seqnum " + vmatch_outfile + " " + tmp_dir + "\cindex\" | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' >> " + contig_file;
+	string cmd = "bash -c \"vseqselect -seqnum " + vmatch_outfile + " " + tmp_dir + "/cindex\" | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' >> " + contig_file;
+	logger->debug(cmd);
+	run_shell_command(cmd);
 
 	//string tmp_file = tmp_dir + "/contig_tmp_" + "r" + int2str(round) + ".fasta";
 	//string line;
@@ -1049,7 +1053,7 @@ void SRAssemblerMaster::remove_no_hit_contigs(int round){
 	//unordered_set<string> hits = aligner->get_hit_list(out_file);
 	remove_no_hit_contigs(out_file, round);
 	//string cmd = "rm -f " + tmp_dir + "/qindex*";
-	string cmd = "rm -f " + tmp_dir + "/cindex*";
+	string cmd = "rm -f " + tmp_dir + "/cindex* " + out_file;
 	logger->debug(cmd);
 	run_shell_command(cmd);
 }
