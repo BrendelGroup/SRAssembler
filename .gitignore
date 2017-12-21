@@ -4,3 +4,4 @@ src/*.d
 src/*.o
 speedtest/
 demo/reads_data
+demo/x*
