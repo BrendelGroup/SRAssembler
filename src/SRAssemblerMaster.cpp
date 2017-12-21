@@ -1008,11 +1008,13 @@ run_shell_command("cp " + contig_file + " " + contig_file + ".original");
 	program_name += "_" + get_type(1) + "_vs_contig";
 	Params params = read_param_file(program_name);
 	string out_file = tmp_dir + "/query_contig.aln";
-run_shell_command("cp " + out_file + " " + out_file + ".round" + int2str(round));
 	aligner->do_alignment(tmp_dir + "/qindex", type, get_match_length(1), get_mismatch_allowed(1), contig_file, params, out_file);
+	string cmd = "cp " + out_file + " " + out_file + ".round" + int2str(round);
+	logger->debug(cmd);
+	run_shell_command(cmd);
 	remove_no_hit_contigs(out_file, round);
 	//string cmd = "rm -f " + tmp_dir + "/qindex*";
-	string cmd = "rm -f " + tmp_dir + "/cindex*";
+	cmd = "rm -f " + tmp_dir + "/cindex*";
 	logger->debug(cmd);
 	run_shell_command(cmd);
 }
