@@ -20,6 +20,7 @@ unordered_set<string> VmatchAligner::get_hit_list(const string& output_file) {
 	boost::unordered_set<string> current_mapped_reads;
 	string line;
 	while (getline(report_file_stream, line)) {
+	//TODO this could probably be more efficient
 		if (line[0] != '#') {
 			vector<string> tokens;
 			tokenize(line, tokens, " ");
@@ -88,6 +89,7 @@ int VmatchAligner::parse_output(const string& output_file, unordered_set<string>
 	report_file_stream.close();
 	tmp_file_stream.close();
 
+	// Use awk to strip out linebreaks from within the sequence
 	cmd = "bash -c \"vseqselect -seqnum " + tmpvseqselectfile + " " + left_read_index + "\" | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' >> " + out_left_read;
 	logger->debug(cmd);
 	run_shell_command(cmd);
@@ -107,7 +109,7 @@ int VmatchAligner::parse_output(const string& output_file, unordered_set<string>
 void VmatchAligner::create_index(const string& index_name, const string& type, const string& fasta_file) {
 	string db_type = type;
 	if (db_type == "cdna") db_type = "dna";
-	string cmd = "mkvtree -" + db_type + " -db " + fasta_file + " -pl -indexname " + index_name + " -allout -v >> " + logger->get_log_file();
+	string cmd = "mkvtree -" + db_type + " -db " + fasta_file + " -pl -indexname " + index_name + " -allout >> " + logger->get_log_file();
 	logger->debug(cmd);
 	run_shell_command(cmd);
 }
@@ -170,7 +172,7 @@ void VmatchAligner::align_long_contigs(const string& long_contig_candidate_file,
 
 	string indexname = tmp_dir + "/contigs";
 	string alignment_out_file = tmp_dir + "/output.aln";
-	string cmd = "mkvtree -dna -db " + contig_file + " -pl -indexname " + indexname + " -allout -v >> " + logger->get_log_file();
+	string cmd = "mkvtree -dna -db " + contig_file + " -pl -indexname " + indexname + " -allout >> " + logger->get_log_file();
 	logger->debug(cmd);
 	run_shell_command(cmd);
 	cmd = "vmatch -q " + long_contig_candidate_file + " -l " + int2str(max_contig_size) + " -showdesc 0 -nodist -noevalue -noscore -noidentity " + indexname + " | awk '{print $1,$2,$3,$4,$5,$6}' | uniq -f5 > " + alignment_out_file;
