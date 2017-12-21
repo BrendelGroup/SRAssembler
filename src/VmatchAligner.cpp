@@ -172,7 +172,7 @@ void VmatchAligner::align_long_contigs(const string& long_contig_candidate_file,
 
 	string indexname = tmp_dir + "/contigs";
 	string alignment_out_file = tmp_dir + "/output.aln";
-	string cmd = "mkvtree -dna -db " + contig_file + " -pl -indexname " + indexname + " -allout -v >> " + logger->get_log_file();
+	string cmd = "mkvtree -dna -db " + contig_file + " -pl -indexname " + indexname + " -allout >> " + logger->get_log_file();
 	logger->debug(cmd);
 	run_shell_command(cmd);
 	cmd = "vmatch -q " + long_contig_candidate_file + " -l " + int2str(max_contig_size) + " -showdesc 0 -nodist -noevalue -noscore -noidentity " + indexname + " | awk '{print $1,$2,$3,$4,$5,$6}' | uniq -f5 > " + alignment_out_file;
