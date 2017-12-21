@@ -203,7 +203,6 @@ void SRAssemblerMaster::do_preprocessing(){
 		// File splitting is handled by the actual library. It does not seem to take file type into acount.
 		if (lib->get_paired_end() && mpiSize > 2){
 			send_code(1, ACTION_SPLIT, lib_index, 1, 0);
-//			system("sleep 0.5");
 			send_code(2, ACTION_SPLIT, lib_index, 2, 0);
 			mpi_receive(code_value, from);
 			mpi_receive(code_value, from);
@@ -225,7 +224,6 @@ void SRAssemblerMaster::do_preprocessing(){
 		} else {
 			if (lib->get_num_parts() < mpiSize){
 				for (part=1; part<=lib->get_num_parts(); part++){
-					//system("sleep 0.5");
 					send_code(part, ACTION_PRE_PROCESSING, lib_index, part, 0);
 				}
 				while(completed < lib->get_num_parts()){
@@ -235,7 +233,6 @@ void SRAssemblerMaster::do_preprocessing(){
 			}
 			else {
 				for (part=1;part<mpiSize;part++){
-					//system("sleep 0.5");
 					send_code(part, ACTION_PRE_PROCESSING, lib_index, part, 0);
 				}
 				while (completed < lib->get_num_parts()){
@@ -348,14 +345,12 @@ void SRAssemblerMaster::do_walking(){
 			// If not parallelized, start a new alignment every 1/2 second?
 			if (mpiSize == 1){
 				for (read_part=1; read_part<=lib.get_num_parts(); read_part++){
-//					sleep(0.5);
 					new_reads_count += do_alignment(round, lib_idx, read_part);
 				}
 			} else {
 				// If there are more split read files than processors
 				if (lib.get_num_parts() < mpiSize){
 					for (read_part=1; read_part<=lib.get_num_parts(); read_part++){
-//						sleep(0.5);
 						send_code(read_part, ACTION_ALIGNMENT, round, read_part, lib_idx);
 					}
 					while(completed < lib.get_num_parts()){
@@ -368,7 +363,6 @@ void SRAssemblerMaster::do_walking(){
 				// If there are fewer split read files than processors
 				} else {
 					for (read_part=1;read_part<mpiSize;read_part++){
-//						sleep(0.5);
 						send_code(read_part, ACTION_ALIGNMENT, round, read_part, lib_idx);
 					}
 					while (completed < lib.get_num_parts()){
@@ -605,7 +599,6 @@ int SRAssemblerMaster::do_assembly(int round) {
 	} else {
 		if (total_k < mpiSize-1){
 			for (i=1; i<=total_k; i++){
-//				sleep(0.5);
 				send_code(i, ACTION_ASSEMBLY, round, start_k + (i-1)*step_k, 0);
 			}
 			while(completed < total_k){
@@ -615,7 +608,6 @@ int SRAssemblerMaster::do_assembly(int round) {
 		}
 		else {
 			for (i=1;i<mpiSize;i++){
-//				sleep(0.5);
 				send_code(i, ACTION_ASSEMBLY, round, start_k + (i-1)*step_k, 0);
 			}
 			while(completed < total_k){
@@ -933,42 +925,6 @@ void SRAssemblerMaster::remove_no_hit_contigs(const string& vmatch_outfile, int 
 	run_shell_command(cmd);
 }
 
-void SRAssemblerMaster::remove_no_hit_contigs(unordered_set<string> &hit_list, int round){
-	logger->debug("remove contigs without hits against query sequences in round " + int2str(round));
-	string contig_file = get_contig_file_name(round);
-	string tmp_file = tmp_dir + "/contig_tmp_" + "r" + int2str(round) + ".fasta";
-	string line;
-	string header = "";
-	string seq = "";
-	ifstream contig_file_stream(contig_file.c_str());
-	ofstream tmp_file_stream(tmp_file.c_str());
-	bool hit_seq = false;
-	int contig_number = 0;
-	while (getline(contig_file_stream, line)){
-		if (line.substr(0,1) == ">"){
-			string contig_id = int2str(contig_number);
-			if (hit_seq) {
-				tmp_file_stream << ">" << header << endl << seq << endl;
-			}
-			header = line.substr(1);
-			hit_seq = (find(hit_list.begin(), hit_list.end(), contig_id) != hit_list.end());
-			seq = "";
-			contig_number++;
-		}
-		else
-			seq.append(line);
-	}
-	if (hit_seq)
-		tmp_file_stream << ">" << header << endl << seq << endl;
-	contig_file_stream.close();
-	tmp_file_stream.close();
-	string cmd = "cp " + tmp_file + " " + contig_file;
-	run_shell_command(cmd);
-	//RM HERE
-	cmd = "rm " + tmp_file;
-	run_shell_command(cmd);
-}
-
 void SRAssemblerMaster::prepare_final_contig_file(int round){
 	logger->debug("prepare final contig file of round " + int2str(round));
 	string contig_file = get_contig_file_name(round);
@@ -1054,9 +1010,8 @@ run_shell_command("cp " + contig_file + " " + contig_file + ".original");
 	string out_file = tmp_dir + "/query_contig.aln";
 run_shell_command("cp " + out_file + " " + out_file + ".round" + int2str(round));
 	aligner->do_alignment(tmp_dir + "/qindex", type, get_match_length(1), get_mismatch_allowed(1), contig_file, params, out_file);
-	unordered_set<string> hits = aligner->get_hit_list(out_file);
 	remove_no_hit_contigs(out_file, round);
-//	string cmd = "rm -f " + tmp_dir + "/qindex*";
+	//string cmd = "rm -f " + tmp_dir + "/qindex*";
 	string cmd = "rm -f " + tmp_dir + "/cindex*";
 	logger->debug(cmd);
 	run_shell_command(cmd);

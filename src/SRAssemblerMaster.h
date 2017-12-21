@@ -26,7 +26,6 @@ private:
 	void prepare_final_contig_file(int round);
 	void remove_hit_contigs(vector<string> &contig_list, int round);
 	void remove_no_hit_contigs(const string& vmatch_outfile, int round);
-	void remove_no_hit_contigs(unordered_set<string> &contig_list, int round);
 	void remove_no_hit_contigs(int round);
 	int get_start_round();
 	void load_long_contigs();
