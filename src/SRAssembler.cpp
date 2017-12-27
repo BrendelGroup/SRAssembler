@@ -576,7 +576,7 @@ int SRAssembler::do_alignment(int round, int lib_idx, int read_part) {
 		aligner->do_alignment(get_contigs_index_name(round), get_type(round), get_match_length(round), get_mismatch_allowed(round), lib.get_split_file_name(read_part, LEFT_READ), params, get_vmatch_output_filename(round, lib_idx, read_part));
 		if (lib.get_paired_end())
 			aligner->do_alignment(get_contigs_index_name(round), get_type(round), get_match_length(round), get_mismatch_allowed(round), lib.get_split_file_name(read_part, RIGHT_READ), params, get_vmatch_output_filename(round, lib_idx, read_part));
-		new_read_count = aligner->parse_output(get_vmatch_output_filename(round, lib_idx, read_part), mapped_reads, read_part, lib.get_read_part_index_name(read_part, LEFT_READ), lib.get_read_part_index_name(read_part, RIGHT_READ), lib.get_matched_left_read_filename(round, read_part), lib.get_matched_right_read_filename(round, read_part));
+		new_read_count = aligner->parse_output(get_vmatch_output_filename(round, lib_idx, read_part), mapped_reads, read_part, lib.get_read_part_index_name(read_part, LEFT_READ), lib.get_read_part_index_name(read_part, RIGHT_READ), lib.get_matched_left_reads_filename(round, read_part), lib.get_matched_right_reads_filename(round, read_part));
 		//save_mapped_reads(round);
 		return new_read_count;
 	// After round 1 we use the masked contig file as the query
@@ -584,7 +584,7 @@ int SRAssembler::do_alignment(int round, int lib_idx, int read_part) {
 		aligner->do_alignment(lib.get_read_part_index_name(read_part, LEFT_READ), get_type(round), get_match_length(round), get_mismatch_allowed(round), get_query_fasta_file_name_masked(round), params, get_vmatch_output_filename(round, lib_idx, read_part));
 		if (lib.get_paired_end())
 			aligner->do_alignment(lib.get_read_part_index_name(read_part, RIGHT_READ), get_type(round), get_match_length(round), get_mismatch_allowed(round), get_query_fasta_file_name_masked(round), params, get_vmatch_output_filename(round, lib_idx, read_part));
-		new_read_count = aligner->parse_output(get_vmatch_output_filename(round, lib_idx, read_part), mapped_reads, read_part, lib.get_read_part_index_name(read_part, LEFT_READ), lib.get_read_part_index_name(read_part, RIGHT_READ), lib.get_matched_left_read_filename(round, read_part), lib.get_matched_right_read_filename(round, read_part));
+		new_read_count = aligner->parse_output(get_vmatch_output_filename(round, lib_idx, read_part), mapped_reads, read_part, lib.get_read_part_index_name(read_part, LEFT_READ), lib.get_read_part_index_name(read_part, RIGHT_READ), lib.get_matched_left_reads_filename(round, read_part), lib.get_matched_right_reads_filename(round, read_part));
 		//save_mapped_reads(round);
 		return new_read_count;
 	}
@@ -693,7 +693,7 @@ void SRAssembler::merge_mapped_files(int round){
 		Library lib = this->libraries[lib_idx];
 		logger->debug("Now merging component matching reads files ...");
 		string left_files = tmp_dir + "/matched_reads_left_" + "r" + int2str(round) + "_" + "lib" + int2str(lib_idx + 1) + "_part*";
-		string cmd = "cat " + left_files + " >> " + lib.get_matched_left_read_filename();
+		string cmd = "cat " + left_files + " >> " + lib.get_matched_left_reads_filename();
 		logger->debug(cmd);
 		run_shell_command(cmd);
 		//RM HERE
@@ -703,7 +703,7 @@ void SRAssembler::merge_mapped_files(int round){
 
 		if (lib.get_paired_end()) {
 			string right_files = tmp_dir + "/matched_reads_right_" + "r" + int2str(round) + "_" + "lib" + int2str(lib_idx + 1) + "_part*";
-			cmd = "cat " + right_files + " >> " + lib.get_matched_right_read_filename();
+			cmd = "cat " + right_files + " >> " + lib.get_matched_right_reads_filename();
 			logger->debug(cmd);
 			run_shell_command(cmd);
 			//RM HERE
@@ -712,9 +712,9 @@ void SRAssembler::merge_mapped_files(int round){
 			run_shell_command(cmd);
 		}
 		if (round > 1) {
-			run_shell_command("cp " + lib.get_matched_left_read_filename() + " " + lib.get_matched_left_read_filename(round));
+			run_shell_command("cp " + lib.get_matched_left_reads_filename() + " " + lib.get_matched_left_reads_filename(round));
 			if (lib.get_paired_end())
-				run_shell_command("cp " + lib.get_matched_right_read_filename() + " " + lib.get_matched_right_read_filename(round));
+				run_shell_command("cp " + lib.get_matched_right_reads_filename() + " " + lib.get_matched_right_reads_filename(round));
 		}
 	}
 	//RM HERE
@@ -728,9 +728,9 @@ int SRAssembler::get_total_read_count(int round){
 	int count = 0;
 	for (unsigned short int lib_idx=0; lib_idx< this->libraries.size();lib_idx++) {
 		Library lib = this->libraries[lib_idx];
-		count += get_read_count(lib.get_matched_left_read_filename(), FORMAT_FASTA);
+		count += get_read_count(lib.get_matched_left_reads_filename(), FORMAT_FASTA);
 		if (lib.get_paired_end()) {
-			count += get_read_count(lib.get_matched_right_read_filename(), FORMAT_FASTA);
+			count += get_read_count(lib.get_matched_right_reads_filename(), FORMAT_FASTA);
 		}
 	}
 

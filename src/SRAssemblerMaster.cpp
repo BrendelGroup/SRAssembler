@@ -263,9 +263,9 @@ int SRAssemblerMaster::get_start_round(){
 				for (unsigned int lib_idx=0;lib_idx<this->libraries.size();lib_idx++){
 					Library lib = this->libraries[lib_idx];
 					// Why do we keep re-assigning found_previous?
-					//found_previous = file_exists(lib.get_matched_left_read_filename(i));
+					//found_previous = file_exists(lib.get_matched_left_reads_filename(i));
 					//if (lib.get_paired_end())
-						//found_previous = file_exists(lib.get_matched_right_read_filename(i));
+						//found_previous = file_exists(lib.get_matched_right_reads_filename(i));
 					found_previous = file_exists(get_query_fasta_file_name(i+1));
 				}
 			//}
@@ -279,9 +279,9 @@ int SRAssemblerMaster::get_start_round(){
 				run_shell_command("rm -f " + tmp_dir + "/matched_reads_right_" + "r" + int2str(start_round) + "*");
 				for (unsigned int lib_idx=0;lib_idx<this->libraries.size();lib_idx++){
 					Library lib = this->libraries[lib_idx];
-					run_shell_command("cp " + lib.get_matched_left_read_filename(i) + " " + lib.get_matched_left_read_filename());
+					run_shell_command("cp " + lib.get_matched_left_reads_filename(i) + " " + lib.get_matched_left_reads_filename());
 					if(lib.get_paired_end()){
-						run_shell_command("cp " + lib.get_matched_right_read_filename(i) + " " + lib.get_matched_right_read_filename());
+						run_shell_command("cp " + lib.get_matched_right_reads_filename(i) + " " + lib.get_matched_right_reads_filename());
 					}
 				}
 				if (mpiSize > 1){
@@ -395,7 +395,7 @@ void SRAssemblerMaster::do_walking(){
 			summary_best += int2str(read_count) + "\n";
 			bool no_reads = true;
 			for (unsigned int lib_idx=0; lib_idx < this->libraries.size(); lib_idx++){
-				if (get_file_size(libraries[lib_idx].get_matched_left_read_filename()) > 0) {
+				if (get_file_size(libraries[lib_idx].get_matched_left_reads_filename()) > 0) {
 					no_reads = false;
 					break;
 				}
@@ -784,9 +784,9 @@ void SRAssemblerMaster::process_long_contigs(int round, int k) {
 			//string type_option = (lib.get_format() == FORMAT_FASTQ)? "-q" : "-f";
 			string type_option = "-f";
 			if (lib.get_paired_end())
-				cmd = "bowtie " + type_option + " -v 2 --suppress 2,3,4,5,6,7,8 " + tmp_dir + "/long_contig " + lib.get_matched_left_read_filename() + "," + lib.get_matched_right_read_filename() + " " + reads_on_contigs + " >> " + logger->get_log_file() + " 2>&1";
+				cmd = "bowtie " + type_option + " -v 2 --suppress 2,3,4,5,6,7,8 " + tmp_dir + "/long_contig " + lib.get_matched_left_reads_filename() + "," + lib.get_matched_right_reads_filename() + " " + reads_on_contigs + " >> " + logger->get_log_file() + " 2>&1";
 			else
-				cmd = "bowtie " + type_option + " -v 2 --suppress 2,3,4,5,6,7,8 " + tmp_dir + "/long_contig " + lib.get_matched_left_read_filename() + " " + reads_on_contigs + " >> " + logger->get_log_file() + " 2>&1";
+				cmd = "bowtie " + type_option + " -v 2 --suppress 2,3,4,5,6,7,8 " + tmp_dir + "/long_contig " + lib.get_matched_left_reads_filename() + " " + reads_on_contigs + " >> " + logger->get_log_file() + " 2>&1";
 			logger->debug(cmd);
 			run_shell_command(cmd);
 
@@ -799,18 +799,18 @@ void SRAssemblerMaster::process_long_contigs(int round, int k) {
 			}
 			reads_file.close();
 
-			string left_matched = lib.get_matched_left_read_filename();
-			string right_matched = lib.get_matched_right_read_filename();
-			string left_processed = tmp_dir + "/matched_reads_processed_left." + lib.get_file_extension();
-			string right_processed = tmp_dir + "/matched_reads_processed_right." + lib.get_file_extension();
+			string left_matched_reads = lib.get_matched_left_reads_filename();
+			string right_matched_reads = lib.get_matched_right_reads_filename();
+			string left_processed_reads = tmp_dir + "/matched_reads_processed_left." + lib.get_file_extension();
+			string right_processed_reads = tmp_dir + "/matched_reads_processed_right." + lib.get_file_extension();
 
-			ifstream left_matched_stream(left_matched.c_str());
-			ofstream left_processed_stream(left_processed.c_str());
-			ifstream right_matched_stream;
-			ofstream right_processed_stream;
+			ifstream left_matched_reads_stream(left_matched_reads.c_str());
+			ofstream left_processed_reads_stream(left_processed_reads.c_str());
+			ifstream right_matched_reads_stream;
+			ofstream right_processed_reads_stream;
 			if (lib.get_paired_end()) {
-				right_matched_stream.open(right_matched.c_str(), ios_base::in);
-				right_processed_stream.open(right_processed.c_str(), ios_base::out);
+				right_matched_reads_stream.open(right_matched_reads.c_str(), ios_base::in);
+				right_processed_reads_stream.open(right_processed_reads.c_str(), ios_base::out);
 			}
 			string left_header = "";
 			string right_header = "";
@@ -819,7 +819,7 @@ void SRAssemblerMaster::process_long_contigs(int round, int k) {
 			string left_qual = "";
 			string right_qual = "";
 			string plus;
-			while (getline(left_matched_stream, left_header)){
+			while (getline(left_matched_reads_stream, left_header)){
 				string left_seq_id = "";
 				string right_seq_id = "";
 				string lead_chr = ">";
@@ -830,10 +830,10 @@ void SRAssemblerMaster::process_long_contigs(int round, int k) {
 					else
 						left_seq_id = left_header.substr(1, pos-1);
 					left_seq_id.erase(left_seq_id.find_last_not_of("\n\r\t")+1);
-					getline(left_matched_stream, left_seq);
+					getline(left_matched_reads_stream, left_seq);
 					if (lib.get_paired_end()){
-						getline(right_matched_stream, right_header);
-						getline(right_matched_stream, right_seq);
+						getline(right_matched_reads_stream, right_header);
+						getline(right_matched_reads_stream, right_seq);
 						pos = right_header.find_first_of(" ");
 						if (pos ==string::npos)
 							right_seq_id = right_header;
@@ -842,28 +842,28 @@ void SRAssemblerMaster::process_long_contigs(int round, int k) {
 						right_seq_id.erase(right_seq_id.find_last_not_of(" \n\r\t")+1);
 					}
 					if (mapped_reads.find(left_seq_id) == mapped_reads.end() && (lib.get_paired_end() && mapped_reads.find(right_seq_id) == mapped_reads.end())){
-						left_processed_stream << left_header << endl << left_seq << endl;
+						left_processed_reads_stream << left_header << endl << left_seq << endl;
 						if (lib.get_paired_end()){
-							right_processed_stream << right_header << endl << right_seq << endl;
+							right_processed_reads_stream << right_header << endl << right_seq << endl;
 						}
 					}
 				}
 			}
-			left_matched_stream.close();
-			right_matched_stream.close();
-			left_processed_stream.close();
-			right_processed_stream.close();
-			cmd = "cp " + left_processed + " " + left_matched;
+			left_matched_reads_stream.close();
+			right_matched_reads_stream.close();
+			left_processed_reads_stream.close();
+			right_processed_reads_stream.close();
+			cmd = "cp " + left_processed_reads + " " + left_matched_reads;
 			logger->debug(cmd);
 			run_shell_command(cmd);
-			cmd = "cp " + left_processed + " " + lib.get_matched_left_read_filename(round);
+			cmd = "cp " + left_processed_reads + " " + lib.get_matched_left_reads_filename(round);
 			logger->debug(cmd);
 			run_shell_command(cmd);
 			if (lib.get_paired_end()){
-				cmd = "cp " + right_processed + " " + right_matched;
+				cmd = "cp " + right_processed_reads + " " + right_matched_reads;
 				logger->debug(cmd);
 				run_shell_command(cmd);
-				cmd = "cp " + right_processed + " " + lib.get_matched_right_read_filename(round);
+				cmd = "cp " + right_processed_reads + " " + lib.get_matched_right_reads_filename(round);
 				logger->debug(cmd);
 				run_shell_command(cmd);
 			}
@@ -1025,45 +1025,53 @@ run_shell_command("cp " + contig_file + " " + contig_file + ".original");
 
 void SRAssemblerMaster::clean_unmapped_reads(int round){
 //TODO improve the speed of the read finding. May be able to parse bowtie output directly.
+	// Assembled contigs that don't have some degree of hit to the query are removed.
 	remove_no_hit_contigs(round);
+	// Build bowtie index of this round's remaining contigs
 	string contig_file = get_contig_file_name(round);
-	//remove associated reads
 	string index_name = tmp_dir + "/contig_index_" + int2str(round);
 	string cmd = "bowtie-build " + contig_file + " " + index_name + " >> " + logger->get_log_file();
 	logger->debug(cmd);
 	run_shell_command(cmd);
+
 	for (unsigned int lib_idx=0; lib_idx < this->libraries.size(); lib_idx++){
 		Library lib = this->libraries[lib_idx];
-		//string type_option = (lib.get_format() == FORMAT_FASTQ)? "-q" : "-f";
-		string type_option = "-f";
+		// Use bowtie to map reads onto the contigs that we kept because they had hits.
+		string type_option = "-f"; //string type_option = (lib.get_format() == FORMAT_FASTQ)? "-q" : "-f";
 		string reads_on_contigs = tmp_dir + "/matched_reads" + int2str(lib_idx+1) + ".sam";
+		// -v 2 allows for 2 mismatches
+		// By suppressing most of the output, we are just getting the names of the matched reads
 		if (lib.get_paired_end())
-			cmd = "bowtie " + type_option + " -v 2 --suppress 2,3,4,5,6,7,8 " + index_name + " " + lib.get_matched_left_read_filename() + "," + lib.get_matched_right_read_filename() + " " + reads_on_contigs + " >> " + logger->get_log_file() + " 2>&1";
+			// Even though the library is paired end, we are just identifying individual matched reads
+			cmd = "bowtie " + type_option + " -v 2 --suppress 2,3,4,5,6,7,8 " + index_name + " " + lib.get_matched_left_reads_filename() + "," + lib.get_matched_right_reads_filename() + " " + reads_on_contigs + " >> " + logger->get_log_file() + " 2>&1";
 		else
-			cmd = "bowtie " + type_option + " -v 2 --suppress 2,3,4,5,6,7,8 " + index_name + " " + lib.get_matched_left_read_filename() + " " + reads_on_contigs + " >> " + logger->get_log_file() + " 2>&1";
+			cmd = "bowtie " + type_option + " -v 2 --suppress 2,3,4,5,6,7,8 " + index_name + " " + lib.get_matched_left_reads_filename() + " " + reads_on_contigs + " >> " + logger->get_log_file() + " 2>&1";
 		logger->debug(cmd);
 		run_shell_command(cmd);
-		//read sam file
-		boost::unordered_set<string> mapped_reads;
-		ifstream reads_file(reads_on_contigs.c_str());
-		string line;
-		while (getline(reads_file, line)) {
-			line.erase(line.find_last_not_of(" \n\r\t")+1);
-			mapped_reads.insert(line);
-		}
-		reads_file.close();
-		string left_matched = lib.get_matched_left_read_filename();
-		string right_matched = lib.get_matched_right_read_filename();
-		string left_processed = tmp_dir + "/matched_reads_processed_left." + "fasta";
-		string right_processed = tmp_dir + "/matched_reads_processed_right." + "fasta";
 
-		ifstream left_matched_stream(left_matched.c_str());
-		ofstream left_processed_stream(left_processed.c_str());
-		ifstream right_matched_stream;
-		ofstream right_processed_stream;
+		// Parse sam file names into an unordered_set
+		boost::unordered_set<string> mapped_read_names;
+		ifstream sam_file(reads_on_contigs.c_str());
+		string line;
+		while (getline(sam_file, line)) {
+			line.erase(line.find_last_not_of(" \n\r\t")+1);
+			mapped_read_names.insert(line);
+		}
+		sam_file.close();
+
+		// Prepare temporary files for processing reads
+		string left_matched_reads = lib.get_matched_left_reads_filename();
+		string right_matched_reads = lib.get_matched_right_reads_filename();
+		string left_processed_reads = tmp_dir + "/matched_reads_processed_left." + "fasta";
+		string right_processed_reads = tmp_dir + "/matched_reads_processed_right." + "fasta";
+
+		ifstream left_matched_reads_stream(left_matched_reads.c_str());
+		ofstream left_processed_reads_stream(left_processed_reads.c_str());
+		ifstream right_matched_reads_stream;
+		ofstream right_processed_reads_stream;
 		if (lib.get_paired_end()) {
-			right_matched_stream.open(right_matched.c_str(), ios_base::in);
-			right_processed_stream.open(right_processed.c_str(), ios_base::out);
+			right_matched_reads_stream.open(right_matched_reads.c_str(), ios_base::in);
+			right_processed_reads_stream.open(right_processed_reads.c_str(), ios_base::out);
 		}
 		string left_header = "";
 		string right_header = "";
@@ -1072,23 +1080,27 @@ void SRAssemblerMaster::clean_unmapped_reads(int round){
 		string left_qual = "";
 		string right_qual = "";
 		string plus;
-		while (getline(left_matched_stream, left_header)){
+
+		// Parse the matched reads file(s). If the names of matched reads from Vmatch are in the bowtie mapped reads, keep the reads.
+		while (getline(left_matched_reads_stream, left_header)){
 			string left_seq_id = "";
 			string right_seq_id = "";
-			if (left_header.length()==0)
+			if (left_header.length() == 0)
 				continue;
 			string lead_chr = ">";
 			if (left_header.substr(0,1) == lead_chr){
+				// Make the left_seq_id the read header up to the first space
 				size_t pos = left_header.find_first_of(" ");
 				if (pos ==string::npos)
 					left_seq_id = left_header.substr(1);
 				else
 					left_seq_id = left_header.substr(1, pos-1);
+				// Strip out any other hanging whitespace
 				left_seq_id.erase(left_seq_id.find_last_not_of("\n\r\t")+1);
-				getline(left_matched_stream, left_seq);
+				getline(left_matched_reads_stream, left_seq);
 				if (lib.get_paired_end()){
-					getline(right_matched_stream, right_header);
-					getline(right_matched_stream, right_seq);
+					getline(right_matched_reads_stream, right_header);
+					getline(right_matched_reads_stream, right_seq);
 					pos = right_header.find_first_of(" ");
 					if (pos ==string::npos)
 						right_seq_id = right_header.substr(1);
@@ -1096,29 +1108,30 @@ void SRAssemblerMaster::clean_unmapped_reads(int round){
 						right_seq_id = right_header.substr(1, pos-1);
 					right_seq_id.erase(right_seq_id.find_last_not_of("\n\r\t")+1);
 				}
-				if (mapped_reads.find(left_seq_id) != mapped_reads.end() && (lib.get_paired_end() || mapped_reads.find(right_seq_id) != mapped_reads.end())){
-					left_processed_stream << left_header << endl << left_seq << endl;
+				//TODO Is this correct? This looks like no reads will be kept if we're not paired_end.
+				if (mapped_read_names.find(left_seq_id) != mapped_read_names.end() && (lib.get_paired_end() || mapped_read_names.find(right_seq_id) != mapped_read_names.end())){
+					left_processed_reads_stream << left_header << endl << left_seq << endl;
 					if (lib.get_paired_end()){
-						right_processed_stream << right_header << endl << right_seq << endl;
+						right_processed_reads_stream << right_header << endl << right_seq << endl;
 					}
 				}
 			}
 		}
-		left_matched_stream.close();
-		right_matched_stream.close();
-		left_processed_stream.close();
-		right_processed_stream.close();
-		cmd = "cp " + left_processed + " " + left_matched;
+		left_matched_reads_stream.close();
+		right_matched_reads_stream.close();
+		left_processed_reads_stream.close();
+		right_processed_reads_stream.close();
+		cmd = "cp " + left_processed_reads + " " + left_matched_reads;
 		logger->debug(cmd);
 		run_shell_command(cmd);
-		cmd = "cp " + left_processed + " " + lib.get_matched_left_read_filename(round);
+		cmd = "cp " + left_processed_reads + " " + lib.get_matched_left_reads_filename(round);
 		logger->debug(cmd);
 		run_shell_command(cmd);
 		if (lib.get_paired_end()){
-			cmd = "cp " + right_processed + " " + right_matched;
+			cmd = "cp " + right_processed_reads + " " + right_matched_reads;
 			logger->debug(cmd);
 			run_shell_command(cmd);
-			cmd = "cp " + right_processed + " " + lib.get_matched_right_read_filename(round);
+			cmd = "cp " + right_processed_reads + " " + lib.get_matched_right_reads_filename(round);
 			logger->debug(cmd);
 			run_shell_command(cmd);
 		}

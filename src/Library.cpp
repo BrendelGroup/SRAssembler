@@ -84,27 +84,27 @@ void Library::set_right_read(string right_read){
 	this->right_read = right_read;
 }
 
-string Library::get_matched_left_read_filename(){
+string Library::get_matched_left_reads_filename(){
 	return tmp_dir + "/matched_reads_left_" + "lib" + int2str(lib_idx+1) + ".fasta";
 }
 
-string Library::get_matched_left_read_filename(int round){
+string Library::get_matched_left_reads_filename(int round){
 	return tmp_dir + "/matched_reads_left_" + "r" + int2str(round) + "_" + "lib" + int2str(lib_idx+1) + ".fasta";
 }
 
-string Library::get_matched_left_read_filename(int round, int part){
+string Library::get_matched_left_reads_filename(int round, int part){
 	return tmp_dir + "/matched_reads_left_" + "r" + int2str(round) + "_" + "lib" + int2str(lib_idx+1) + "_" + "part" + int2str(part) + ".fasta";
 }
 
-string Library::get_matched_right_read_filename(){
+string Library::get_matched_right_reads_filename(){
 	return tmp_dir + "/matched_reads_right_" + "lib" + int2str(lib_idx+1) + ".fasta";
 }
 
-string Library::get_matched_right_read_filename(int round){
+string Library::get_matched_right_reads_filename(int round){
 	return tmp_dir + "/matched_reads_right_" + "r" + int2str(round) + "_" + "lib" + int2str(lib_idx+1) + ".fasta";
 }
 
-string Library::get_matched_right_read_filename(int round, int part){
+string Library::get_matched_right_reads_filename(int round, int part){
 	if (paired_end)
 		return tmp_dir + "/matched_reads_right_" + "r" + int2str(round) + "_" + "lib" + int2str(lib_idx+1) + "_" + "part" + int2str(part) + ".fasta";
 	return "";
