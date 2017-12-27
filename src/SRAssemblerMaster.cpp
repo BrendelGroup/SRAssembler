@@ -997,6 +997,7 @@ void SRAssemblerMaster::create_folders(){
 
 void SRAssemblerMaster::remove_no_hit_contigs(int round){
 	logger->info("Removing contigs without hits ...");
+	string cmd;
 	string contig_file = get_contig_file_name(round);
 run_shell_command("cp " + contig_file + " " + contig_file + ".original");
 	Aligner* aligner = get_aligner(round);
@@ -1007,11 +1008,14 @@ run_shell_command("cp " + contig_file + " " + contig_file + ".original");
 	string program_name = aligner->get_program_name();
 	program_name += "_" + get_type(1) + "_vs_contig";
 	Params params = read_param_file(program_name);
-	string out_file = tmp_dir + "/query_contig.aln";
+	string out_file = tmp_dir + "/query_contig.round" + int2str(round) + ".aln";
+//	cmd = "rm " + out_file;
+//	logger->debug(cmd);
+//	run_shell_command(cmd);
 	aligner->do_alignment(tmp_dir + "/qindex", type, get_match_length(1), get_mismatch_allowed(1), contig_file, params, out_file);
-	string cmd = "cp " + out_file + " " + out_file + ".round" + int2str(round);
-	logger->debug(cmd);
-	run_shell_command(cmd);
+//	cmd = "cp " + out_file + " " + out_file + ".round" + int2str(round);
+//	logger->debug(cmd);
+//	run_shell_command(cmd);
 	remove_no_hit_contigs(out_file, round);
 	//string cmd = "rm -f " + tmp_dir + "/qindex*";
 	cmd = "rm -f " + tmp_dir + "/cindex*";

@@ -114,6 +114,9 @@ void VmatchAligner::create_index(const string& index_name, const string& type, c
 	run_shell_command(cmd);
 }
 
+/* This function APPENDS the sequence numbers of hits (usually reads) to the output_file.
+ * This is suitable input for vseqselect to pull those hits out of the mkvtree index.
+ */
 void VmatchAligner::do_alignment(const string& index_name, const string& type, int match_length, int mismatch_allowed, const string& query_file, const Params& params, const string& output_file) {
 	// Is this a protein query (round 1 only)? If not, empty string.
 	string align_type = (type == "protein") ? "-dnavsprot 1": "";
@@ -138,7 +141,9 @@ void VmatchAligner::do_alignment(const string& index_name, const string& type, i
 	}
 	string cmd;
 	string tmpvmfile = output_file + "-tmp";
-	// Vmatch output is appended to the output file so that left and right read searches for one part go into the same output file:
+	/* Vmatch output is appended to the output file so that left and right read searches for one part go into the same output file.
+	 * AWK selects only the column containing the sequence number. It is different for proteins because the reads are used as queries.
+	 */
 	if (type == "protein" ) {
 		cmd = "vmatch " + align_type + " -q " + query_file + " -d" + " -l " + int2str(match_length) + " " + e_option + " " + param_list + " -nodist -noevalue -noscore -noidentity " + index_name + " | awk '$0 !~ /^#.*/ {print $6}' >> " + output_file + "; sort -nu " + output_file + " > " + tmpvmfile + "; \\mv " + tmpvmfile + " " + output_file;
 	} else if (type == "cdna" ) {

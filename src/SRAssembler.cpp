@@ -516,7 +516,8 @@ void SRAssembler::mask_contigs(int round){
 	string contig_file;
 	contig_file = get_contig_file_name(round);
 	string masked_file = contig_file + ".masked";
-	cmd = "dustmasker -in " + contig_file + " -outfmt fasta -out - | sed '/^[^>]/s/[a-z]/N/g' > " + masked_file;
+	// Sed command replaces lowercase letters NOT in the header with capital Ns. AWK command converts FASTA to single-line.
+	cmd = "dustmasker -in " + contig_file + " -outfmt fasta -out - | sed '/^[^>]/s/[a-z]/N/g' | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' > " + masked_file;
 	run_shell_command(cmd);
 }
 
