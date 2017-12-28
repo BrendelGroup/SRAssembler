@@ -236,6 +236,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 		return -1;
 	}
 	tmp_dir = out_dir + "/tmp";
+	dump_dir = "/dev/shm/SRAssembler" + int2str(time(0));
 	if (data_dir == "")
 		data_dir = out_dir + "/" + READS_DATA;
 	preprocessed_exist = file_exists(data_dir);
@@ -330,6 +331,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 	return 0;
 }
 
+//TODO this should read through one time and store all of the potential parameters so that we aren't always rereading the file
 Params SRAssembler::read_param_file(string program_name) {
 	ifstream param_file(this->param_file.c_str());
 	string line;
@@ -685,7 +687,7 @@ int SRAssembler::get_mismatch_allowed(int round) {
 }
 
 string SRAssembler::get_vmatch_output_filename(int round, int lib_idx, int read_part){
-	return tmp_dir + "/vmatch_" + "r" + int2str(round) + "_" + "lib" + int2str(lib_idx+1) + "_" + "part" + int2str(read_part);
+	return dump_dir + "/vmatch_" + "r" + int2str(round) + "_" + "lib" + int2str(lib_idx+1) + "_" + "part" + int2str(read_part);
 }
 
 void SRAssembler::merge_mapped_files(int round){

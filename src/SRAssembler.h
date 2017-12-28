@@ -112,6 +112,7 @@ protected:
 	bool preprocessed_exist;
 	std::string library_file;
 	std::string tmp_dir;
+	std::string dump_dir;
 	std::string intermediate_dir;
 	std::string data_dir;
 	std::string results_dir;

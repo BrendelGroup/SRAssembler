@@ -25,12 +25,10 @@ private:
 	void process_long_contigs(int round, int k);
 	void prepare_final_contig_file(int round);
 	void remove_hit_contigs(vector<string> &contig_list, int round);
-	void remove_no_hit_contigs(const string& vmatch_outfile, int round);
 	void remove_no_hit_contigs(int round);
 	int get_start_round();
 	void load_long_contigs();
 	void remove_contigs_no_hits(int round);
-	void remove_unmapped_reads_VMATCH(int round);
 	void remove_unmapped_reads(int round);
 	void clean_tmp_files(int round);
 	void create_folders();
