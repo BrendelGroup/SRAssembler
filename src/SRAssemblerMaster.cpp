@@ -450,13 +450,19 @@ void SRAssemblerMaster::do_walking(){
 						logger->info("The walking is terminated: All contigs have enough coverage and score.");
 						break;
 					}
-					clean_unmapped_reads(round);
+					// Assembled contigs that don't have some degree of hit to the query are removed.
+					remove_no_hit_contigs(round);
+					remove_unmapped_reads_VMATCH(round);
 					cleaned = true;
 				}
 			}
-			if (clean_round > 2 && !cleaned)
-				if (round % clean_round == 0)
-					clean_unmapped_reads(round);
+			if (clean_round > 2 && !cleaned) {
+				if (round % clean_round == 0) {
+					// Assembled contigs that don't have some degree of hit to the query are removed.
+					remove_no_hit_contigs(round);
+					remove_unmapped_reads_VMATCH(round);
+				}
+			}
 		} else {
 			logger->info("Round " + int2str(round) + " is done!");
 			if (round == num_rounds) {
@@ -917,10 +923,11 @@ void SRAssemblerMaster::remove_hit_contigs(vector<string> &contig_list, int roun
 	run_shell_command(cmd);
 }
 
+//TODO remove this, it is vestigial
 void SRAssemblerMaster::remove_no_hit_contigs(const string& vmatch_outfile, int round) {
 	logger->debug("remove contigs without hits against query sequences in round " + int2str(round));
 	string contig_file = get_contig_file_name(round);
-	string cmd = "bash -c \"vseqselect -seqnum " + vmatch_outfile + " " + tmp_dir + "/cindex\" | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' > " + contig_file;
+	string cmd = "vseqselect -seqnum " + vmatch_outfile + " " + tmp_dir + "/cindex | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' > " + contig_file;
 	logger->debug(cmd);
 	run_shell_command(cmd);
 }
@@ -1016,17 +1023,71 @@ run_shell_command("cp " + contig_file + " " + contig_file + ".original");
 //	cmd = "cp " + out_file + " " + out_file + ".round" + int2str(round);
 //	logger->debug(cmd);
 //	run_shell_command(cmd);
-	remove_no_hit_contigs(out_file, round);
+	logger->debug("remove contigs without hits against query sequences in round " + int2str(round));
+	cmd = "vseqselect -seqnum " + out_file + " " + tmp_dir + "/cindex | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' > " + contig_file;
+	logger->debug(cmd);
+	run_shell_command(cmd);
 	//string cmd = "rm -f " + tmp_dir + "/qindex*";
 	cmd = "rm -f " + tmp_dir + "/cindex*";
 	logger->debug(cmd);
 	run_shell_command(cmd);
 }
 
-void SRAssemblerMaster::clean_unmapped_reads(int round){
-//TODO improve the speed of the read finding. May be able to parse bowtie output directly.
-	// Assembled contigs that don't have some degree of hit to the query are removed.
-	remove_no_hit_contigs(round);
+//TODO I think maybe it makes sense to apply this to MASKED contigs
+void SRAssemblerMaster::remove_unmapped_reads_VMATCH(int round){
+	logger->info("Removing found reads without matched contigs ...");
+	string cmd;
+	string contig_file = get_contig_file_name(round);
+	Aligner* aligner = get_aligner(round);
+	for (unsigned int lib_idx=0; lib_idx < this->libraries.size(); lib_idx++) {
+		Library lib = this->libraries[lib_idx];
+		// Index current matched reads
+		string left_matched_reads = lib.get_matched_left_reads_filename();
+		string right_matched_reads;
+		if (lib.get_paired_end()) {
+			 right_matched_reads = lib.get_matched_right_reads_filename();
+		}
+		aligner->create_index(tmp_dir + "/left_reads_index", "dna", left_matched_reads);
+		if (lib.get_paired_end()) {
+			aligner->create_index(tmp_dir + "/right_reads_index", "dna", right_matched_reads);
+		}
+
+		// Use the contigs as queries against the matched reads to identify matchy reads
+		string program_name = aligner->get_program_name();
+		program_name += "_contig_vs_reads";
+		Params params = read_param_file(program_name);
+		string vmatch_outfile = tmp_dir + "/contig_reads.lib" + int2str(lib_idx+1) + ".round" + int2str(round) + ".aln";
+//		run_shell_command("rm " + vmatch_outfile);
+		aligner->do_alignment(tmp_dir + "/left_reads_index", "cdna", 30, 2, contig_file, params, vmatch_outfile);
+		if (lib.get_paired_end()) {
+			aligner->do_alignment(tmp_dir + "/right_reads_index", "cdna", 30, 2, contig_file, params, vmatch_outfile);
+		}
+
+		// Use vseqselect to collect matchy reads
+		logger->debug("remove reads without hits against contigs in round " + int2str(round));
+		cmd = "vseqselect -seqnum " + vmatch_outfile + " " + tmp_dir + "/left_reads_index | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' > " + left_matched_reads;
+		logger->debug(cmd);
+		run_shell_command(cmd);
+		cmd = "cp " + left_matched_reads + " " + lib.get_matched_left_reads_filename(round);
+		logger->debug(cmd);
+		run_shell_command(cmd);
+		if (lib.get_paired_end()) {
+			cmd = "vseqselect -seqnum " + vmatch_outfile + " " + tmp_dir + "/right_reads_index | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' > " + right_matched_reads;
+			logger->debug(cmd);
+			run_shell_command(cmd);
+			cmd = "cp " + left_matched_reads + " " + lib.get_matched_left_reads_filename(round);
+			logger->debug(cmd);
+			run_shell_command(cmd);
+		}
+	}
+	//RM here
+	cmd = "rm -f " + tmp_dir + "/left_reads_index* " + tmp_dir + "/right_reads_index*";
+	logger->debug(cmd);
+	run_shell_command(cmd);
+}
+
+void SRAssemblerMaster::remove_unmapped_reads(int round) {
+	logger->info("Removing matched reads without contigs ...");
 	// Build bowtie index of this round's remaining contigs
 	string contig_file = get_contig_file_name(round);
 	string index_name = tmp_dir + "/contig_index_" + int2str(round);
@@ -1108,8 +1169,7 @@ void SRAssemblerMaster::clean_unmapped_reads(int round){
 						right_seq_id = right_header.substr(1, pos-1);
 					right_seq_id.erase(right_seq_id.find_last_not_of("\n\r\t")+1);
 				}
-				//TODO Is this correct? This looks like no reads will be kept if we're not paired_end.
-				if (mapped_read_names.find(left_seq_id) != mapped_read_names.end() && (lib.get_paired_end() || mapped_read_names.find(right_seq_id) != mapped_read_names.end())){
+				if (mapped_read_names.find(left_seq_id) != mapped_read_names.end() || (lib.get_paired_end() && mapped_read_names.find(right_seq_id) != mapped_read_names.end())){
 					left_processed_reads_stream << left_header << endl << left_seq << endl;
 					if (lib.get_paired_end()){
 						right_processed_reads_stream << right_header << endl << right_seq << endl;

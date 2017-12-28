@@ -30,7 +30,8 @@ private:
 	int get_start_round();
 	void load_long_contigs();
 	void remove_contigs_no_hits(int round);
-	void clean_unmapped_reads(int round);
+	void remove_unmapped_reads_VMATCH(int round);
+	void remove_unmapped_reads(int round);
 	void clean_tmp_files(int round);
 	void create_folders();
 	void save_query_list();

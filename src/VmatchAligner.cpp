@@ -52,8 +52,8 @@ unordered_set<string> VmatchAligner::get_hit_list(const string& output_file) {
  */
 int VmatchAligner::parse_output(const string& output_file, unordered_set<string>& mapped_reads, int read_part, const string& left_read_index, const string& right_read_index, const string& out_left_read, const string& out_right_read) {
 	logger->debug("parsing output file " + output_file);
-	logger->debug("mapped_reads size = " + int2str(mapped_reads.size()));
-	logger->debug("mapped_reads bucket_count = " + int2str(mapped_reads.bucket_count()));
+	//logger->debug("mapped_reads size = " + int2str(mapped_reads.size()));
+	//logger->debug("mapped_reads bucket_count = " + int2str(mapped_reads.bucket_count()));
 	//logger->debug("mapped_reads load_factor = " + int2str(mapped_reads.load_factor()));
 	//logger->debug("mapped_reads max_load_factor = " + int2str(mapped_reads.max_load_factor()));
 	bool paired_end = (out_right_read != "");
@@ -90,11 +90,11 @@ int VmatchAligner::parse_output(const string& output_file, unordered_set<string>
 	tmp_file_stream.close();
 
 	// Use awk to strip out linebreaks from within the sequence
-	cmd = "bash -c \"vseqselect -seqnum " + tmpvseqselectfile + " " + left_read_index + "\" | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' >> " + out_left_read;
+	cmd = "vseqselect -seqnum " + tmpvseqselectfile + " " + left_read_index + " | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' >> " + out_left_read;
 	logger->debug(cmd);
 	run_shell_command(cmd);
 	if (paired_end) {
-		cmd = "bash -c \"vseqselect -seqnum " + tmpvseqselectfile + " " + right_read_index + "\" | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' >> " + out_right_read;
+		cmd = "vseqselect -seqnum " + tmpvseqselectfile + " " + right_read_index + " | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' >> " + out_right_read;
 		logger->debug(cmd);
 		run_shell_command(cmd);
 	}
@@ -127,7 +127,7 @@ void VmatchAligner::do_alignment(const string& index_name, const string& type, i
 	// Other parameters are set up here.
 	string param_list = "";
 	for ( Params::const_iterator it = params.begin(); it != params.end(); ++it ){
-			// Is "-e" option handled here, or above? Something seems vestigial.
+			// Allowed number of mismatches may be handled by arguments or from params
 			if (it->first == "e") {
 				if (str2int(it->second) > 0){
 					e_option = " -e " + it->second;
