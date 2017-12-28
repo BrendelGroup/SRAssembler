@@ -17,14 +17,15 @@ SRAssembler* SRAssembler::_srassembler = NULL;
 
 SRAssembler::SRAssembler() {
 	// TODO Auto-generated constructor stub
-
+	//cerr << "SRAssembler constructed." << endl ;
 }
 
 SRAssembler::~SRAssembler() {
 	// TODO Auto-generated destructor stub
+	cerr << "SRAssembler destructed" << endl ;
 }
 
-int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
+int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize, const int start_time) {
 	//set the default values
 	init_match_length = INIT_MATCH_LENGTH_PROTEIN;
 	recur_match_length = RECUR_MATCH_LENGTH;
@@ -236,7 +237,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 		return -1;
 	}
 	tmp_dir = out_dir + "/tmp";
-	dump_dir = "/dev/shm/SRAssembler" + int2str(time(0));
+	mem_dir = "/dev/shm/SRAssembler" + int2str(start_time);
 	if (data_dir == "")
 		data_dir = out_dir + "/" + READS_DATA;
 	preprocessed_exist = file_exists(data_dir);
@@ -245,6 +246,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 	log_file = results_dir + "/msg.log";
 	spliced_alignment_output_file = results_dir + "/output.aln";
 	gene_finding_output_file = results_dir + "/output.ano";
+	gene_finding_output_protein_file = results_dir + "/snap.predicted.prot";
 	//spliced_alignment_gsq_file = results_dir + "/output.gsq";
 	final_contig_file = results_dir + "/all_contigs.fasta";
 	summary_file = results_dir + "/summary.html";
@@ -633,7 +635,7 @@ void SRAssembler::do_gene_finding() {
 	logger->info("Now running the ab initio gene finding program ...");
 	string program_name = gene_finder->get_program_name();
 	Params params = this->read_param_file(program_name);
-	gene_finder->do_gene_finding(this->aligned_contig_file, this->species, params, this->gene_finding_output_file);
+	gene_finder->do_gene_finding(this->aligned_contig_file, this->species, params, this->gene_finding_output_file, this->gene_finding_output_protein_file);
 	logger->info("Done.");
 }
 
@@ -687,7 +689,7 @@ int SRAssembler::get_mismatch_allowed(int round) {
 }
 
 string SRAssembler::get_vmatch_output_filename(int round, int lib_idx, int read_part){
-	return dump_dir + "/vmatch_" + "r" + int2str(round) + "_" + "lib" + int2str(lib_idx+1) + "_" + "part" + int2str(read_part);
+	return mem_dir + "/vmatch_" + "r" + int2str(round) + "_" + "lib" + int2str(lib_idx+1) + "_" + "part" + int2str(read_part);
 }
 
 void SRAssembler::merge_mapped_files(int round){
@@ -827,7 +829,7 @@ void finalized(){
 
 int main(int argc, char * argv[] ) {
 
-	time_t now = time(0);
+	time_t start_time = time(0);
 	int rank, mpiSize;
 
 	SRAssembler* srassembler = NULL;
@@ -837,7 +839,7 @@ int main(int argc, char * argv[] ) {
 		rank=mpi_get_rank();
 
 		srassembler = SRAssembler::getInstance(rank);
-		int ret = srassembler->init(argc, argv, rank, mpiSize);
+		int ret = srassembler->init(argc, argv, rank, mpiSize, start_time);
 		if (ret == -1) {
 			throw -1;
 		}
@@ -854,7 +856,7 @@ int main(int argc, char * argv[] ) {
 	}
 	finalized();
 	if (rank == 0) {
-		string str = "Execution time: " + int2str(time(0) - now) + " seconds";
+		string str = "Execution time: " + int2str(time(0) - start_time) + " seconds";
 		srassembler->get_logger()->info(str);
 	}
 	return 0;

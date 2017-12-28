@@ -9,11 +9,12 @@
 
 SRAssemblerMaster::SRAssemblerMaster() {
 	// TODO Auto-generated constructor stub
+	//cerr << "SRAssemblerMaster constructed." << endl ;
 }
 
-int SRAssemblerMaster::init(int argc, char * argv[], int rank, int mpiSize) {
+int SRAssemblerMaster::init(int argc, char * argv[], int rank, int mpiSize, const int start_time) {
 	string cmd;
-	int ret = SRAssembler::init(argc, argv, rank, mpiSize);
+	int ret = SRAssembler::init(argc, argv, rank, mpiSize, start_time);
 	if (ret == -1)
 		return ret;
 	if (!get_aligner(Aligner::PROTEIN_ALIGNER)->is_available()) return -1;
@@ -28,7 +29,7 @@ int SRAssemblerMaster::init(int argc, char * argv[], int rank, int mpiSize) {
 		cmd.append(argv[i]).append(" ");
 	}
 	logger->info(cmd);
-	//logger->info("Dump directory is " + dump_dir);
+	//logger->info("Dump directory is " + mem_dir);
 	output_header();
 	output_libraries();
 	get_query_list();
@@ -992,7 +993,7 @@ void SRAssemblerMaster::create_folders(){
 	run_shell_command(cmd);
 	cmd = "mkdir " + tmp_dir;
 	run_shell_command(cmd);
-	cmd = "mkdir " + dump_dir;
+	cmd = "mkdir " + mem_dir;
 	run_shell_command(cmd);
 }
 
@@ -1082,4 +1083,5 @@ void SRAssemblerMaster::remove_unmapped_reads(int round){
 
 SRAssemblerMaster::~SRAssemblerMaster() {
 	// TODO Auto-generated destructor stub
+	cerr << "SRAssemblerMaster destructed" << endl ;
 }

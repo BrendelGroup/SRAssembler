@@ -12,8 +12,8 @@ SRAssemblerSlave::SRAssemblerSlave() {
 
 }
 
-int SRAssemblerSlave::init(int argc, char * argv[], int rank, int mpiSize) {
-	return SRAssembler::init(argc, argv, rank, mpiSize);
+int SRAssemblerSlave::init(int argc, char * argv[], int rank, int mpiSize, const int start_time) {
+	return SRAssembler::init(argc, argv, rank, mpiSize, start_time);
 }
 
 void SRAssemblerSlave::print_message(const string& msg){
