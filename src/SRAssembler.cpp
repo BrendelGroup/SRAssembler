@@ -856,6 +856,9 @@ int main(int argc, char * argv[] ) {
 	}
 	finalized();
 	if (rank == 0) {
+		string cmd = "rm -rf /dev/shm/SRAssembler" + int2str(start_time);
+		srassembler->get_logger()->debug(cmd);
+		run_shell_command(cmd);
 		string str = "Execution time: " + int2str(time(0) - start_time) + " seconds";
 		srassembler->get_logger()->info(str);
 	}
