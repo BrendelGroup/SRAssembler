@@ -92,20 +92,20 @@ void run_shell_command(const string& cmd) {
 
 string run_shell_command_with_return(const string& cmd)
 {
-  // setup
-  string data;
-  FILE *stream;
-  int buf_size = 2048;
-  char buffer[buf_size];
+	// setup
+	string data;
+	FILE *stream;
+	int buf_size = 2048;
+	char buffer[buf_size];
 
-  // do it
-  stream = popen(cmd.c_str(), "r");
-  while ( fgets(buffer, buf_size, stream) != NULL )
+	// do it
+	stream = popen(cmd.c_str(), "r");
+	while ( fgets(buffer, buf_size, stream) != NULL )
 	data.append(buffer);
-  pclose(stream);
+	pclose(stream);
 
-  // exit
-  return data;
+	// exit
+	return data;
 }
 
 int str2int (const string &str) {
@@ -173,8 +173,8 @@ long get_file_size(const string& filename) {
 }
 
 long get_read_count(const string& filename, int format) {
+	//TODO would this be faster using bash wc?
 	ifstream inFile(filename.c_str());
-	string read;
 	string line;
 	long line_count = 0;
 	while (getline(inFile,line)) {
@@ -225,43 +225,43 @@ string string_format(const string fmt, ...) {
 // Why isn't this set up for FASTA as well as FASTQ?
 void remove_duplicate_reads(const string& filename, int read_format) {
 	if (read_format == FORMAT_FASTA) {
-	    string tmp_file = filename + ".tmp";
-	    //TODO this does not return them in order
-	    string cmd = "awk '$0 ~ /^>/ && !seen[$0] {getline seq; seen[$0]=seq;} END {for (read in seen) {print read; print seen[read];}}' " + filename + " > " + tmp_file;
-	    run_shell_command(cmd);
-	    run_shell_command("cp " + tmp_file + " " + filename);
-	    run_shell_command("rm " + tmp_file);
+		string tmp_file = filename + ".tmp";
+		//TODO this does not return them in order
+		string cmd = "awk '$0 ~ /^>/ && !seen[$0] {getline seq; seen[$0]=seq;} END {for (read in seen) {print read; print seen[read];}}' " + filename + " > " + tmp_file;
+		run_shell_command(cmd);
+		run_shell_command("cp " + tmp_file + " " + filename);
+		run_shell_command("rm " + tmp_file);
 	}
 	//TODO make this more efficient as above, or possibly remove.
 	else {
-	    boost::unordered_set<string> mapped_reads;
-	    string tmp_file = filename + ".tmp";
-	    ifstream src_stream(filename.c_str());
-	    ofstream tmp_stream(tmp_file.c_str());
-	    string lead_chr = "@";
-	    string line;
-	    while (getline(src_stream, line)){
-		    if (line.substr(0,1) == lead_chr){
-			    if (mapped_reads.find(line) == mapped_reads.end()) {
-				    mapped_reads.insert(line);
-				    tmp_stream << line << endl;
-				    getline(src_stream, line);
-				    tmp_stream << line << endl;
-				    getline(src_stream, line);
-				    tmp_stream << line << endl;
-				    getline(src_stream, line);
-				    tmp_stream << line << endl;
-			    }
-			    else {
-				    getline(src_stream, line);
-				    getline(src_stream, line);
-				    getline(src_stream, line);
-			    }
-		    }
-	    }
-	    src_stream.close();
-	    tmp_stream.close();
-	    run_shell_command("cp " + tmp_file + " " + filename);
-	    run_shell_command("rm " + tmp_file);
-    }
+		boost::unordered_set<string> mapped_reads;
+		string tmp_file = filename + ".tmp";
+		ifstream src_stream(filename.c_str());
+		ofstream tmp_stream(tmp_file.c_str());
+		string lead_chr = "@";
+		string line;
+		while (getline(src_stream, line)){
+			if (line.substr(0,1) == lead_chr){
+				if (mapped_reads.find(line) == mapped_reads.end()) {
+					mapped_reads.insert(line);
+					tmp_stream << line << endl;
+					getline(src_stream, line);
+					tmp_stream << line << endl;
+					getline(src_stream, line);
+					tmp_stream << line << endl;
+					getline(src_stream, line);
+					tmp_stream << line << endl;
+				}
+				else {
+					getline(src_stream, line);
+					getline(src_stream, line);
+					getline(src_stream, line);
+				}
+			}
+		}
+		src_stream.close();
+		tmp_stream.close();
+		run_shell_command("cp " + tmp_file + " " + filename);
+		run_shell_command("rm " + tmp_file);
+	}
 }

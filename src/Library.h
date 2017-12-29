@@ -30,12 +30,12 @@ public:
 	void set_paired_end(bool paired_end);
 	void set_left_read(string left_read);
 	void set_right_read(string right_read);
-	string get_matched_left_read_filename();
-	string get_matched_right_read_filename();
-	string get_matched_left_read_filename(int round);
-	string get_matched_right_read_filename(int round);
-	string get_matched_left_read_filename(int round, int idx);
-	string get_matched_right_read_filename(int round, int idx);
+	string get_matched_left_reads_filename();
+	string get_matched_right_reads_filename();
+	string get_matched_left_reads_filename(int round);
+	string get_matched_right_reads_filename(int round);
+	string get_matched_left_reads_filename(int round, int idx);
+	string get_matched_right_reads_filename(int round, int idx);
 	string get_file_extension();
 	string get_split_file_name(int file_part, int read_direction);
 	string get_read_part_index_name(int file_part, int read_direction);

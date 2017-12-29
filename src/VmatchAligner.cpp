@@ -20,6 +20,7 @@ unordered_set<string> VmatchAligner::get_hit_list(const string& output_file) {
 	boost::unordered_set<string> current_mapped_reads;
 	string line;
 	while (getline(report_file_stream, line)) {
+	//TODO this could probably be more efficient
 		if (line[0] != '#') {
 			vector<string> tokens;
 			tokenize(line, tokens, " ");
@@ -51,51 +52,71 @@ unordered_set<string> VmatchAligner::get_hit_list(const string& output_file) {
  */
 int VmatchAligner::parse_output(const string& output_file, unordered_set<string>& mapped_reads, int read_part, const string& left_read_index, const string& right_read_index, const string& out_left_read, const string& out_right_read) {
 	logger->debug("parsing output file " + output_file);
+	//logger->debug("mapped_reads size = " + int2str(mapped_reads.size()));
+	//logger->debug("mapped_reads bucket_count = " + int2str(mapped_reads.bucket_count()));
+	//logger->debug("mapped_reads load_factor = " + int2str(mapped_reads.load_factor()));
+	//logger->debug("mapped_reads max_load_factor = " + int2str(mapped_reads.max_load_factor()));
 	bool paired_end = (out_right_read != "");
 	ifstream report_file_stream(output_file.c_str());
-	int found_new_read = 0;
+	int found_read = 0;
+	int new_read_count = 0;
 	// parse the output file and get the mapped reads have not found yet
 	string line;
 	string cmd;
+	string part_string = int2str(read_part); //Calculate this once rather than over and over
 	string tmpvseqselectfile = out_left_read + "-tmp";
 	ofstream tmp_file_stream(tmpvseqselectfile.c_str());
 	//run_shell_command("touch " + tmpvseqselectfile);
 
 	while (getline(report_file_stream, line)) {
+		found_read++;
 		string seq_number = line;
-		string seq_id = int2str(read_part) + "," + seq_number;
+		//logger->debug("seq_number " + seq_number);
+		string seq_id = part_string + "," + seq_number;
 		// boost::unordered_set.find() produces past-the-end pointer if a key isn't found
 		if (mapped_reads.find(seq_id) == mapped_reads.end()) {
-			found_new_read += 1;
+			//logger->debug(seq_number + " is new");
+			new_read_count += 1;
+			// We are catching two new reads if the library is paired end
+			if (paired_end) {
+				new_read_count += 1;
+			}
 			mapped_reads.insert(seq_id);
 			tmp_file_stream << seq_number << endl;
 		}
 	}
+	logger->debug("Found " + int2str(found_read) + " reads in part " + part_string);
 	report_file_stream.close();
 	tmp_file_stream.close();
 
-	cmd = "bash -c \"vseqselect -seqnum " + tmpvseqselectfile + " " + left_read_index + "\" | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' >> " + out_left_read;
+	// Use awk to strip out linebreaks from within the sequence
+	cmd = "vseqselect -seqnum " + tmpvseqselectfile + " " + left_read_index + " | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' >> " + out_left_read;
 	logger->debug(cmd);
 	run_shell_command(cmd);
 	if (paired_end) {
-		cmd = "bash -c \"vseqselect -seqnum " + tmpvseqselectfile + " " + right_read_index + "\" | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' >> " + out_right_read;
+		cmd = "vseqselect -seqnum " + tmpvseqselectfile + " " + right_read_index + " | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' >> " + out_right_read;
 		logger->debug(cmd);
 		run_shell_command(cmd);
 	}
+	//TODO make this part of a cleanup function.
 	cmd = "\\rm " + tmpvseqselectfile;
+	logger->debug(cmd);
 	run_shell_command(cmd);
 
-	return found_new_read;
+	return new_read_count;
 }
 
 void VmatchAligner::create_index(const string& index_name, const string& type, const string& fasta_file) {
 	string db_type = type;
 	if (db_type == "cdna") db_type = "dna";
-	string cmd = "mkvtree -" + db_type + " -db " + fasta_file + " -pl -indexname " + index_name + " -allout -v >> " + logger->get_log_file();
+	string cmd = "mkvtree -" + db_type + " -db " + fasta_file + " -pl -indexname " + index_name + " -allout >> " + logger->get_log_file();
 	logger->debug(cmd);
 	run_shell_command(cmd);
 }
 
+/* This function APPENDS the sequence numbers of hits (usually reads) to the output_file.
+ * This is suitable input for vseqselect to pull those hits out of the mkvtree index.
+ */
 void VmatchAligner::do_alignment(const string& index_name, const string& type, int match_length, int mismatch_allowed, const string& query_file, const Params& params, const string& output_file) {
 	// Is this a protein query (round 1 only)? If not, empty string.
 	string align_type = (type == "protein") ? "-dnavsprot 1": "";
@@ -106,7 +127,7 @@ void VmatchAligner::do_alignment(const string& index_name, const string& type, i
 	// Other parameters are set up here.
 	string param_list = "";
 	for ( Params::const_iterator it = params.begin(); it != params.end(); ++it ){
-			// Is "-e" option handled here, or above? Something seems vestigial.
+			// Allowed number of mismatches may be handled by arguments or from params
 			if (it->first == "e") {
 				if (str2int(it->second) > 0){
 					e_option = " -e " + it->second;
@@ -120,9 +141,11 @@ void VmatchAligner::do_alignment(const string& index_name, const string& type, i
 	}
 	string cmd;
 	string tmpvmfile = output_file + "-tmp";
-// Vmatch output is appended to the output file so that left and right read searches for one part go into the same output file:
+	/* Vmatch output is appended to the output file so that left and right read searches for one part go into the same output file.
+	 * AWK selects only the column containing the sequence number. It is different for proteins because the reads are used as queries.
+	 */
 	if (type == "protein" ) {
-		cmd = "vmatch " + align_type + " -q " + query_file + " -d"    + " -l " + int2str(match_length) + " " + e_option + " " + param_list + " -nodist -noevalue -noscore -noidentity " + index_name + " | awk '$0 !~ /^#.*/ {print $6}' >> " + output_file + "; sort -nu " + output_file + " > " + tmpvmfile + "; \\mv " + tmpvmfile + " " + output_file;
+		cmd = "vmatch " + align_type + " -q " + query_file + " -d" + " -l " + int2str(match_length) + " " + e_option + " " + param_list + " -nodist -noevalue -noscore -noidentity " + index_name + " | awk '$0 !~ /^#.*/ {print $6}' >> " + output_file + "; sort -nu " + output_file + " > " + tmpvmfile + "; \\mv " + tmpvmfile + " " + output_file;
 	} else if (type == "cdna" ) {
 		cmd = "vmatch " + align_type + " -q " + query_file + " -d -p" + " -l " + int2str(match_length) + " " + e_option + " " + param_list + " -nodist -noevalue -noscore -noidentity " + index_name + " | awk '$0 !~ /^#.*/ {print $2}' >> " + output_file + "; sort -nu " + output_file + " > " + tmpvmfile + "; \\mv " + tmpvmfile + " " + output_file;
 	}
@@ -154,7 +177,7 @@ void VmatchAligner::align_long_contigs(const string& long_contig_candidate_file,
 
 	string indexname = tmp_dir + "/contigs";
 	string alignment_out_file = tmp_dir + "/output.aln";
-	string cmd = "mkvtree -dna -db " + contig_file + " -pl -indexname " + indexname + " -allout -v >> " + logger->get_log_file();
+	string cmd = "mkvtree -dna -db " + contig_file + " -pl -indexname " + indexname + " -allout >> " + logger->get_log_file();
 	logger->debug(cmd);
 	run_shell_command(cmd);
 	cmd = "vmatch -q " + long_contig_candidate_file + " -l " + int2str(max_contig_size) + " -showdesc 0 -nodist -noevalue -noscore -noidentity " + indexname + " | awk '{print $1,$2,$3,$4,$5,$6}' | uniq -f5 > " + alignment_out_file;

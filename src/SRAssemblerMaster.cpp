@@ -9,11 +9,12 @@
 
 SRAssemblerMaster::SRAssemblerMaster() {
 	// TODO Auto-generated constructor stub
+	//cerr << "SRAssemblerMaster constructed." << endl ;
 }
 
-int SRAssemblerMaster::init(int argc, char * argv[], int rank, int mpiSize) {
+int SRAssemblerMaster::init(int argc, char * argv[], int rank, int mpiSize, const int start_time) {
 	string cmd;
-	int ret = SRAssembler::init(argc, argv, rank, mpiSize);
+	int ret = SRAssembler::init(argc, argv, rank, mpiSize, start_time);
 	if (ret == -1)
 		return ret;
 	if (!get_aligner(Aligner::PROTEIN_ALIGNER)->is_available()) return -1;
@@ -28,6 +29,7 @@ int SRAssemblerMaster::init(int argc, char * argv[], int rank, int mpiSize) {
 		cmd.append(argv[i]).append(" ");
 	}
 	logger->info(cmd);
+	//logger->info("Dump directory is " + mem_dir);
 	output_header();
 	output_libraries();
 	get_query_list();
@@ -175,26 +177,24 @@ void SRAssemblerMaster::do_preprocessing(){
 	for (unsigned lib_index=0;lib_index<this->libraries.size();lib_index++) {
 		Library* lib = &this->libraries[lib_index];
 		lib->set_num_parts(1);
-		// test if files are generated before
+		// test if split files have been generated
 		if (file_exists(lib->get_split_file_name(1, LEFT_READ))){
 			//long library_read_count = get_read_count(lib->get_left_read(), lib->get_format()) + get_read_count(lib->get_right_read(), lib->get_format());
-			long split_read_count = count_preprocessed_reads(lib_index);
-			split_read_count /= 2; // Don't count header lines
-			logger->debug("split_read_count: " + int2str(split_read_count));
-			lib->set_num_parts(get_file_count(data_dir + "/lib" + int2str(lib_index+1) + "/" + get_file_base_name(lib->get_left_read()) + "_*." + "fasta"));
+			//long split_read_count = count_preprocessed_reads(lib_index);
+			//logger->debug("split_read_count: " + int2str(split_read_count));
+			lib->set_num_parts(get_file_count(lib->get_split_read_prefix(lib->get_left_read()) + "*.fasta"));
 			// Test if split reads have been indexed
 			if (file_exists(lib->get_read_part_index_name(lib->get_num_parts(), LEFT_READ) + ".skp")){
 				logger->info("Using previously split files for read library " + int2str(lib_index+1));
 				broadcast_code(ACTION_TOTAL_PARTS, lib_index, lib->get_num_parts(), 0);
-				//broadcast_code(ACTION_EXIT, 0, 0);
 				continue;
 			}
 		}
 		logger->info("Splitting read library " + int2str(lib_index+1) + " ...");
-		cmd = "rm -f " + data_dir + "/lib" + int2str(lib_index+1) + "/" + get_file_base_name(lib->get_left_read()) + "*";      //delete old files
+		cmd = "rm -f " + data_dir + "/lib" + int2str(lib_index+1) + "/" + get_file_base_name(lib->get_left_read()) + "*"; //delete old files
 		logger->debug(cmd);
 		run_shell_command(cmd);
-		cmd = "rm -f " + data_dir + "/lib" + int2str(lib_index+1) + "/" + get_file_base_name(lib->get_right_read()) + "*";      //delete old files
+		cmd = "rm -f " + data_dir + "/lib" + int2str(lib_index+1) + "/" + get_file_base_name(lib->get_right_read()) + "*"; //delete old files
 		logger->debug(cmd);
 		run_shell_command(cmd);
 		// Why would you name a variable 'from'?
@@ -205,7 +205,6 @@ void SRAssemblerMaster::do_preprocessing(){
 		// File splitting is handled by the actual library. It does not seem to take file type into acount.
 		if (lib->get_paired_end() && mpiSize > 2){
 			send_code(1, ACTION_SPLIT, lib_index, 1, 0);
-			system("sleep 0.5");
 			send_code(2, ACTION_SPLIT, lib_index, 2, 0);
 			mpi_receive(code_value, from);
 			mpi_receive(code_value, from);
@@ -216,15 +215,8 @@ void SRAssemblerMaster::do_preprocessing(){
 			if (lib->get_paired_end())
 				lib->do_split_files(RIGHT_READ, this->reads_per_file);
 		}
-		// We need to count all files because we are not interleaving.
-		//if (lib->get_paired_end()) {
-			//lib->set_num_parts(get_file_count(lib->get_split_read_prefix(lib->get_left_read()) + "*") + get_file_count(lib->get_split_read_prefix(lib->get_right_read()) + "*"));
-		//} else {
-			//lib->set_num_parts(get_file_count(lib->get_split_read_prefix(lib->get_left_read()) + "*"));
-		//}
 		lib->set_num_parts(get_file_count(lib->get_split_read_prefix(lib->get_left_read()) + "*.fasta"));
 		logger->info("We have " + int2str(lib->get_num_parts()) +" split files");
-
 		broadcast_code(ACTION_TOTAL_PARTS, lib_index, lib->get_num_parts(), 0);
 		int completed = 0;
 
@@ -234,7 +226,6 @@ void SRAssemblerMaster::do_preprocessing(){
 		} else {
 			if (lib->get_num_parts() < mpiSize){
 				for (part=1; part<=lib->get_num_parts(); part++){
-					//system("sleep 0.5");
 					send_code(part, ACTION_PRE_PROCESSING, lib_index, part, 0);
 				}
 				while(completed < lib->get_num_parts()){
@@ -244,7 +235,6 @@ void SRAssemblerMaster::do_preprocessing(){
 			}
 			else {
 				for (part=1;part<mpiSize;part++){
-					//system("sleep 0.5");
 					send_code(part, ACTION_PRE_PROCESSING, lib_index, part, 0);
 				}
 				while (completed < lib->get_num_parts()){
@@ -275,9 +265,9 @@ int SRAssemblerMaster::get_start_round(){
 				for (unsigned int lib_idx=0;lib_idx<this->libraries.size();lib_idx++){
 					Library lib = this->libraries[lib_idx];
 					// Why do we keep re-assigning found_previous?
-					//found_previous = file_exists(lib.get_matched_left_read_filename(i));
+					//found_previous = file_exists(lib.get_matched_left_reads_filename(i));
 					//if (lib.get_paired_end())
-						//found_previous = file_exists(lib.get_matched_right_read_filename(i));
+						//found_previous = file_exists(lib.get_matched_right_reads_filename(i));
 					found_previous = file_exists(get_query_fasta_file_name(i+1));
 				}
 			//}
@@ -291,20 +281,20 @@ int SRAssemblerMaster::get_start_round(){
 				run_shell_command("rm -f " + tmp_dir + "/matched_reads_right_" + "r" + int2str(start_round) + "*");
 				for (unsigned int lib_idx=0;lib_idx<this->libraries.size();lib_idx++){
 					Library lib = this->libraries[lib_idx];
-					run_shell_command("cp " + lib.get_matched_left_read_filename(i) + " " + lib.get_matched_left_read_filename());
+					run_shell_command("cp " + lib.get_matched_left_reads_filename(i) + " " + lib.get_matched_left_reads_filename());
 					if(lib.get_paired_end()){
-						run_shell_command("cp " + lib.get_matched_right_read_filename(i) + " " + lib.get_matched_right_read_filename());
+						run_shell_command("cp " + lib.get_matched_right_reads_filename(i) + " " + lib.get_matched_right_reads_filename());
 					}
 				}
 				if (mpiSize > 1){
 					for (int i=1;i<mpiSize;i++)
-						 send_code(i, ACTION_LOAD_PREVIOUS, start_round - 1, 0, 0);
+						send_code(i, ACTION_LOAD_PREVIOUS, start_round - 1, 0, 0);
 					int completed = 0;
 					int code_value = 0;
 					int from = 0;
 					while(completed < mpiSize - 1){
-						  mpi_receive(code_value, from);
-						  completed++;
+						mpi_receive(code_value, from);
+						completed++;
 					}
 				}
 				else
@@ -340,9 +330,15 @@ void SRAssemblerMaster::do_walking(){
 		logger->info("Starting round " + int2str(round) + " ...");
 		int new_reads_count = 0;
 
-		// Index the contigs in round 1 for the dnavsprot vmatch step
-		if (round == 1)
-			create_index(round);
+		// Index the query in round 1 for the dnavsprot vmatch step
+		if (round == 1) {
+			create_index(1);
+		} else {
+			// Mask the previous round's contigs for later searches
+			if (assembly_round < round) {
+				mask_contigs(round-1);
+			}
+		}
 
 		// For each library
 		for (unsigned lib_idx=0;lib_idx<this->libraries.size();lib_idx++){
@@ -351,14 +347,12 @@ void SRAssemblerMaster::do_walking(){
 			// If not parallelized, start a new alignment every 1/2 second?
 			if (mpiSize == 1){
 				for (read_part=1; read_part<=lib.get_num_parts(); read_part++){
-					sleep(0.5);
 					new_reads_count += do_alignment(round, lib_idx, read_part);
 				}
 			} else {
 				// If there are more split read files than processors
 				if (lib.get_num_parts() < mpiSize){
 					for (read_part=1; read_part<=lib.get_num_parts(); read_part++){
-						sleep(0.5);
 						send_code(read_part, ACTION_ALIGNMENT, round, read_part, lib_idx);
 					}
 					while(completed < lib.get_num_parts()){
@@ -371,7 +365,6 @@ void SRAssemblerMaster::do_walking(){
 				// If there are fewer split read files than processors
 				} else {
 					for (read_part=1;read_part<mpiSize;read_part++){
-						sleep(0.5);
 						send_code(read_part, ACTION_ALIGNMENT, round, read_part, lib_idx);
 					}
 					while (completed < lib.get_num_parts()){
@@ -388,6 +381,8 @@ void SRAssemblerMaster::do_walking(){
 				}
 			}
 		}
+		save_mapped_reads(round);
+
 
 		if (new_reads_count == 0) {
 			logger->info("The walking is terminated: No new reads found.");
@@ -395,13 +390,14 @@ void SRAssemblerMaster::do_walking(){
 		}
 		merge_mapped_files(round);
 		int read_count = get_total_read_count(round);
-		logger->info("Found matched reads: " + int2str(read_count));
+		logger->info("Found new reads: " + int2str(new_reads_count));
+		logger->info("Total matched reads: " + int2str(read_count));
 		if (assembly_round <= round){
 			unsigned int longest_contig = do_assembly(round);
 			summary_best += int2str(read_count) + "\n";
 			bool no_reads = true;
 			for (unsigned int lib_idx=0; lib_idx < this->libraries.size(); lib_idx++){
-				if (get_file_size(libraries[lib_idx].get_matched_left_read_filename()) > 0) {
+				if (get_file_size(libraries[lib_idx].get_matched_left_reads_filename()) > 0) {
 					no_reads = false;
 					break;
 				}
@@ -416,11 +412,13 @@ void SRAssemblerMaster::do_walking(){
 				logger->info("The walking is terminated: No contigs found.");
 				break;
 			}
+			// If maximum round is reached, stop
 			logger->info("Round " + int2str(round) + " is done!");
 			if (round == num_rounds) {
 				logger->info("The walking is terminated: The maximum round (" + int2str(num_rounds) + ") has been reached.");
 				break;
 			}
+			// If we haven't yet found a contig that meets the required length
 			if (longest_contig < min_contig_lgth) {
 				//RM HERE
 				clean_tmp_files(round-1);
@@ -438,8 +436,8 @@ void SRAssemblerMaster::do_walking(){
 				BOOST_FOREACH(string_map::value_type item, query_map) {
 					contig_list.push_back(item.second);
 					for (int i=this->query_list.size()-1;i>=0;i--){
-						  if (query_list[i] == item.first){
-							  query_list.erase(query_list.begin()+i);
+						if (query_list[i] == item.first){
+							query_list.erase(query_list.begin()+i);
 						}
 					}
 				}
@@ -454,13 +452,19 @@ void SRAssemblerMaster::do_walking(){
 						logger->info("The walking is terminated: All contigs have enough coverage and score.");
 						break;
 					}
-					clean_unmapped_reads(round);
+					// Assembled contigs that don't have some degree of hit to the query are removed.
+					remove_no_hit_contigs(round);
+					remove_unmapped_reads(round);
 					cleaned = true;
 				}
 			}
-			if (clean_round > 2 && !cleaned)
-				if (round % clean_round == 0)
-					clean_unmapped_reads(round);
+			if (clean_round > 2 && !cleaned) {
+				if (round % clean_round == 0) {
+					// Assembled contigs that don't have some degree of hit to the query are removed.
+					remove_no_hit_contigs(round);
+					remove_unmapped_reads(round);
+				}
+			}
 		} else {
 			logger->info("Round " + int2str(round) + " is done!");
 			if (round == num_rounds) {
@@ -603,7 +607,6 @@ int SRAssemblerMaster::do_assembly(int round) {
 	} else {
 		if (total_k < mpiSize-1){
 			for (i=1; i<=total_k; i++){
-				sleep(0.5);
 				send_code(i, ACTION_ASSEMBLY, round, start_k + (i-1)*step_k, 0);
 			}
 			while(completed < total_k){
@@ -613,7 +616,6 @@ int SRAssemblerMaster::do_assembly(int round) {
 		}
 		else {
 			for (i=1;i<mpiSize;i++){
-				sleep(0.5);
 				send_code(i, ACTION_ASSEMBLY, round, start_k + (i-1)*step_k, 0);
 			}
 			while(completed < total_k){
@@ -790,9 +792,9 @@ void SRAssemblerMaster::process_long_contigs(int round, int k) {
 			//string type_option = (lib.get_format() == FORMAT_FASTQ)? "-q" : "-f";
 			string type_option = "-f";
 			if (lib.get_paired_end())
-				cmd = "bowtie " + type_option + " -v 2 --suppress 2,3,4,5,6,7,8 " + tmp_dir + "/long_contig " + lib.get_matched_left_read_filename() + "," + lib.get_matched_right_read_filename() + " " + reads_on_contigs + " >> " + logger->get_log_file() + " 2>&1";
+				cmd = "bowtie " + type_option + " -v 2 --suppress 2,3,4,5,6,7,8 " + tmp_dir + "/long_contig " + lib.get_matched_left_reads_filename() + "," + lib.get_matched_right_reads_filename() + " " + reads_on_contigs + " >> " + logger->get_log_file() + " 2>&1";
 			else
-				cmd = "bowtie "  + type_option + " -v 2 --suppress 2,3,4,5,6,7,8 " + tmp_dir + "/long_contig " + lib.get_matched_left_read_filename() + " " + reads_on_contigs + " >> " + logger->get_log_file() + " 2>&1";
+				cmd = "bowtie " + type_option + " -v 2 --suppress 2,3,4,5,6,7,8 " + tmp_dir + "/long_contig " + lib.get_matched_left_reads_filename() + " " + reads_on_contigs + " >> " + logger->get_log_file() + " 2>&1";
 			logger->debug(cmd);
 			run_shell_command(cmd);
 
@@ -805,18 +807,18 @@ void SRAssemblerMaster::process_long_contigs(int round, int k) {
 			}
 			reads_file.close();
 
-			string left_matched = lib.get_matched_left_read_filename();
-			string right_matched = lib.get_matched_right_read_filename();
-			string left_processed = tmp_dir + "/matched_reads_processed_left." + lib.get_file_extension();
-			string right_processed = tmp_dir + "/matched_reads_processed_right." + lib.get_file_extension();
+			string left_matched_reads = lib.get_matched_left_reads_filename();
+			string right_matched_reads = lib.get_matched_right_reads_filename();
+			string left_processed_reads = tmp_dir + "/matched_reads_processed_left." + lib.get_file_extension();
+			string right_processed_reads = tmp_dir + "/matched_reads_processed_right." + lib.get_file_extension();
 
-			ifstream left_matched_stream(left_matched.c_str());
-			ofstream left_processed_stream(left_processed.c_str());
-			ifstream right_matched_stream;
-			ofstream right_processed_stream;
+			ifstream left_matched_reads_stream(left_matched_reads.c_str());
+			ofstream left_processed_reads_stream(left_processed_reads.c_str());
+			ifstream right_matched_reads_stream;
+			ofstream right_processed_reads_stream;
 			if (lib.get_paired_end()) {
-				right_matched_stream.open(right_matched.c_str(), ios_base::in);
-				right_processed_stream.open(right_processed.c_str(), ios_base::out);
+				right_matched_reads_stream.open(right_matched_reads.c_str(), ios_base::in);
+				right_processed_reads_stream.open(right_processed_reads.c_str(), ios_base::out);
 			}
 			string left_header = "";
 			string right_header = "";
@@ -825,7 +827,7 @@ void SRAssemblerMaster::process_long_contigs(int round, int k) {
 			string left_qual = "";
 			string right_qual = "";
 			string plus;
-			while (getline(left_matched_stream, left_header)){
+			while (getline(left_matched_reads_stream, left_header)){
 				string left_seq_id = "";
 				string right_seq_id = "";
 				string lead_chr = ">";
@@ -836,10 +838,10 @@ void SRAssemblerMaster::process_long_contigs(int round, int k) {
 					else
 						left_seq_id = left_header.substr(1, pos-1);
 					left_seq_id.erase(left_seq_id.find_last_not_of("\n\r\t")+1);
-					getline(left_matched_stream, left_seq);
+					getline(left_matched_reads_stream, left_seq);
 					if (lib.get_paired_end()){
-						getline(right_matched_stream, right_header);
-						getline(right_matched_stream, right_seq);
+						getline(right_matched_reads_stream, right_header);
+						getline(right_matched_reads_stream, right_seq);
 						pos = right_header.find_first_of(" ");
 						if (pos ==string::npos)
 							right_seq_id = right_header;
@@ -848,43 +850,33 @@ void SRAssemblerMaster::process_long_contigs(int round, int k) {
 						right_seq_id.erase(right_seq_id.find_last_not_of(" \n\r\t")+1);
 					}
 					if (mapped_reads.find(left_seq_id) == mapped_reads.end() && (lib.get_paired_end() && mapped_reads.find(right_seq_id) == mapped_reads.end())){
-						left_processed_stream << left_header << endl << left_seq << endl;
+						left_processed_reads_stream << left_header << endl << left_seq << endl;
 						if (lib.get_paired_end()){
-							right_processed_stream << right_header << endl << right_seq << endl;
+							right_processed_reads_stream << right_header << endl << right_seq << endl;
 						}
 					}
 				}
 			}
-			left_matched_stream.close();
-			right_matched_stream.close();
-			left_processed_stream.close();
-			right_processed_stream.close();
-			cmd = "cp " + left_processed + " " + left_matched;
+			left_matched_reads_stream.close();
+			right_matched_reads_stream.close();
+			left_processed_reads_stream.close();
+			right_processed_reads_stream.close();
+			cmd = "cp " + left_processed_reads + " " + left_matched_reads;
 			logger->debug(cmd);
 			run_shell_command(cmd);
-			cmd = "cp " + left_processed + " " + lib.get_matched_left_read_filename(round);
+			cmd = "cp " + left_processed_reads + " " + lib.get_matched_left_reads_filename(round);
 			logger->debug(cmd);
 			run_shell_command(cmd);
 			if (lib.get_paired_end()){
-				cmd = "cp " + right_processed + " " + right_matched;
+				cmd = "cp " + right_processed_reads + " " + right_matched_reads;
 				logger->debug(cmd);
 				run_shell_command(cmd);
-				cmd = "cp " + right_processed + " " + lib.get_matched_right_read_filename(round);
+				cmd = "cp " + right_processed_reads + " " + lib.get_matched_right_reads_filename(round);
 				logger->debug(cmd);
 				run_shell_command(cmd);
 			}
 		}
 	}
-	// For right now masking is done by NCBI's dustmasker.
-	//TODO This should be more modular
-	//TODO Masking is happening before cleaning in cleaning rounds.
-	string cmd;
-	string contig_file;
-	contig_file = get_contig_file_name(round);
-	string masked_file = contig_file + ".masked";
-	//cmd = "printf '\e[38;5;002mPROCESS_LONG_CONTIGS\e[0m\n'; dustmasker -in " + contig_file + " -outfmt fasta -out - | sed '/^[^>]/s/[a-z]/N/g' > " + masked_file;
-	cmd = "dustmasker -in " + contig_file + " -outfmt fasta -out - | sed '/^[^>]/s/[a-z]/N/g' > " + masked_file;
-	run_shell_command(cmd);
 }
 
 void SRAssemblerMaster::remove_hit_contigs(vector<string> &contig_list, int round){
@@ -926,42 +918,6 @@ void SRAssemblerMaster::remove_hit_contigs(vector<string> &contig_list, int roun
 	contig_file_stream.close();
 	tmp_file_stream.close();
 	saved_contig_file.close();
-	string cmd = "cp " + tmp_file + " " + contig_file;
-	run_shell_command(cmd);
-	//RM HERE
-	cmd = "rm " + tmp_file;
-	run_shell_command(cmd);
-}
-
-void SRAssemblerMaster::remove_no_hit_contigs(unordered_set<string> &hit_list, int round){
-	logger->debug("remove contigs without hits against query sequences in round " + int2str(round));
-	string contig_file = get_contig_file_name(round);
-	string tmp_file = tmp_dir + "/contig_tmp_" + "r" + int2str(round) + ".fasta";
-	string line;
-	string header = "";
-	string seq = "";
-	ifstream contig_file_stream(contig_file.c_str());
-	ofstream tmp_file_stream(tmp_file.c_str());
-	bool hit_seq = false;
-	int contig_number = 0;
-	while (getline(contig_file_stream, line)){
-		if (line.substr(0,1) == ">"){
-			string contig_id = int2str(contig_number);
-			if (hit_seq) {
-			 	tmp_file_stream << ">" << header << endl << seq << endl;
-			}
-			header = line.substr(1);
-			hit_seq = (find(hit_list.begin(), hit_list.end(), contig_id) != hit_list.end());
-			seq = "";
-			contig_number++;
-		}
-		else
-			seq.append(line);
-	}
-	if (hit_seq)
-		tmp_file_stream << ">" << header << endl << seq << endl;
-	contig_file_stream.close();
-	tmp_file_stream.close();
 	string cmd = "cp " + tmp_file + " " + contig_file;
 	run_shell_command(cmd);
 	//RM HERE
@@ -1037,131 +993,95 @@ void SRAssemblerMaster::create_folders(){
 	run_shell_command(cmd);
 	cmd = "mkdir " + tmp_dir;
 	run_shell_command(cmd);
+	cmd = "mkdir " + mem_dir;
+	run_shell_command(cmd);
 }
 
 void SRAssemblerMaster::remove_no_hit_contigs(int round){
 	logger->info("Removing contigs without hits ...");
+	string cmd;
 	string contig_file = get_contig_file_name(round);
+run_shell_command("cp " + contig_file + " " + contig_file + ".original");
 	Aligner* aligner = get_aligner(round);
+	// Index contigs for easy extraction of hit contigs
+	aligner->create_index(tmp_dir + "/cindex", "dna", contig_file);
+	// Why are we remaking this index every time?
 	aligner->create_index(tmp_dir + "/qindex", type, query_file);
 	string program_name = aligner->get_program_name();
 	program_name += "_" + get_type(1) + "_vs_contig";
 	Params params = read_param_file(program_name);
-	string out_file = tmp_dir + "/query_contig.aln";
+	string out_file = tmp_dir + "/query_contig.round" + int2str(round) + ".aln";
+//	cmd = "rm " + out_file;
+//	logger->debug(cmd);
+//	run_shell_command(cmd);
 	aligner->do_alignment(tmp_dir + "/qindex", type, get_match_length(1), get_mismatch_allowed(1), contig_file, params, out_file);
-	unordered_set<string> hits = aligner->get_hit_list(out_file);
-	remove_no_hit_contigs(hits, round);
-	string cmd = "rm -f " + tmp_dir + "/qindex*";
+//	cmd = "cp " + out_file + " " + out_file + ".round" + int2str(round);
+//	logger->debug(cmd);
+//	run_shell_command(cmd);
+	logger->debug("remove contigs without hits against query sequences in round " + int2str(round));
+	cmd = "vseqselect -seqnum " + out_file + " " + tmp_dir + "/cindex | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' > " + contig_file;
+	logger->debug(cmd);
+	run_shell_command(cmd);
+	//string cmd = "rm -f " + tmp_dir + "/qindex*";
+	cmd = "rm -f " + tmp_dir + "/cindex*";
 	logger->debug(cmd);
 	run_shell_command(cmd);
 }
 
-void SRAssemblerMaster::clean_unmapped_reads(int round){
-//TODO improve the speed of the read finding. May be able to parse bowtie output directly.
-	remove_no_hit_contigs(round);
+//TODO I think maybe it makes sense to apply this to MASKED contigs
+void SRAssemblerMaster::remove_unmapped_reads(int round){
+	logger->info("Removing found reads without matched contigs ...");
+	string cmd;
 	string contig_file = get_contig_file_name(round);
-	//remove associated reads
-	string index_name = tmp_dir + "/contig_index_" + int2str(round);
-	string cmd = "bowtie-build " + contig_file + " " + index_name + " >> " + logger->get_log_file();
-	logger->debug(cmd);
-	run_shell_command(cmd);
-	for (unsigned int lib_idx=0; lib_idx < this->libraries.size(); lib_idx++){
+	Aligner* aligner = get_aligner(round);
+	for (unsigned int lib_idx=0; lib_idx < this->libraries.size(); lib_idx++) {
 		Library lib = this->libraries[lib_idx];
-		//string type_option = (lib.get_format() == FORMAT_FASTQ)? "-q" : "-f";
-		string type_option = "-f";
-		string reads_on_contigs = tmp_dir + "/matched_reads" + int2str(lib_idx+1) + ".sam";
-		if (lib.get_paired_end())
-			cmd = "bowtie " + type_option + " -v 2 --suppress 2,3,4,5,6,7,8 " + index_name + " " + lib.get_matched_left_read_filename() + "," + lib.get_matched_right_read_filename() + " " + reads_on_contigs + " >> " + logger->get_log_file() + " 2>&1";
-		else
-			cmd = "bowtie "  + type_option + " -v 2 --suppress 2,3,4,5,6,7,8 " + index_name + " " + lib.get_matched_left_read_filename() + " " + reads_on_contigs + " >> " + logger->get_log_file() + " 2>&1";
-		logger->debug(cmd);
-		run_shell_command(cmd);
-		//read sam file
-		boost::unordered_set<string> mapped_reads;
-		ifstream reads_file(reads_on_contigs.c_str());
-		string line;
-		while (getline(reads_file, line)) {
-			line.erase(line.find_last_not_of(" \n\r\t")+1);
-			mapped_reads.insert(line);
-		}
-		reads_file.close();
-		string left_matched = lib.get_matched_left_read_filename();
-		string right_matched = lib.get_matched_right_read_filename();
-		string left_processed = tmp_dir + "/matched_reads_processed_left." + "fasta";
-		string right_processed = tmp_dir + "/matched_reads_processed_right." + "fasta";
-
-		ifstream left_matched_stream(left_matched.c_str());
-		ofstream left_processed_stream(left_processed.c_str());
-		ifstream right_matched_stream;
-		ofstream right_processed_stream;
+		// Index current matched reads
+		string left_matched_reads = lib.get_matched_left_reads_filename();
+		string right_matched_reads;
 		if (lib.get_paired_end()) {
-			right_matched_stream.open(right_matched.c_str(), ios_base::in);
-			right_processed_stream.open(right_processed.c_str(), ios_base::out);
+			 right_matched_reads = lib.get_matched_right_reads_filename();
 		}
-		string left_header = "";
-		string right_header = "";
-		string left_seq = "";
-		string right_seq = "";
-		string left_qual = "";
-		string right_qual = "";
-		string plus;
-		while (getline(left_matched_stream, left_header)){
-			string left_seq_id = "";
-			string right_seq_id = "";
-			if (left_header.length()==0)
-				continue;
-			string lead_chr = ">";
-			if (left_header.substr(0,1) == lead_chr){
-				size_t pos = left_header.find_first_of(" ");
-				if (pos ==string::npos)
-					left_seq_id = left_header.substr(1);
-				else
-					left_seq_id = left_header.substr(1, pos-1);
-				left_seq_id.erase(left_seq_id.find_last_not_of("\n\r\t")+1);
-				getline(left_matched_stream, left_seq);
-				if (lib.get_paired_end()){
-					getline(right_matched_stream, right_header);
-					getline(right_matched_stream, right_seq);
-					pos = right_header.find_first_of(" ");
-					if (pos ==string::npos)
-						right_seq_id = right_header.substr(1);
-					else
-						right_seq_id = right_header.substr(1, pos-1);
-					right_seq_id.erase(right_seq_id.find_last_not_of("\n\r\t")+1);
-				}
-				if (mapped_reads.find(left_seq_id) != mapped_reads.end() && (lib.get_paired_end() || mapped_reads.find(right_seq_id) != mapped_reads.end())){
-					left_processed_stream << left_header << endl << left_seq << endl;
-					if (lib.get_paired_end()){
-						right_processed_stream << right_header << endl << right_seq << endl;
-					}
-				}
-			}
+		aligner->create_index(tmp_dir + "/left_reads_index", "dna", left_matched_reads);
+		if (lib.get_paired_end()) {
+			aligner->create_index(tmp_dir + "/right_reads_index", "dna", right_matched_reads);
 		}
-		left_matched_stream.close();
-		right_matched_stream.close();
-		left_processed_stream.close();
-		right_processed_stream.close();
-		cmd = "cp " + left_processed + " " + left_matched;
+
+		// Use the contigs as queries against the matched reads to identify matchy reads
+		string program_name = aligner->get_program_name();
+		program_name += "_contig_vs_reads";
+		Params params = read_param_file(program_name);
+		string vmatch_outfile = tmp_dir + "/contig_reads.lib" + int2str(lib_idx+1) + ".round" + int2str(round) + ".aln";
+//		run_shell_command("rm " + vmatch_outfile);
+		aligner->do_alignment(tmp_dir + "/left_reads_index", "cdna", 30, 2, contig_file, params, vmatch_outfile);
+		if (lib.get_paired_end()) {
+			aligner->do_alignment(tmp_dir + "/right_reads_index", "cdna", 30, 2, contig_file, params, vmatch_outfile);
+		}
+
+		// Use vseqselect to collect matchy reads
+		logger->debug("remove reads without hits against contigs in round " + int2str(round));
+		cmd = "vseqselect -seqnum " + vmatch_outfile + " " + tmp_dir + "/left_reads_index | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' > " + left_matched_reads;
 		logger->debug(cmd);
 		run_shell_command(cmd);
-		cmd = "cp " + left_processed + " " + lib.get_matched_left_read_filename(round);
+		cmd = "cp " + left_matched_reads + " " + lib.get_matched_left_reads_filename(round);
 		logger->debug(cmd);
 		run_shell_command(cmd);
-		if (lib.get_paired_end()){
-			cmd = "cp " + right_processed + " " + right_matched;
+		if (lib.get_paired_end()) {
+			cmd = "vseqselect -seqnum " + vmatch_outfile + " " + tmp_dir + "/right_reads_index | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' > " + right_matched_reads;
 			logger->debug(cmd);
 			run_shell_command(cmd);
-			cmd = "cp " + right_processed + " " + lib.get_matched_right_read_filename(round);
+			cmd = "cp " + left_matched_reads + " " + lib.get_matched_left_reads_filename(round);
 			logger->debug(cmd);
 			run_shell_command(cmd);
 		}
 	}
-	//RM HERE
-	cmd = "rm -f " + index_name + "*";
+	//RM here
+	cmd = "rm -f " + tmp_dir + "/left_reads_index* " + tmp_dir + "/right_reads_index*";
 	logger->debug(cmd);
 	run_shell_command(cmd);
 }
 
 SRAssemblerMaster::~SRAssemblerMaster() {
 	// TODO Auto-generated destructor stub
+	cerr << "SRAssemblerMaster destructed" << endl ;
 }

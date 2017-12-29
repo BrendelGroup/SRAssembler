@@ -22,7 +22,7 @@ void mpi_receive(char* msg, int& from );
 void mpi_send( const int& code, const int& to );
 void mpi_bcast(const int& code);
 void mpi_receive( int& code, int& from );
-int get_mpi_code_value(mpi_code code);
+unsigned long get_mpi_code_value(mpi_code code);
 mpi_code get_mpi_code(int code_value);
 void mpi_init(int argc, char * argv[] );
 int mpi_get_rank();

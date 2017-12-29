@@ -37,7 +37,7 @@ class SRAssembler {
 public:
 	SRAssembler();
 	virtual ~SRAssembler();
-	virtual int init(int argc, char * argv[], int rank, int mpiSize);
+	virtual int init(int argc, char * argv[], int rank, int mpiSize, const int start_time);
 	virtual void do_preprocessing()=0;
 	virtual void do_walking()=0;
 	virtual void show_usage()=0;
@@ -54,7 +54,8 @@ protected:
 	void create_index(int round);
 	std::string get_contigs_index_name(int round);
 	std::string get_query_fasta_file_name(int round);
-	std::string get_masked_query_fasta_file_name(int round);
+	void mask_contigs(int round);
+	std::string get_query_fasta_file_name_masked(int round);
 	std::string get_contig_file_name(int round);
 	std::string get_mapped_reads_file_name(int round);
 	std::string get_vmatch_output_filename(int round, int lib_idx, int idx);
@@ -111,6 +112,7 @@ protected:
 	bool preprocessed_exist;
 	std::string library_file;
 	std::string tmp_dir;
+	std::string mem_dir;
 	std::string intermediate_dir;
 	std::string data_dir;
 	std::string results_dir;
@@ -118,6 +120,7 @@ protected:
 	std::string param_file;
 	std::string spliced_alignment_output_file;
 	std::string gene_finding_output_file;
+	std::string gene_finding_output_protein_file;
 	std::string usage;
 	std::string final_scaf_file;
 	std::string final_contig_file;

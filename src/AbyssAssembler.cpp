@@ -30,13 +30,13 @@ void AbyssAssembler::do_assembly(int kmer, const vector<Library>& libraries, con
 	string single_files = "";
 	for (unsigned int i=0; i<libraries.size();i++){
 		Library lib = libraries[i];
-		if (get_file_size(lib.get_matched_left_read_filename()) == 0) continue;
+		if (get_file_size(lib.get_matched_left_reads_filename()) == 0) continue;
 		if (lib.get_paired_end()) {
 			string lib_name = "pe" + int2str(lib.get_insert_size());
-			lib_list +=  lib_name + " ";
-			paired_files += lib_name + "='" + lib.get_matched_left_read_filename() + " " + lib.get_matched_right_read_filename() + "' ";
+			lib_list += lib_name + " ";
+			paired_files += lib_name + "='" + lib.get_matched_left_reads_filename() + " " + lib.get_matched_right_reads_filename() + "' ";
 		} else
-			single_files += lib.get_matched_left_read_filename() + " ";
+			single_files += lib.get_matched_left_reads_filename() + " ";
 	}
 	if (lib_list != ""){
 		lib_list = "lib='" + lib_list + "'";

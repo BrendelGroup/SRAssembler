@@ -17,14 +17,15 @@ SRAssembler* SRAssembler::_srassembler = NULL;
 
 SRAssembler::SRAssembler() {
 	// TODO Auto-generated constructor stub
-
+	//cerr << "SRAssembler constructed." << endl ;
 }
 
 SRAssembler::~SRAssembler() {
 	// TODO Auto-generated destructor stub
+	cerr << "SRAssembler destructed" << endl ;
 }
 
-int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
+int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize, const int start_time) {
 	//set the default values
 	init_match_length = INIT_MATCH_LENGTH_PROTEIN;
 	recur_match_length = RECUR_MATCH_LENGTH;
@@ -236,6 +237,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 		return -1;
 	}
 	tmp_dir = out_dir + "/tmp";
+	mem_dir = "/dev/shm/SRAssembler" + int2str(start_time);
 	if (data_dir == "")
 		data_dir = out_dir + "/" + READS_DATA;
 	preprocessed_exist = file_exists(data_dir);
@@ -244,6 +246,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 	log_file = results_dir + "/msg.log";
 	spliced_alignment_output_file = results_dir + "/output.aln";
 	gene_finding_output_file = results_dir + "/output.ano";
+	gene_finding_output_protein_file = results_dir + "/snap.predicted.prot";
 	//spliced_alignment_gsq_file = results_dir + "/output.gsq";
 	final_contig_file = results_dir + "/all_contigs.fasta";
 	summary_file = results_dir + "/summary.html";
@@ -330,6 +333,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 	return 0;
 }
 
+//TODO this should read through one time and store all of the potential parameters so that we aren't always rereading the file
 Params SRAssembler::read_param_file(string program_name) {
 	ifstream param_file(this->param_file.c_str());
 	string line;
@@ -439,90 +443,9 @@ int SRAssembler::count_preprocessed_reads(int lib_idx){
 	// This uses a system call to count the lines in all the fasta files in the split reads directory
 	string cmd = "wc -l " + data_dir + "/lib" + int2str(lib_idx+1) + "/*part*.fasta | tail -n 1 | cut -d' ' -f3";
 	logger->debug(cmd);
-	return str2int(run_shell_command_with_return(cmd));
+	return str2int(run_shell_command_with_return(cmd)) / 2;
 }
 
-// As far as I can tell this produces interleaved FASTA and interleaved FASTQ files from the split files produced by the library's do_split_files() function.
-//void SRAssembler::preprocess_read_part(int lib_idx, int read_part){
-	//Library lib = this->libraries[lib_idx];
-
-	//logger->info("preprocessing lib " + int2str(lib_idx + 1) + ", reads file (" + int2str(read_part) + "/" + int2str(lib.get_num_parts()) + ")");
-	//string suffix = int2str(read_part, 10); // Setting suffix length to 10 for now.
-	//string left_src_read = lib.get_split_read_prefix(lib.get_left_read()) + suffix;
-	//string right_src_read = "";
-	//if (lib.get_paired_end())
-		//right_src_read = lib.get_split_read_prefix(lib.get_right_read()) + suffix;
-	//ifstream left_file(left_src_read.c_str());
-	//ifstream right_file;
-	//if (lib.get_paired_end()){
-		//right_file.open(right_src_read.c_str(), ios_base::in);
-	//}
-	//string left_header = "";
-	//string right_header = "";
-	//string left_seq = "";
-	//string right_seq = "";
-	//string left_qual = "";
-	//string right_qual = "";
-	//string plus;
-	//ofstream split_read_fasta_file;
-	//ofstream split_read_fastq_file; // Shouldn't need this
-	//split_read_fasta_file.open(lib.get_split_file_name(read_part, FORMAT_FASTA).c_str(), ios_base::out);
-	//if (lib.get_format() == FORMAT_FASTQ)
-		//split_read_fastq_file.open(lib.get_split_file_name(read_part, FORMAT_FASTQ).c_str(), ios_base::out);
-	//while (getline(left_file, left_header)) {
-		//// get read data point, which includes 4 lines
-		//string lead_chr = (lib.get_format() == FORMAT_FASTQ)? "@" : ">";
-		//if (left_header.substr(0,1) == lead_chr){
-		 ////save left-end reads
-			//getline(left_file, left_seq);
-			//if (lib.get_format() == FORMAT_FASTQ) {
-				//getline(left_file, plus);
-				//getline(left_file, left_qual);
-			//}
-			//if (lib.get_paired_end()){
-				 ////save right-end reads
-				 //while (getline(right_file, right_header))
-					 //if (right_header.substr(0,1) == lead_chr)
-						 //break;
-				 //getline(right_file, right_seq);
-				 //if (lib.get_format() == FORMAT_FASTQ) {
-					 //getline(right_file, plus);
-					 //getline(right_file, right_qual);
-				 //}
-			//}
-			//if (lib.get_format() == FORMAT_FASTQ) {
-				//split_read_fastq_file << left_header << endl
-									  //<< left_seq << endl
-									  //<< "+" << endl
-									  //<< left_qual << endl;
-			//}
-			//split_read_fasta_file << ">" << left_header.substr(1) << endl << left_seq << endl;
-			//if (lib.get_paired_end()){
-				//if (lib.get_format() == FORMAT_FASTQ) {
-					//split_read_fastq_file << right_header << endl
-								 //<< right_seq << endl
-								 //<< "+" << endl
-								 //<< right_qual << endl;
-				//}
-				//split_read_fasta_file << ">" << right_header.substr(1) << endl << right_seq << endl;
-			//}
-		 //}
-	//}
-	//split_read_fasta_file.close();
-	//if (lib.get_format() == FORMAT_FASTQ)
-		//split_read_fastq_file.close();
-	//left_file.close();
-	//if (lib.get_paired_end())
-		//right_file.close();
-	//string cmd = "rm " + left_src_read + " " + right_src_read;
-	//run_shell_command(cmd);
-	//// Create the Vmatch mkvtree indexes
-	//Aligner* aligner = get_aligner(0);  // Round 0 means DNA Aligner
-	//// create_index(index_name, dna or protein, fasta_file_name)
-	//aligner->create_index(lib.get_read_part_index_name(read_part), "dna", lib.get_split_file_name(read_part, FORMAT_FASTA));
-//}
-
-// Interleaved reads are totally unneccessary
 void SRAssembler::preprocess_read_part(int lib_idx, int read_part){
 	Library lib = this->libraries[lib_idx];
 	logger->info("preprocessing lib " + int2str(lib_idx + 1) + ", reads file (" + int2str(read_part) + "/" + int2str(lib.get_num_parts()) + ")");
@@ -533,7 +456,6 @@ void SRAssembler::preprocess_read_part(int lib_idx, int read_part){
 		right_read_file = lib.get_split_read_prefix(lib.get_right_read()) + suffix;
 	// Create the Vmatch mkvtree indexes
 	Aligner* aligner = get_aligner(0);  // Round 0 means DNA Aligner
-	// create_index(index_name, dna or protein, fasta_file_name)
 	// Creating both indices in one function is not maximally efficient when using a lot of processors, but it's not terrible.
 	aligner->create_index(lib.get_read_part_index_name(read_part, LEFT_READ), "dna", left_read_file);
 	if (lib.get_paired_end())
@@ -592,11 +514,21 @@ string SRAssembler:: get_query_fasta_file_name(int round){
 	}
 	return query_file;
 }
-string SRAssembler:: get_masked_query_fasta_file_name(int round){
+
+void SRAssembler::mask_contigs(int round){
+	string cmd;
+	string contig_file;
+	contig_file = get_contig_file_name(round);
+	string masked_file = contig_file + ".masked";
+	// Sed command replaces lowercase letters NOT in the header with capital Ns. AWK command converts FASTA to single-line.
+	cmd = "dustmasker -in " + contig_file + " -outfmt fasta -out - | sed '/^[^>]/s/[a-z]/N/g' | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' > " + masked_file;
+	run_shell_command(cmd);
+}
+
+string SRAssembler:: get_query_fasta_file_name_masked(int round){
 	if (round > 1){
 		if (assembly_round < round) {
 			string masked_fasta = get_contig_file_name(round-1) + ".masked";
-			//run_shell_command("printf '\e[38;5;002mUSING MASKED FASTA FOR INDEX\e[0m\n'");
 			return masked_fasta;
 		} else {
 			string joined_file = tmp_dir + "/matched_reads_joined.fasta";
@@ -625,7 +557,8 @@ string SRAssembler:: get_contig_file_name(int round){
 }
 
 string SRAssembler:: get_mapped_reads_file_name(int round){
-	return tmp_dir + "/matched_reads_" + "r" + int2str(round) + "_" + "rank" + int2str(this->rank) + ".list";
+	//return tmp_dir + "/matched_reads_" + "r" + int2str(round) + "_" + "rank" + int2str(this->rank) + ".list";
+	return tmp_dir + "/matched_reads_" + "r" + int2str(round) + "_" + "rank" + "0" + ".list";
 }
 
 int SRAssembler::do_alignment(int round, int lib_idx, int read_part) {
@@ -638,28 +571,26 @@ int SRAssembler::do_alignment(int round, int lib_idx, int read_part) {
 	} else {
 		program_name += "_extend_contig";
 	}
-	logger->info("... using Vmatch criteria: " + program_name);
+	//logger->info("... using Vmatch criteria: " + program_name);
+	//TODO we read this parameter file A LOT. We should import the parameters for each program_name once.
 	Params params = this->read_param_file(program_name);
-	int ret;
-	if (round == 1) { // Reads as queries are necessary when searching against a protein.
-		// VmatchAligner::do_alignment(index_name, type, match_length, mismatch_allowed, query_file, params, output_file)
+	int new_read_count;
+	// Reads as queries are necessary when searching against a protein.
+	if (round == 1) {
 		aligner->do_alignment(get_contigs_index_name(round), get_type(round), get_match_length(round), get_mismatch_allowed(round), lib.get_split_file_name(read_part, LEFT_READ), params, get_vmatch_output_filename(round, lib_idx, read_part));
 		if (lib.get_paired_end())
 			aligner->do_alignment(get_contigs_index_name(round), get_type(round), get_match_length(round), get_mismatch_allowed(round), lib.get_split_file_name(read_part, RIGHT_READ), params, get_vmatch_output_filename(round, lib_idx, read_part));
-		// Change to always look in FASTA reads file as source.
-		ret = aligner->parse_output(get_vmatch_output_filename(round, lib_idx, read_part), mapped_reads, read_part, lib.get_read_part_index_name(read_part, LEFT_READ), lib.get_read_part_index_name(read_part, RIGHT_READ), lib.get_matched_left_read_filename(round, read_part), lib.get_matched_right_read_filename(round, read_part));
-		save_mapped_reads(round);
-		return ret;
+		new_read_count = aligner->parse_output(get_vmatch_output_filename(round, lib_idx, read_part), mapped_reads, read_part, lib.get_read_part_index_name(read_part, LEFT_READ), lib.get_read_part_index_name(read_part, RIGHT_READ), lib.get_matched_left_reads_filename(round, read_part), lib.get_matched_right_reads_filename(round, read_part));
+		//save_mapped_reads(round);
+		return new_read_count;
+	// After round 1 we use the masked contig file as the query
 	} else {
-		// VmatchAligner::do_alignment(index_name, type, match_length, mismatch_allowed, query_file, params, output_file)
-		aligner->do_alignment(lib.get_read_part_index_name(read_part, LEFT_READ), get_type(round), get_match_length(round), get_mismatch_allowed(round), get_masked_query_fasta_file_name(round), params, get_vmatch_output_filename(round, lib_idx, read_part));
+		aligner->do_alignment(lib.get_read_part_index_name(read_part, LEFT_READ), get_type(round), get_match_length(round), get_mismatch_allowed(round), get_query_fasta_file_name_masked(round), params, get_vmatch_output_filename(round, lib_idx, read_part));
 		if (lib.get_paired_end())
-			aligner->do_alignment(lib.get_read_part_index_name(read_part, RIGHT_READ), get_type(round), get_match_length(round), get_mismatch_allowed(round), get_masked_query_fasta_file_name(round), params, get_vmatch_output_filename(round, lib_idx, read_part));
-		// VmatchAligner::parse_output(output_file, mapped_reads, read_part, read_index out_left_read, out_right_read)
-		// Need a way to get read indexes
-		ret = aligner->parse_output(get_vmatch_output_filename(round, lib_idx, read_part), mapped_reads, read_part, lib.get_read_part_index_name(read_part, LEFT_READ), lib.get_read_part_index_name(read_part, RIGHT_READ), lib.get_matched_left_read_filename(round, read_part), lib.get_matched_right_read_filename(round, read_part));
-		save_mapped_reads(round);
-		return ret;
+			aligner->do_alignment(lib.get_read_part_index_name(read_part, RIGHT_READ), get_type(round), get_match_length(round), get_mismatch_allowed(round), get_query_fasta_file_name_masked(round), params, get_vmatch_output_filename(round, lib_idx, read_part));
+		new_read_count = aligner->parse_output(get_vmatch_output_filename(round, lib_idx, read_part), mapped_reads, read_part, lib.get_read_part_index_name(read_part, LEFT_READ), lib.get_read_part_index_name(read_part, RIGHT_READ), lib.get_matched_left_reads_filename(round, read_part), lib.get_matched_right_reads_filename(round, read_part));
+		//save_mapped_reads(round);
+		return new_read_count;
 	}
 }
 
@@ -704,7 +635,7 @@ void SRAssembler::do_gene_finding() {
 	logger->info("Now running the ab initio gene finding program ...");
 	string program_name = gene_finder->get_program_name();
 	Params params = this->read_param_file(program_name);
-	gene_finder->do_gene_finding(this->aligned_contig_file, this->species, params, this->gene_finding_output_file);
+	gene_finder->do_gene_finding(this->aligned_contig_file, this->species, params, this->gene_finding_output_file, this->gene_finding_output_protein_file);
 	logger->info("Done.");
 }
 
@@ -742,7 +673,7 @@ Logger* SRAssembler::get_logger(){
 
 void SRAssembler::create_index(int round) {
 	Aligner* aligner = get_aligner(round);
-	aligner->create_index(get_contigs_index_name(round), get_type(round), get_masked_query_fasta_file_name(round));
+	aligner->create_index(get_contigs_index_name(round), get_type(round), get_query_fasta_file_name_masked(round));
 }
 
 string SRAssembler:: get_type(int round){
@@ -758,7 +689,7 @@ int SRAssembler::get_mismatch_allowed(int round) {
 }
 
 string SRAssembler::get_vmatch_output_filename(int round, int lib_idx, int read_part){
-	return tmp_dir + "/vmatch_" + "r" + int2str(round) + "_" + "lib" + int2str(lib_idx+1) + "_" + "part" + int2str(read_part);
+	return mem_dir + "/vmatch_" + "r" + int2str(round) + "_" + "lib" + int2str(lib_idx+1) + "_" + "part" + int2str(read_part);
 }
 
 void SRAssembler::merge_mapped_files(int round){
@@ -766,7 +697,7 @@ void SRAssembler::merge_mapped_files(int round){
 		Library lib = this->libraries[lib_idx];
 		logger->debug("Now merging component matching reads files ...");
 		string left_files = tmp_dir + "/matched_reads_left_" + "r" + int2str(round) + "_" + "lib" + int2str(lib_idx + 1) + "_part*";
-		string cmd = "cat " + left_files + " >> " + lib.get_matched_left_read_filename();
+		string cmd = "cat " + left_files + " >> " + lib.get_matched_left_reads_filename();
 		logger->debug(cmd);
 		run_shell_command(cmd);
 		//RM HERE
@@ -776,7 +707,7 @@ void SRAssembler::merge_mapped_files(int round){
 
 		if (lib.get_paired_end()) {
 			string right_files = tmp_dir + "/matched_reads_right_" + "r" + int2str(round) + "_" + "lib" + int2str(lib_idx + 1) + "_part*";
-			cmd = "cat " + right_files + " >> " + lib.get_matched_right_read_filename();
+			cmd = "cat " + right_files + " >> " + lib.get_matched_right_reads_filename();
 			logger->debug(cmd);
 			run_shell_command(cmd);
 			//RM HERE
@@ -785,9 +716,9 @@ void SRAssembler::merge_mapped_files(int round){
 			run_shell_command(cmd);
 		}
 		if (round > 1) {
-			run_shell_command("cp " + lib.get_matched_left_read_filename() + " " + lib.get_matched_left_read_filename(round));
+			run_shell_command("cp " + lib.get_matched_left_reads_filename() + " " + lib.get_matched_left_reads_filename(round));
 			if (lib.get_paired_end())
-				run_shell_command("cp " + lib.get_matched_right_read_filename() + " " + lib.get_matched_right_read_filename(round));
+				run_shell_command("cp " + lib.get_matched_right_reads_filename() + " " + lib.get_matched_right_reads_filename(round));
 		}
 	}
 	//RM HERE
@@ -800,8 +731,11 @@ void SRAssembler::merge_mapped_files(int round){
 int SRAssembler::get_total_read_count(int round){
 	int count = 0;
 	for (unsigned short int lib_idx=0; lib_idx< this->libraries.size();lib_idx++) {
-		//count += get_read_count(this->libraries[lib_idx].get_matched_left_read_filename(), this->libraries[lib_idx].get_format());
-		count += get_read_count(this->libraries[lib_idx].get_matched_left_read_filename(), FORMAT_FASTA);
+		Library lib = this->libraries[lib_idx];
+		count += get_read_count(lib.get_matched_left_reads_filename(), FORMAT_FASTA);
+		if (lib.get_paired_end()) {
+			count += get_read_count(lib.get_matched_right_reads_filename(), FORMAT_FASTA);
+		}
 	}
 
 	return count;
@@ -855,12 +789,13 @@ Assembly_stats SRAssembler::get_assembly_stats(int round, int k) {
 }
 
 void SRAssembler::save_mapped_reads(int round){
-	//run_shell_command("printf '\e[38;5;002m" "save_mapped_reads INVOKED" "\e[0m\n'");
+	logger->debug("save_mapped_reads INVOKED");
 	string mapped_file = get_mapped_reads_file_name(round);
 	ofstream mapped_file_stream(mapped_file.c_str());
 	for (unordered_set<string>::iterator it = mapped_reads.begin();it != mapped_reads.end(); ++it)
 		 mapped_file_stream << *it << endl;
 	mapped_file_stream.close();
+	logger->debug("save_mapped_reads FINISHED");
 }
 
 void SRAssembler::load_mapped_reads(int round){
@@ -894,7 +829,7 @@ void finalized(){
 
 int main(int argc, char * argv[] ) {
 
-	time_t now = time(0);
+	time_t start_time = time(0);
 	int rank, mpiSize;
 
 	SRAssembler* srassembler = NULL;
@@ -904,7 +839,7 @@ int main(int argc, char * argv[] ) {
 		rank=mpi_get_rank();
 
 		srassembler = SRAssembler::getInstance(rank);
-		int ret = srassembler->init(argc, argv, rank, mpiSize);
+		int ret = srassembler->init(argc, argv, rank, mpiSize, start_time);
 		if (ret == -1) {
 			throw -1;
 		}
@@ -921,7 +856,10 @@ int main(int argc, char * argv[] ) {
 	}
 	finalized();
 	if (rank == 0) {
-		string str = "Execution time: " + int2str(time(0) - now) + " seconds";
+		string cmd = "rm -rf /dev/shm/SRAssembler" + int2str(start_time);
+		srassembler->get_logger()->debug(cmd);
+		run_shell_command(cmd);
+		string str = "Execution time: " + int2str(time(0) - start_time) + " seconds";
 		srassembler->get_logger()->info(str);
 	}
 	return 0;
