@@ -34,7 +34,7 @@ bool GSQAligner::is_available(){
 	return true;
 }
 
-void GSQAligner::do_spliced_alignment(const string& genomic_file, const string& type, const string& query_file, const string& species, const Params& params, const string& output_file, const string& hit_contig_file){
+void GSQAligner::do_spliced_alignment(const string& genomic_file, const string& type, const string& query_file, const string& species, const Params& params, const string& output_file){
 	string param_list = "";
 	for ( Params::const_iterator it = params.begin(); it != params.end(); ++it ){
 		param_list += " -" + it->first + " " + it->second;

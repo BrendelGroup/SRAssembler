@@ -22,7 +22,7 @@ bool ExonerateAligner::is_available(){
 	return true;
 }
 
-void ExonerateAligner::do_spliced_alignment(const string& genomic_file, const string& type, const string& query_file, const string& species, const Params& params, const string& output_file, const string& hit_contig_file){
+void ExonerateAligner::do_spliced_alignment(const string& genomic_file, const string& type, const string& query_file, const string& species, const Params& params, const string& output_file){
 	string param_list = "";
 	for ( Params::const_iterator it = params.begin(); it != params.end(); ++it ){
 		string param = it->first;
@@ -36,7 +36,6 @@ void ExonerateAligner::do_spliced_alignment(const string& genomic_file, const st
 	string cmd = "exonerate --model " + type_str + param_list + " " + query_file + " " + genomic_file + " > " + output_file;
 	logger->debug(cmd);
 	run_shell_command(cmd);
-	//get_aligned_contigs(genomic_file, hit_contig_file, output_file);
 }
 
 string_map ExonerateAligner::get_aligned_contigs(const double& min_score, const double& min_coverage, const unsigned int& min_contig_lgth, const string& all_contig_file, const string& hit_contig_file, const string& alignment_file){
