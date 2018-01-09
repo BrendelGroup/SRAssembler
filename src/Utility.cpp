@@ -11,6 +11,7 @@
 #include <string>
 #include <algorithm>
 #include <vector>
+#include <regex>
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
@@ -264,4 +265,16 @@ void remove_duplicate_reads(const string& filename, int read_format) {
 		run_shell_command("cp " + tmp_file + " " + filename);
 		run_shell_command("rm " + tmp_file);
 	}
+}
+
+unsigned int count_letters(string &str) {
+	unsigned int count = 0;
+	char const constexpr alpha[] = R"(abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ)";
+	for(std::string::size_type i = 0; i < str.size(); ++i) {
+		char test = str[i];
+	    if (any_of(begin(alpha), end(alpha), [test](char c){return c == test;})) {
+			count++;
+		}
+	}
+	return count;
 }

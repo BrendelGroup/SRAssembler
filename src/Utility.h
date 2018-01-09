@@ -55,5 +55,6 @@ string trim(const string& str);
 string string_format(const std::string fmt, ...);
 void fastq2fasta(const string& fq, const string& fa);
 void remove_duplicate_reads(const string& filename, int read_format);
+unsigned int count_letters(string &str);
 
 #endif /* UTILITY_H_ */

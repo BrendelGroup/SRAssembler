@@ -248,9 +248,9 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize, const int 
 	gene_finding_output_file = results_dir + "/output.ano";
 	gene_finding_output_protein_file = results_dir + "/snap.predicted.prot";
 	//spliced_alignment_gsq_file = results_dir + "/output.gsq";
-	final_contig_file = results_dir + "/all_contigs.fasta";
+	final_contigs_file = results_dir + "/all_contigs.fasta";
 	summary_file = results_dir + "/summary.html";
-	aligned_contig_file = results_dir + "/hit_contigs.fasta";
+	hit_contigs_file = results_dir + "/hit_contigs.fasta";
 
 	int level = Logger::LEVEL_INFO;
 	if (verbose)
@@ -571,16 +571,16 @@ int SRAssembler::do_alignment(int round, int lib_idx, int read_part) {
 	} else {
 		program_name += "_extend_contig";
 	}
-	//logger->info("... using Vmatch criteria: " + program_name);
+	logger->debug("... using Vmatch criteria: " + program_name);
 	//TODO we read this parameter file A LOT. We should import the parameters for each program_name once.
 	Params params = this->read_param_file(program_name);
 	int new_read_count;
 	// Reads as queries are necessary when searching against a protein.
-	if (round == 1) {
+	if (round == 1 && type == "protein") {
 		aligner->do_alignment(get_contigs_index_name(round), get_type(round), get_match_length(round), get_mismatch_allowed(round), lib.get_split_file_name(read_part, LEFT_READ), params, get_vmatch_output_filename(round, lib_idx, read_part));
 		if (lib.get_paired_end())
 			aligner->do_alignment(get_contigs_index_name(round), get_type(round), get_match_length(round), get_mismatch_allowed(round), lib.get_split_file_name(read_part, RIGHT_READ), params, get_vmatch_output_filename(round, lib_idx, read_part));
-		new_read_count = aligner->parse_output(get_vmatch_output_filename(round, lib_idx, read_part), mapped_reads, read_part, lib.get_read_part_index_name(read_part, LEFT_READ), lib.get_read_part_index_name(read_part, RIGHT_READ), lib.get_matched_left_reads_filename(round, read_part), lib.get_matched_right_reads_filename(round, read_part));
+		new_read_count = aligner->parse_output(get_vmatch_output_filename(round, lib_idx, read_part), mapped_reads, lib_idx, read_part, lib.get_read_part_index_name(read_part, LEFT_READ), lib.get_read_part_index_name(read_part, RIGHT_READ), lib.get_matched_left_reads_filename(round, read_part), lib.get_matched_right_reads_filename(round, read_part));
 		//save_mapped_reads(round);
 		return new_read_count;
 	// After round 1 we use the masked contig file as the query
@@ -588,7 +588,7 @@ int SRAssembler::do_alignment(int round, int lib_idx, int read_part) {
 		aligner->do_alignment(lib.get_read_part_index_name(read_part, LEFT_READ), get_type(round), get_match_length(round), get_mismatch_allowed(round), get_query_fasta_file_name_masked(round), params, get_vmatch_output_filename(round, lib_idx, read_part));
 		if (lib.get_paired_end())
 			aligner->do_alignment(lib.get_read_part_index_name(read_part, RIGHT_READ), get_type(round), get_match_length(round), get_mismatch_allowed(round), get_query_fasta_file_name_masked(round), params, get_vmatch_output_filename(round, lib_idx, read_part));
-		new_read_count = aligner->parse_output(get_vmatch_output_filename(round, lib_idx, read_part), mapped_reads, read_part, lib.get_read_part_index_name(read_part, LEFT_READ), lib.get_read_part_index_name(read_part, RIGHT_READ), lib.get_matched_left_reads_filename(round, read_part), lib.get_matched_right_reads_filename(round, read_part));
+		new_read_count = aligner->parse_output(get_vmatch_output_filename(round, lib_idx, read_part), mapped_reads, lib_idx, read_part, lib.get_read_part_index_name(read_part, LEFT_READ), lib.get_read_part_index_name(read_part, RIGHT_READ), lib.get_matched_left_reads_filename(round, read_part), lib.get_matched_right_reads_filename(round, read_part));
 		//save_mapped_reads(round);
 		return new_read_count;
 	}
@@ -605,8 +605,8 @@ void SRAssembler::do_spliced_alignment() {
 	SplicedAligner* spliced_aligner = get_spliced_aligner();
 	string program_name = spliced_aligner->get_program_name();
 	Params params = this->read_param_file(program_name);
-	spliced_aligner->do_spliced_alignment(this->final_contig_file, type, this->query_file, this->species, params, this->spliced_alignment_output_file);
-	spliced_aligner->get_aligned_contigs(min_score, min_coverage, min_contig_lgth, this->final_contig_file, this->aligned_contig_file, this->spliced_alignment_output_file);
+	spliced_aligner->do_spliced_alignment(this->final_contigs_file, type, this->query_file, this->species, params, this->spliced_alignment_output_file);
+	spliced_aligner->get_hit_contigs(min_score, min_coverage, min_contig_lgth, this->final_contigs_file, this->hit_contigs_file, this->spliced_alignment_output_file);
 	logger->info("Done.");
 }
 
@@ -635,7 +635,7 @@ void SRAssembler::do_gene_finding() {
 	logger->info("Now running the ab initio gene finding program ...");
 	string program_name = gene_finder->get_program_name();
 	Params params = this->read_param_file(program_name);
-	gene_finder->do_gene_finding(this->aligned_contig_file, this->species, params, this->gene_finding_output_file, this->gene_finding_output_protein_file);
+	gene_finder->do_gene_finding(this->hit_contigs_file, this->species, params, this->gene_finding_output_file, this->gene_finding_output_protein_file);
 	logger->info("Done.");
 }
 

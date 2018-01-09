@@ -123,8 +123,8 @@ protected:
 	std::string gene_finding_output_protein_file;
 	std::string usage;
 	std::string final_scaf_file;
-	std::string final_contig_file;
-	std::string aligned_contig_file;
+	std::string final_contigs_file;
+	std::string hit_contigs_file;
 	std::string final_long_contig_file;
 	std::string summary_file;
 	std::string mapped_readnumbers_file;
