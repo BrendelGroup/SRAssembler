@@ -172,6 +172,8 @@ string VmatchAligner::get_program_name() {
 	return "Vmatch";
 }
 
+
+//TODO refactor
 void VmatchAligner::align_long_contigs(const string& long_contig_candidate_file, const string& tmp_dir, const string& contig_file, const int max_contig_size, unordered_set<string>& candidate_ids, unordered_set<string>& long_contig_ids) {
 	if (!file_exists(long_contig_candidate_file)){
 		return;

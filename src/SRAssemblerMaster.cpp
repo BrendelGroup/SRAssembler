@@ -785,100 +785,91 @@ void SRAssemblerMaster::process_long_contigs(int round, int k) {
 
 	if (long_contig_ids.size() > 0){
 		logger->info("Processing contigs longer than the specified maximal contig size " + int2str(this->max_contig_lgth) + " ...");
-		string reads_on_contigs = tmp_dir + "/matched_reads.sam";
-		//remove associated reads
-		string cmd = "bowtie-build " + long_contig_file + " " + tmp_dir + "/long_contig >> " + logger->get_log_file();
-		logger->debug(cmd);
-		run_shell_command(cmd);
-		for (unsigned int lib_idx=0; lib_idx < this->libraries.size(); lib_idx++){
+		// Remove associated reads.
+		//TODO make this a function that remove_unmapped_reads also uses
+		string cmd;
+		string contig_file = long_contig_file;
+		Aligner* aligner = get_aligner(round);
+		for (unsigned int lib_idx=0; lib_idx < this->libraries.size(); lib_idx++) {
 			Library lib = this->libraries[lib_idx];
-			//string type_option = (lib.get_format() == FORMAT_FASTQ)? "-q" : "-f";
-			string type_option = "-f";
-			if (lib.get_paired_end())
-				cmd = "bowtie " + type_option + " -v 2 --suppress 2,3,4,5,6,7,8 " + tmp_dir + "/long_contig " + lib.get_matched_left_reads_filename() + "," + lib.get_matched_right_reads_filename() + " " + reads_on_contigs + " >> " + logger->get_log_file() + " 2>&1";
-			else
-				cmd = "bowtie " + type_option + " -v 2 --suppress 2,3,4,5,6,7,8 " + tmp_dir + "/long_contig " + lib.get_matched_left_reads_filename() + " " + reads_on_contigs + " >> " + logger->get_log_file() + " 2>&1";
-			logger->debug(cmd);
-			run_shell_command(cmd);
-
-			//read sam file
-			boost::unordered_set<string> mapped_reads;
-			ifstream reads_file(reads_on_contigs.c_str());
-			while (getline(reads_file, line)) {
-				line.erase(line.find_last_not_of(" \n\r\t")+1);
-				mapped_reads.insert(line);
-			}
-			reads_file.close();
-
+			// Index current matched reads
 			string left_matched_reads = lib.get_matched_left_reads_filename();
-			string right_matched_reads = lib.get_matched_right_reads_filename();
-			string left_processed_reads = tmp_dir + "/matched_reads_processed_left." + lib.get_file_extension();
-			string right_processed_reads = tmp_dir + "/matched_reads_processed_right." + lib.get_file_extension();
-
-			ifstream left_matched_reads_stream(left_matched_reads.c_str());
-			ofstream left_processed_reads_stream(left_processed_reads.c_str());
-			ifstream right_matched_reads_stream;
-			ofstream right_processed_reads_stream;
+			string right_matched_reads;
 			if (lib.get_paired_end()) {
-				right_matched_reads_stream.open(right_matched_reads.c_str(), ios_base::in);
-				right_processed_reads_stream.open(right_processed_reads.c_str(), ios_base::out);
+				 right_matched_reads = lib.get_matched_right_reads_filename();
 			}
-			string left_header = "";
-			string right_header = "";
-			string left_seq = "";
-			string right_seq = "";
-			string left_qual = "";
-			string right_qual = "";
-			string plus;
-			while (getline(left_matched_reads_stream, left_header)){
-				string left_seq_id = "";
-				string right_seq_id = "";
-				string lead_chr = ">";
-				if (left_header.substr(0,1) == lead_chr){
-					unsigned int pos = left_header.find_first_of(" ");
-					if (pos ==string::npos)
-						left_seq_id = left_header;
-					else
-						left_seq_id = left_header.substr(1, pos-1);
-					left_seq_id.erase(left_seq_id.find_last_not_of("\n\r\t")+1);
-					getline(left_matched_reads_stream, left_seq);
-					if (lib.get_paired_end()){
-						getline(right_matched_reads_stream, right_header);
-						getline(right_matched_reads_stream, right_seq);
-						pos = right_header.find_first_of(" ");
-						if (pos ==string::npos)
-							right_seq_id = right_header;
-						else
-							right_seq_id = right_header.substr(1, pos-1);
-						right_seq_id.erase(right_seq_id.find_last_not_of(" \n\r\t")+1);
-					}
-					if (mapped_reads.find(left_seq_id) == mapped_reads.end() && (lib.get_paired_end() && mapped_reads.find(right_seq_id) == mapped_reads.end())){
-						left_processed_reads_stream << left_header << endl << left_seq << endl;
-						if (lib.get_paired_end()){
-							right_processed_reads_stream << right_header << endl << right_seq << endl;
-						}
-					}
+			aligner->create_index(tmp_dir + "/left_reads_index", "dna", left_matched_reads);
+			if (lib.get_paired_end()) {
+				aligner->create_index(tmp_dir + "/right_reads_index", "dna", right_matched_reads);
+			}
+
+			// Use the contigs as queries against the matched reads to identify matchy reads
+			string program_name = aligner->get_program_name();
+			program_name += "_contig_vs_reads";
+			Params params = read_param_file(program_name);
+			string vmatch_outfile = tmp_dir + "/long_contig_vs_reads.lib" + int2str(lib_idx+1) + ".round" + int2str(round) + ".vmatch";
+//			run_shell_command("rm " + vmatch_outfile);
+			aligner->do_alignment(tmp_dir + "/left_reads_index", "cdna", 30, 2, contig_file, params, vmatch_outfile);
+			if (lib.get_paired_end()) {
+				aligner->do_alignment(tmp_dir + "/right_reads_index", "cdna", 30, 2, contig_file, params, vmatch_outfile);
+			}
+
+			// Use vseqselect to AVOID matchy reads
+
+			// The .prj index file includes the total number of reads in the index
+			int readcount;
+			string reads_index_prj = tmp_dir + "/left_reads_index.prj";
+			ifstream reads_index_prj_stream(reads_index_prj.c_str());
+			while (getline(reads_index_prj_stream, line)){
+				if (line.substr(0,17) == "numofdbsequences="){
+					readcount = str2int(line.substr(17));
+					break;
 				}
 			}
-			left_matched_reads_stream.close();
-			right_matched_reads_stream.close();
-			left_processed_reads_stream.close();
-			right_processed_reads_stream.close();
-			cmd = "cp " + left_processed_reads + " " + left_matched_reads;
+			reads_index_prj_stream.close();
+
+			// Complement the set of matched reads
+			string vmatch_complement = tmp_dir + "/long_contig_vs_reads.lib" + int2str(lib_idx+1) + ".round" + int2str(round) + ".complement";
+			ifstream vmatch_stream(vmatch_outfile.c_str());
+			ofstream complement_stream(vmatch_complement.c_str());
+			getline(vmatch_stream, line);
+			// For each potential read number, add to the complement if not in the vmatch output
+			for (int i=0; i < readcount; i++) {
+				if (i < str2int(line)) {
+					complement_stream << i << endl;
+					continue;
+				}
+				// Because the vmatch output is sorted, we only iterate the vmatch_stream when we find matching numbers
+				if (i == str2int(line)) {
+					getline(vmatch_stream, line);  // This will eventually run out
+					continue;
+				}
+				// If vmatch_stream is empty, line will have no value and we keep all remaining read numbers
+				complement_stream << i << endl;
+			}
+			vmatch_stream.close();
+			complement_stream.close();
+
+			logger->debug("keep reads without hits against long_contigs in round " + int2str(round));
+			cmd = "vseqselect -seqnum " + vmatch_complement + " " + tmp_dir + "/left_reads_index | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' > " + left_matched_reads;
 			logger->debug(cmd);
 			run_shell_command(cmd);
-			cmd = "cp " + left_processed_reads + " " + lib.get_matched_left_reads_filename(round);
+			cmd = "cp " + left_matched_reads + " " + lib.get_matched_left_reads_filename(round);
 			logger->debug(cmd);
 			run_shell_command(cmd);
-			if (lib.get_paired_end()){
-				cmd = "cp " + right_processed_reads + " " + right_matched_reads;
+			if (lib.get_paired_end()) {
+				cmd = "vseqselect -seqnum " + vmatch_complement + " " + tmp_dir + "/right_reads_index | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' > " + right_matched_reads;
 				logger->debug(cmd);
 				run_shell_command(cmd);
-				cmd = "cp " + right_processed_reads + " " + lib.get_matched_right_reads_filename(round);
+				cmd = "cp " + left_matched_reads + " " + lib.get_matched_left_reads_filename(round);
 				logger->debug(cmd);
 				run_shell_command(cmd);
 			}
 		}
+		//RM here
+		cmd = "rm -f " + tmp_dir + "/left_reads_index* " + tmp_dir + "/right_reads_index*";
+		logger->debug(cmd);
+		run_shell_command(cmd);
 	}
 }
 
