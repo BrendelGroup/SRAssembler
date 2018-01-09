@@ -19,8 +19,9 @@ class SplicedAligner {
 public:
 	SplicedAligner(int, string);
 	virtual ~SplicedAligner();
-	virtual void do_spliced_alignment(const string& genomic_file, const string& type, const string& query_file, const string& species, const Params& params, const string& output_file, const string& hit_contig_file)=0;
+	virtual void do_spliced_alignment(const string& genomic_file, const string& type, const string& query_file, const string& species, const Params& params, const string& output_file)=0;
 	virtual string_map get_aligned_contigs(const double& min_score, const double& min_coverage, const unsigned int& min_contig_lgth, const string& all_contig_file, const string& hit_contig_file, const string& alignment_file)=0;
+	virtual void get_hit_contigs(const double& min_score, const double& min_coverage, const unsigned int& min_contig_lgth, const string& final_contigs_file, const string& hit_contig_file, const string& alignment_file)=0;
 	virtual string get_program_name()=0;
 	virtual bool is_available()=0;
 	virtual void clean_files(const string&)=0;

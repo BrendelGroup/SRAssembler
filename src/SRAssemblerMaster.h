@@ -23,7 +23,7 @@ public:
 	virtual ~SRAssemblerMaster();
 private:
 	void process_long_contigs(int round, int k);
-	void prepare_final_contig_file(int round);
+	void prepare_final_contigs_file(int round);
 	void remove_hit_contigs(vector<string> &contig_list, int round);
 	void remove_no_hit_contigs(int round);
 	int get_start_round();

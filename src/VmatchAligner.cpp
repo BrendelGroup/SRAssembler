@@ -14,6 +14,7 @@ VmatchAligner::VmatchAligner(int log_level, string log_file):Aligner(log_level, 
 
 }
 
+//TODO I think this is a vestigial function. Confirm and delete it.
 unordered_set<string> VmatchAligner::get_hit_list(const string& output_file) {
 	logger->debug("get hit list from output file " + output_file);
 	ifstream report_file_stream(output_file.c_str());
@@ -50,7 +51,7 @@ unordered_set<string> VmatchAligner::get_hit_list(const string& output_file) {
  * format: fastq or fasta
  *
  */
-int VmatchAligner::parse_output(const string& output_file, unordered_set<string>& mapped_reads, int read_part, const string& left_read_index, const string& right_read_index, const string& out_left_read, const string& out_right_read) {
+int VmatchAligner::parse_output(const string& output_file, unordered_set<string>& mapped_reads, const int lib_idx, const int read_part, const string& left_read_index, const string& right_read_index, const string& out_left_read, const string& out_right_read) {
 	logger->debug("parsing output file " + output_file);
 	//logger->debug("mapped_reads size = " + int2str(mapped_reads.size()));
 	//logger->debug("mapped_reads bucket_count = " + int2str(mapped_reads.bucket_count()));
@@ -64,6 +65,7 @@ int VmatchAligner::parse_output(const string& output_file, unordered_set<string>
 	string line;
 	string cmd;
 	string part_string = int2str(read_part); //Calculate this once rather than over and over
+	string lib_string = int2str(lib_idx);
 	string tmpvseqselectfile = out_left_read + "-tmp";
 	ofstream tmp_file_stream(tmpvseqselectfile.c_str());
 	//run_shell_command("touch " + tmpvseqselectfile);
@@ -72,7 +74,7 @@ int VmatchAligner::parse_output(const string& output_file, unordered_set<string>
 		found_read++;
 		string seq_number = line;
 		//logger->debug("seq_number " + seq_number);
-		string seq_id = part_string + "," + seq_number;
+		string seq_id = "lib" + lib_string + ",part" + part_string + ",read" + seq_number;
 		// boost::unordered_set.find() produces past-the-end pointer if a key isn't found
 		if (mapped_reads.find(seq_id) == mapped_reads.end()) {
 			//logger->debug(seq_number + " is new");

@@ -91,7 +91,7 @@ void SRAssemblerMaster::output_summary_header(){
 	summary_header += "</B>\n";
 }
 void SRAssemblerMaster::output_summary(int round){
-	output_content += "<PRE>\n\nThe final contigs file(<a href=\"" + get_file_name(this->final_contig_file) + "\">" + get_file_name(this->final_contig_file) + "</a>) are generated from round " + int2str(round) + " with k=" + int2str(best_k) + "\n";
+	output_content += "<PRE>\n\nThe final contigs file(<a href=\"" + get_file_name(this->final_contigs_file) + "\">" + get_file_name(this->final_contigs_file) + "</a>) are generated from round " + int2str(round) + " with k=" + int2str(best_k) + "\n";
 	output_content += "\n</PRE><H5>The best k and the number of matched reads:</H5></PRE>\n<PRE>";
 	output_content += "<B>Round\tBest_k\tMatched_reads</B>\n";
 	output_content += "----------------------------------------------------\n";
@@ -139,7 +139,7 @@ void SRAssemblerMaster::output_spliced_alignment(){
 	output_content += "</PRE><H3>Spliced alignment - " + spliced_aligner->get_program_name() + "</H3><HR>";
 	output_content += "<PRE>\n";
 	string spliced_filename = get_file_name(this->spliced_alignment_output_file);
-	string hit_contigs_name = get_file_name(this->aligned_contig_file);
+	string hit_contigs_name = get_file_name(this->hit_contigs_file);
 	int num_matches = spliced_aligner->get_match_num();
 	if (num_matches == 0)
 		output_content += "\nNo matches found with " + spliced_aligner->get_program_name() + "\n";
@@ -272,6 +272,8 @@ int SRAssemblerMaster::get_start_round(){
 				}
 			//}
 			if (found_previous) {
+				string cmd = "mkdir -p " + mem_dir;
+				run_shell_command(cmd);
 				start_round = i+1;
 				if (start_round > this->num_rounds)
 					return start_round;
@@ -491,8 +493,8 @@ void SRAssemblerMaster::do_walking(){
 	// if the final contig size is 0, then report the previous round
 	while (round > 1) {
 		logger->info("Checking the final contigs assembled in round " + int2str(round) + " ...");
-		prepare_final_contig_file(round);
-		if (get_file_size(final_contig_file) == 0){
+		prepare_final_contigs_file(round);
+		if (get_file_size(final_contigs_file) == 0){
 			logger->info("... no contigs found in round " + int2str(round));
 			round--;
 		}
@@ -500,13 +502,13 @@ void SRAssemblerMaster::do_walking(){
 			break;
 		}
 	}
-	if (get_file_size(final_contig_file) == 0) {
+	if (get_file_size(final_contigs_file) == 0) {
 		return;
 	}
 	do_spliced_alignment();
 	do_gene_finding();
 	//RM HERE
-	this->get_spliced_aligner()->clean_files(this->final_contig_file);
+	this->get_spliced_aligner()->clean_files(this->final_contigs_file);
 	output_summary(round);
 	output_spliced_alignment();
 	if (file_exists(this->gene_finding_output_file)) {
@@ -700,6 +702,7 @@ void SRAssemblerMaster::load_long_contigs() {
 	saved_contig_file.close();
 }
 
+//TODO This should probably be refactored
 void SRAssemblerMaster::process_long_contigs(int round, int k) {
 	string long_contig_candidate_file = tmp_dir + "/long_contig_candidate_" + "r" + int2str(round-1)+ ".fasta";
 	string long_contig_candidate_next_file = tmp_dir + "/long_contig_candidate_" + "r" + int2str(round)+ ".fasta";
@@ -925,7 +928,7 @@ void SRAssemblerMaster::remove_hit_contigs(vector<string> &contig_list, int roun
 	run_shell_command(cmd);
 }
 
-void SRAssemblerMaster::prepare_final_contig_file(int round){
+void SRAssemblerMaster::prepare_final_contigs_file(int round){
 	logger->debug("prepare final contig file of round " + int2str(round));
 	string contig_file = get_contig_file_name(round);
 	string saved_contig_file_name = get_saved_contig_file_name();
@@ -933,7 +936,7 @@ void SRAssemblerMaster::prepare_final_contig_file(int round){
 	//final_long_contig_file = results_dir + "/contigs_long.fasta";
 	ifstream last_round_contig(contig_file.c_str());
 	ifstream saved_contig(saved_contig_file_name.c_str());
-	ofstream final_contig(final_contig_file.c_str());
+	ofstream final_contig(final_contigs_file.c_str());
 	string line;
 	while (getline(saved_contig, line))
 		final_contig << line << endl;
@@ -1010,7 +1013,7 @@ run_shell_command("cp " + contig_file + " " + contig_file + ".original");
 	string program_name = aligner->get_program_name();
 	program_name += "_" + get_type(1) + "_vs_contig";
 	Params params = read_param_file(program_name);
-	string out_file = tmp_dir + "/query_contig.round" + int2str(round) + ".aln";
+	string out_file = tmp_dir + "/query_vs_contig.round" + int2str(round) + ".vmatch";
 //	cmd = "rm " + out_file;
 //	logger->debug(cmd);
 //	run_shell_command(cmd);
@@ -1051,7 +1054,7 @@ void SRAssemblerMaster::remove_unmapped_reads(int round){
 		string program_name = aligner->get_program_name();
 		program_name += "_contig_vs_reads";
 		Params params = read_param_file(program_name);
-		string vmatch_outfile = tmp_dir + "/contig_reads.lib" + int2str(lib_idx+1) + ".round" + int2str(round) + ".aln";
+		string vmatch_outfile = tmp_dir + "/contig_vs_reads.lib" + int2str(lib_idx+1) + ".round" + int2str(round) + ".vmatch";
 //		run_shell_command("rm " + vmatch_outfile);
 		aligner->do_alignment(tmp_dir + "/left_reads_index", "cdna", 30, 2, contig_file, params, vmatch_outfile);
 		if (lib.get_paired_end()) {
