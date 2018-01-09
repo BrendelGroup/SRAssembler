@@ -674,6 +674,7 @@ Logger* SRAssembler::get_logger(){
 void SRAssembler::create_index(int round) {
 	Aligner* aligner = get_aligner(round);
 	aligner->create_index(get_contigs_index_name(round), get_type(round), get_query_fasta_file_name_masked(round));
+	aligner->create_index(tmp_dir + "/qindex", type, query_file);
 }
 
 string SRAssembler:: get_type(int round){

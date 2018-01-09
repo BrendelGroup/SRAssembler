@@ -60,7 +60,7 @@ string_map GTHAligner::get_aligned_contigs(const double& min_score, const double
 	while (getline(alignment_fs, line)) {
 		if (line.substr(0,16) == "Genomic Template"){
 			sscanf(line.c_str(),"Genomic Template: %*s %*s %*s %*s description=%s length %d %*s",currentid,&contig_length);
-			logger->info("... checking contig:\t" + std::string(currentid) + "\tof length:\t" + int2str(contig_length));
+			logger->debug("... checking contig:\t" + std::string(currentid) + "\tof length:\t" + int2str(contig_length));
 		}
 		if (line.substr(0,5) == "MATCH"){
 			vector<string> tokens;
@@ -77,7 +77,7 @@ string_map GTHAligner::get_aligned_contigs(const double& min_score, const double
 			output_string += string_format("%-15s %-8s %-30s %-8s %-10s %-15s %-15s %-15s",contig_id.c_str(),strand.c_str(),query.c_str(),qstrand.c_str(),score.c_str(),length.c_str(),cov.c_str(),type.c_str()) + "\n";
 			num_matches++;
 			output_string += "\n";
-			logger->info("   ... MATCH found with coverage:\t" + cov + " " + type + "\tscore:\t" + score + "\tlength:\t" + int2str(contig_length));
+			logger->debug("   ... MATCH found with coverage:\t" + cov + " " + type + "\tscore:\t" + score + "\tlength:\t" + int2str(contig_length));
 			if (type == "P" || type == "C"){
 				if (str2double(cov) > min_coverage && str2double(score) > min_score && contig_length >= min_contig_lgth)
 					aligned_query_list[query] = contig_id;
@@ -134,6 +134,7 @@ void GTHAligner::get_hit_contigs(const double& min_score, const double& min_cove
 			query_length = 0;
 			sscanf(line.c_str(), "%s Sequence %*s", query_type);
 			while (getline(alignment_fs, query_sequence_line)) {
+				// This ends the query sequence
 				if (query_sequence_line.substr(0,16) == "Genomic Template") {
 					if (std::string(query_type) == "Protein") {
 						min_match_length = query_length * 3 * min_coverage;
@@ -141,7 +142,7 @@ void GTHAligner::get_hit_contigs(const double& min_score, const double& min_cove
 						min_match_length = query_length * min_coverage;
 					}
 					sscanf(query_sequence_line.c_str(),"Genomic Template: %*s %*s %*s %*s description=%s length %d %*s",currentid,&contig_length);
-					logger->info("... checking contig:\t" + std::string(currentid) + "\tof length:\t" + int2str(contig_length));
+					logger->debug("... checking contig:\t" + std::string(currentid) + "\tof length:\t" + int2str(contig_length));
 					//cerr << "Query length is " + int2str(query_length) << endl;
 					//cerr << "min_coverage is " << min_coverage << endl;
 					//cerr << "Min match length is " + int2str(min_match_length) << endl;

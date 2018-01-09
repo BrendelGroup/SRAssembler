@@ -392,8 +392,8 @@ void SRAssemblerMaster::do_walking(){
 		}
 		merge_mapped_files(round);
 		int read_count = get_total_read_count(round);
-		logger->info("Found new reads: " + int2str(new_reads_count));
-		logger->info("Total matched reads: " + int2str(read_count));
+		logger->debug("Found new reads: " + int2str(new_reads_count));
+		logger->debug("Total matched reads: " + int2str(read_count));
 		if (assembly_round <= round){
 			unsigned int longest_contig = do_assembly(round);
 			summary_best += int2str(read_count) + "\n";
@@ -415,7 +415,7 @@ void SRAssemblerMaster::do_walking(){
 				break;
 			}
 			// If maximum round is reached, stop
-			logger->info("Round " + int2str(round) + " is done!");
+			logger->info("Round " + int2str(round) + " is done.");
 			if (round == num_rounds) {
 				logger->info("The walking is terminated: The maximum round (" + int2str(num_rounds) + ") has been reached.");
 				break;
@@ -468,7 +468,7 @@ void SRAssemblerMaster::do_walking(){
 				}
 			}
 		} else {
-			logger->info("Round " + int2str(round) + " is done!");
+			logger->info("Round " + int2str(round) + " is done.");
 			if (round == num_rounds) {
 				logger->info("The walking is terminated: The maximum round (" + int2str(num_rounds) + ") has been reached.");
 				break;
@@ -518,7 +518,7 @@ void SRAssemblerMaster::do_walking(){
 	outFile << output_content << endl;
 	outFile.close();
 	//RM HERE
-	run_shell_command("rm -rf " + query_file + ".*");
+	run_shell_command("rm -rf " + query_file + ".* " + tmp_dir + "/qindex.*");
 }
 
 void SRAssemblerMaster::clean_tmp_files(int round){
@@ -670,7 +670,7 @@ int SRAssemblerMaster::do_assembly(int round) {
 	summary_max += "\n";
 	summary_total += "\n";
 	if (best_k > 0) {
-		logger->info("The best k-value (corresponding to the longest assembled contig) in round\t" + int2str(round) + " is k =\t" + int2str(best_k));
+		logger->debug("The best k-value (corresponding to the longest assembled contig) in round\t" + int2str(round) + " is k =\t" + int2str(best_k));
 	}
 	else {
 		logger->info("No contig of the specified minimum length has been assembled by round\t" + int2str(round));
@@ -785,100 +785,91 @@ void SRAssemblerMaster::process_long_contigs(int round, int k) {
 
 	if (long_contig_ids.size() > 0){
 		logger->info("Processing contigs longer than the specified maximal contig size " + int2str(this->max_contig_lgth) + " ...");
-		string reads_on_contigs = tmp_dir + "/matched_reads.sam";
-		//remove associated reads
-		string cmd = "bowtie-build " + long_contig_file + " " + tmp_dir + "/long_contig >> " + logger->get_log_file();
-		logger->debug(cmd);
-		run_shell_command(cmd);
-		for (unsigned int lib_idx=0; lib_idx < this->libraries.size(); lib_idx++){
+		// Remove associated reads.
+		//TODO make this a function that remove_unmapped_reads also uses
+		string cmd;
+		string contig_file = long_contig_file;
+		Aligner* aligner = get_aligner(round);
+		for (unsigned int lib_idx=0; lib_idx < this->libraries.size(); lib_idx++) {
 			Library lib = this->libraries[lib_idx];
-			//string type_option = (lib.get_format() == FORMAT_FASTQ)? "-q" : "-f";
-			string type_option = "-f";
-			if (lib.get_paired_end())
-				cmd = "bowtie " + type_option + " -v 2 --suppress 2,3,4,5,6,7,8 " + tmp_dir + "/long_contig " + lib.get_matched_left_reads_filename() + "," + lib.get_matched_right_reads_filename() + " " + reads_on_contigs + " >> " + logger->get_log_file() + " 2>&1";
-			else
-				cmd = "bowtie " + type_option + " -v 2 --suppress 2,3,4,5,6,7,8 " + tmp_dir + "/long_contig " + lib.get_matched_left_reads_filename() + " " + reads_on_contigs + " >> " + logger->get_log_file() + " 2>&1";
-			logger->debug(cmd);
-			run_shell_command(cmd);
-
-			//read sam file
-			boost::unordered_set<string> mapped_reads;
-			ifstream reads_file(reads_on_contigs.c_str());
-			while (getline(reads_file, line)) {
-				line.erase(line.find_last_not_of(" \n\r\t")+1);
-				mapped_reads.insert(line);
-			}
-			reads_file.close();
-
+			// Index current matched reads
 			string left_matched_reads = lib.get_matched_left_reads_filename();
-			string right_matched_reads = lib.get_matched_right_reads_filename();
-			string left_processed_reads = tmp_dir + "/matched_reads_processed_left." + lib.get_file_extension();
-			string right_processed_reads = tmp_dir + "/matched_reads_processed_right." + lib.get_file_extension();
-
-			ifstream left_matched_reads_stream(left_matched_reads.c_str());
-			ofstream left_processed_reads_stream(left_processed_reads.c_str());
-			ifstream right_matched_reads_stream;
-			ofstream right_processed_reads_stream;
+			string right_matched_reads;
 			if (lib.get_paired_end()) {
-				right_matched_reads_stream.open(right_matched_reads.c_str(), ios_base::in);
-				right_processed_reads_stream.open(right_processed_reads.c_str(), ios_base::out);
+				 right_matched_reads = lib.get_matched_right_reads_filename();
 			}
-			string left_header = "";
-			string right_header = "";
-			string left_seq = "";
-			string right_seq = "";
-			string left_qual = "";
-			string right_qual = "";
-			string plus;
-			while (getline(left_matched_reads_stream, left_header)){
-				string left_seq_id = "";
-				string right_seq_id = "";
-				string lead_chr = ">";
-				if (left_header.substr(0,1) == lead_chr){
-					unsigned int pos = left_header.find_first_of(" ");
-					if (pos ==string::npos)
-						left_seq_id = left_header;
-					else
-						left_seq_id = left_header.substr(1, pos-1);
-					left_seq_id.erase(left_seq_id.find_last_not_of("\n\r\t")+1);
-					getline(left_matched_reads_stream, left_seq);
-					if (lib.get_paired_end()){
-						getline(right_matched_reads_stream, right_header);
-						getline(right_matched_reads_stream, right_seq);
-						pos = right_header.find_first_of(" ");
-						if (pos ==string::npos)
-							right_seq_id = right_header;
-						else
-							right_seq_id = right_header.substr(1, pos-1);
-						right_seq_id.erase(right_seq_id.find_last_not_of(" \n\r\t")+1);
-					}
-					if (mapped_reads.find(left_seq_id) == mapped_reads.end() && (lib.get_paired_end() && mapped_reads.find(right_seq_id) == mapped_reads.end())){
-						left_processed_reads_stream << left_header << endl << left_seq << endl;
-						if (lib.get_paired_end()){
-							right_processed_reads_stream << right_header << endl << right_seq << endl;
-						}
-					}
+			aligner->create_index(tmp_dir + "/left_reads_index", "dna", left_matched_reads);
+			if (lib.get_paired_end()) {
+				aligner->create_index(tmp_dir + "/right_reads_index", "dna", right_matched_reads);
+			}
+
+			// Use the contigs as queries against the matched reads to identify matchy reads
+			string program_name = aligner->get_program_name();
+			program_name += "_contig_vs_reads";
+			Params params = read_param_file(program_name);
+			string vmatch_outfile = tmp_dir + "/long_contig_vs_reads.lib" + int2str(lib_idx+1) + ".round" + int2str(round) + ".vmatch";
+//			run_shell_command("rm " + vmatch_outfile);
+			aligner->do_alignment(tmp_dir + "/left_reads_index", "cdna", 30, 2, contig_file, params, vmatch_outfile);
+			if (lib.get_paired_end()) {
+				aligner->do_alignment(tmp_dir + "/right_reads_index", "cdna", 30, 2, contig_file, params, vmatch_outfile);
+			}
+
+			// Use vseqselect to AVOID matchy reads
+
+			// The .prj index file includes the total number of reads in the index
+			int readcount;
+			string reads_index_prj = tmp_dir + "/left_reads_index.prj";
+			ifstream reads_index_prj_stream(reads_index_prj.c_str());
+			while (getline(reads_index_prj_stream, line)){
+				if (line.substr(0,17) == "numofdbsequences="){
+					readcount = str2int(line.substr(17));
+					break;
 				}
 			}
-			left_matched_reads_stream.close();
-			right_matched_reads_stream.close();
-			left_processed_reads_stream.close();
-			right_processed_reads_stream.close();
-			cmd = "cp " + left_processed_reads + " " + left_matched_reads;
+			reads_index_prj_stream.close();
+
+			// Complement the set of matched reads
+			string vmatch_complement = tmp_dir + "/long_contig_vs_reads.lib" + int2str(lib_idx+1) + ".round" + int2str(round) + ".complement";
+			ifstream vmatch_stream(vmatch_outfile.c_str());
+			ofstream complement_stream(vmatch_complement.c_str());
+			getline(vmatch_stream, line);
+			// For each potential read number, add to the complement if not in the vmatch output
+			for (int i=0; i < readcount; i++) {
+				if (i < str2int(line)) {
+					complement_stream << i << endl;
+					continue;
+				}
+				// Because the vmatch output is sorted, we only iterate the vmatch_stream when we find matching numbers
+				if (i == str2int(line)) {
+					getline(vmatch_stream, line);  // This will eventually run out
+					continue;
+				}
+				// If vmatch_stream is empty, line will have no value and we keep all remaining read numbers
+				complement_stream << i << endl;
+			}
+			vmatch_stream.close();
+			complement_stream.close();
+
+			logger->debug("keep reads without hits against long_contigs in round " + int2str(round));
+			cmd = "vseqselect -seqnum " + vmatch_complement + " " + tmp_dir + "/left_reads_index | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' > " + left_matched_reads;
 			logger->debug(cmd);
 			run_shell_command(cmd);
-			cmd = "cp " + left_processed_reads + " " + lib.get_matched_left_reads_filename(round);
+			cmd = "cp " + left_matched_reads + " " + lib.get_matched_left_reads_filename(round);
 			logger->debug(cmd);
 			run_shell_command(cmd);
-			if (lib.get_paired_end()){
-				cmd = "cp " + right_processed_reads + " " + right_matched_reads;
+			if (lib.get_paired_end()) {
+				cmd = "vseqselect -seqnum " + vmatch_complement + " " + tmp_dir + "/right_reads_index | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' > " + right_matched_reads;
 				logger->debug(cmd);
 				run_shell_command(cmd);
-				cmd = "cp " + right_processed_reads + " " + lib.get_matched_right_reads_filename(round);
+				cmd = "cp " + left_matched_reads + " " + lib.get_matched_left_reads_filename(round);
 				logger->debug(cmd);
 				run_shell_command(cmd);
 			}
 		}
+		//RM here
+		cmd = "rm -f " + tmp_dir + "/left_reads_index* " + tmp_dir + "/right_reads_index*";
+		logger->debug(cmd);
+		run_shell_command(cmd);
 	}
 }
 
@@ -1009,24 +1000,19 @@ run_shell_command("cp " + contig_file + " " + contig_file + ".original");
 	// Index contigs for easy extraction of hit contigs
 	aligner->create_index(tmp_dir + "/cindex", "dna", contig_file);
 	// Why are we remaking this index every time?
-	aligner->create_index(tmp_dir + "/qindex", type, query_file);
+	//aligner->create_index(tmp_dir + "/qindex", type, query_file);
 	string program_name = aligner->get_program_name();
 	program_name += "_" + get_type(1) + "_vs_contig";
 	Params params = read_param_file(program_name);
 	string out_file = tmp_dir + "/query_vs_contig.round" + int2str(round) + ".vmatch";
-//	cmd = "rm " + out_file;
-//	logger->debug(cmd);
-//	run_shell_command(cmd);
 	aligner->do_alignment(tmp_dir + "/qindex", type, get_match_length(1), get_mismatch_allowed(1), contig_file, params, out_file);
-//	cmd = "cp " + out_file + " " + out_file + ".round" + int2str(round);
-//	logger->debug(cmd);
-//	run_shell_command(cmd);
 	logger->debug("remove contigs without hits against query sequences in round " + int2str(round));
 	cmd = "vseqselect -seqnum " + out_file + " " + tmp_dir + "/cindex | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' > " + contig_file;
 	logger->debug(cmd);
 	run_shell_command(cmd);
+	//RM here
 	//string cmd = "rm -f " + tmp_dir + "/qindex*";
-	cmd = "rm -f " + tmp_dir + "/cindex*";
+	cmd = "rm -f " + tmp_dir + "/cindex* " + out_file;
 	logger->debug(cmd);
 	run_shell_command(cmd);
 }
@@ -1055,7 +1041,6 @@ void SRAssemblerMaster::remove_unmapped_reads(int round){
 		program_name += "_contig_vs_reads";
 		Params params = read_param_file(program_name);
 		string vmatch_outfile = tmp_dir + "/contig_vs_reads.lib" + int2str(lib_idx+1) + ".round" + int2str(round) + ".vmatch";
-//		run_shell_command("rm " + vmatch_outfile);
 		aligner->do_alignment(tmp_dir + "/left_reads_index", "cdna", 30, 2, contig_file, params, vmatch_outfile);
 		if (lib.get_paired_end()) {
 			aligner->do_alignment(tmp_dir + "/right_reads_index", "cdna", 30, 2, contig_file, params, vmatch_outfile);
@@ -1077,6 +1062,8 @@ void SRAssemblerMaster::remove_unmapped_reads(int round){
 			logger->debug(cmd);
 			run_shell_command(cmd);
 		}
+		//RM here
+		run_shell_command("rm " + vmatch_outfile);
 	}
 	//RM here
 	cmd = "rm -f " + tmp_dir + "/left_reads_index* " + tmp_dir + "/right_reads_index*";
