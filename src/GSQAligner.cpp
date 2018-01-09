@@ -66,7 +66,7 @@ string_map GSQAligner::get_aligned_contigs(const double& min_score, const double
 	while (getline(alignment_fs, line)) {
 		if (line.substr(0,8) == "Sequence"){
 			sscanf(line.c_str(),"Sequence %*d: %80[^,], from %*d to %d,%*s",currentid,&contig_length);
-			logger->info("... checking contig:\t" + std::string(currentid) + "\tof length:\t" + int2str(contig_length));
+			logger->debug("... checking contig:\t" + std::string(currentid) + "\tof length:\t" + int2str(contig_length));
 		}
 		if (line.substr(0,5) == "MATCH"){
 			vector<string> tokens;
@@ -83,7 +83,7 @@ string_map GSQAligner::get_aligned_contigs(const double& min_score, const double
 			output_string += string_format("%-15s %-8s %-30s %-10s %-15s %-15s %-15s",contig.c_str(),strand.c_str(),query.c_str(),score.c_str(),length.c_str(),cov.c_str(),type.c_str()) + "\n";
 			num_matches++;
 			output_string += "\n";
-			logger->info("   ... MATCH found with coverage:\t" + cov + " " + type + "\tscore:\t" + score + "\tlength:\t" + int2str(contig_length));
+			logger->debug("   ... MATCH found with coverage:\t" + cov + " " + type + "\tscore:\t" + score + "\tlength:\t" + int2str(contig_length));
 			if (type == "P" || type == "C"){
 				if (str2double(score) > min_score && str2double(cov) > min_coverage && contig_length >= min_contig_lgth)
 					aligned_query_list[query] = contig_id;

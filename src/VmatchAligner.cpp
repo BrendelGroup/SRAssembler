@@ -179,15 +179,15 @@ void VmatchAligner::align_long_contigs(const string& long_contig_candidate_file,
 		return;
 	}
 
-	string indexname = tmp_dir + "/contigs";
-	string alignment_out_file = tmp_dir + "/output.aln";
+	string indexname = tmp_dir + "/contigs_index";
+	string vmatch_out_file = tmp_dir + "/long_contigs_candidates.vmatch";
 	string cmd = "mkvtree -dna -db " + contig_file + " -pl -indexname " + indexname + " -allout >> " + logger->get_log_file();
 	logger->debug(cmd);
 	run_shell_command(cmd);
-	cmd = "vmatch -q " + long_contig_candidate_file + " -l " + int2str(max_contig_size) + " -showdesc 0 -nodist -noevalue -noscore -noidentity " + indexname + " | awk '{print $1,$2,$3,$4,$5,$6}' | uniq -f5 > " + alignment_out_file;
+	cmd = "vmatch -q " + long_contig_candidate_file + " -d -p" + " -l " + int2str(max_contig_size) + " -showdesc 0 -nodist -noevalue -noscore -noidentity " + indexname + " | awk '{print $1,$2,$3,$4,$5,$6}' | uniq -f5 > " + vmatch_out_file;
 	logger->debug(cmd);
 	run_shell_command(cmd);
-	ifstream out_file_stream(alignment_out_file.c_str());
+	ifstream out_file_stream(vmatch_out_file.c_str());
 	//parse the output file and remove the long contigs and associated reads.
 	string line;
 	while (getline(out_file_stream, line)){
@@ -201,6 +201,10 @@ void VmatchAligner::align_long_contigs(const string& long_contig_candidate_file,
 		}
 	}
 	out_file_stream.close();
+	//RM here
+	cmd = "rm " + vmatch_out_file + " " + indexname + "*";
+	logger->debug(cmd);
+	run_shell_command(cmd);
 }
 
 VmatchAligner::~VmatchAligner() {

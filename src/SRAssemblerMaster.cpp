@@ -392,8 +392,8 @@ void SRAssemblerMaster::do_walking(){
 		}
 		merge_mapped_files(round);
 		int read_count = get_total_read_count(round);
-		logger->info("Found new reads: " + int2str(new_reads_count));
-		logger->info("Total matched reads: " + int2str(read_count));
+		logger->debug("Found new reads: " + int2str(new_reads_count));
+		logger->debug("Total matched reads: " + int2str(read_count));
 		if (assembly_round <= round){
 			unsigned int longest_contig = do_assembly(round);
 			summary_best += int2str(read_count) + "\n";
@@ -415,7 +415,7 @@ void SRAssemblerMaster::do_walking(){
 				break;
 			}
 			// If maximum round is reached, stop
-			logger->info("Round " + int2str(round) + " is done!");
+			logger->info("Round " + int2str(round) + " is done.");
 			if (round == num_rounds) {
 				logger->info("The walking is terminated: The maximum round (" + int2str(num_rounds) + ") has been reached.");
 				break;
@@ -468,7 +468,7 @@ void SRAssemblerMaster::do_walking(){
 				}
 			}
 		} else {
-			logger->info("Round " + int2str(round) + " is done!");
+			logger->info("Round " + int2str(round) + " is done.");
 			if (round == num_rounds) {
 				logger->info("The walking is terminated: The maximum round (" + int2str(num_rounds) + ") has been reached.");
 				break;
@@ -518,7 +518,7 @@ void SRAssemblerMaster::do_walking(){
 	outFile << output_content << endl;
 	outFile.close();
 	//RM HERE
-	run_shell_command("rm -rf " + query_file + ".*");
+	run_shell_command("rm -rf " + query_file + ".* " + tmp_dir + "/qindex.*");
 }
 
 void SRAssemblerMaster::clean_tmp_files(int round){
@@ -670,7 +670,7 @@ int SRAssemblerMaster::do_assembly(int round) {
 	summary_max += "\n";
 	summary_total += "\n";
 	if (best_k > 0) {
-		logger->info("The best k-value (corresponding to the longest assembled contig) in round\t" + int2str(round) + " is k =\t" + int2str(best_k));
+		logger->debug("The best k-value (corresponding to the longest assembled contig) in round\t" + int2str(round) + " is k =\t" + int2str(best_k));
 	}
 	else {
 		logger->info("No contig of the specified minimum length has been assembled by round\t" + int2str(round));
@@ -1000,24 +1000,19 @@ run_shell_command("cp " + contig_file + " " + contig_file + ".original");
 	// Index contigs for easy extraction of hit contigs
 	aligner->create_index(tmp_dir + "/cindex", "dna", contig_file);
 	// Why are we remaking this index every time?
-	aligner->create_index(tmp_dir + "/qindex", type, query_file);
+	//aligner->create_index(tmp_dir + "/qindex", type, query_file);
 	string program_name = aligner->get_program_name();
 	program_name += "_" + get_type(1) + "_vs_contig";
 	Params params = read_param_file(program_name);
 	string out_file = tmp_dir + "/query_vs_contig.round" + int2str(round) + ".vmatch";
-//	cmd = "rm " + out_file;
-//	logger->debug(cmd);
-//	run_shell_command(cmd);
 	aligner->do_alignment(tmp_dir + "/qindex", type, get_match_length(1), get_mismatch_allowed(1), contig_file, params, out_file);
-//	cmd = "cp " + out_file + " " + out_file + ".round" + int2str(round);
-//	logger->debug(cmd);
-//	run_shell_command(cmd);
 	logger->debug("remove contigs without hits against query sequences in round " + int2str(round));
 	cmd = "vseqselect -seqnum " + out_file + " " + tmp_dir + "/cindex | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' > " + contig_file;
 	logger->debug(cmd);
 	run_shell_command(cmd);
+	//RM here
 	//string cmd = "rm -f " + tmp_dir + "/qindex*";
-	cmd = "rm -f " + tmp_dir + "/cindex*";
+	cmd = "rm -f " + tmp_dir + "/cindex* " + out_file;
 	logger->debug(cmd);
 	run_shell_command(cmd);
 }
@@ -1046,7 +1041,6 @@ void SRAssemblerMaster::remove_unmapped_reads(int round){
 		program_name += "_contig_vs_reads";
 		Params params = read_param_file(program_name);
 		string vmatch_outfile = tmp_dir + "/contig_vs_reads.lib" + int2str(lib_idx+1) + ".round" + int2str(round) + ".vmatch";
-//		run_shell_command("rm " + vmatch_outfile);
 		aligner->do_alignment(tmp_dir + "/left_reads_index", "cdna", 30, 2, contig_file, params, vmatch_outfile);
 		if (lib.get_paired_end()) {
 			aligner->do_alignment(tmp_dir + "/right_reads_index", "cdna", 30, 2, contig_file, params, vmatch_outfile);
@@ -1068,6 +1062,8 @@ void SRAssemblerMaster::remove_unmapped_reads(int round){
 			logger->debug(cmd);
 			run_shell_command(cmd);
 		}
+		//RM here
+		run_shell_command("rm " + vmatch_outfile);
 	}
 	//RM here
 	cmd = "rm -f " + tmp_dir + "/left_reads_index* " + tmp_dir + "/right_reads_index*";
