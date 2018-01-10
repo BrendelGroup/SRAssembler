@@ -11,7 +11,6 @@
 #include <string>
 #include <algorithm>
 #include <vector>
-#include <regex>
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
@@ -272,7 +271,7 @@ unsigned int count_letters(string &str) {
 	char const constexpr alpha[] = R"(abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ)";
 	for(std::string::size_type i = 0; i < str.size(); ++i) {
 		char test = str[i];
-	    if (any_of(begin(alpha), end(alpha), [test](char c){return c == test;})) {
+		if (any_of(begin(alpha), end(alpha), [test](char c){return c == test;})) {
 			count++;
 		}
 	}
