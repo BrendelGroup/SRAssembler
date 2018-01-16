@@ -830,7 +830,7 @@ void finalized(){
 
 int main(int argc, char * argv[] ) {
 
-	time_t start_time = time(0);
+	long int start_time = time(0);
 	int rank, mpiSize;
 
 	SRAssembler* srassembler = NULL;
