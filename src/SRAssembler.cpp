@@ -794,13 +794,12 @@ void SRAssembler::save_mapped_reads(int round){
 	string mapped_file = get_mapped_reads_file_name(round);
 	ofstream mapped_file_stream(mapped_file.c_str());
 	for (unordered_set<string>::iterator it = mapped_reads.begin();it != mapped_reads.end(); ++it)
-		 mapped_file_stream << *it << endl;
+		 mapped_file_stream << *it << '\n';
 	mapped_file_stream.close();
 	logger->debug("save_mapped_reads FINISHED");
 }
 
 void SRAssembler::load_mapped_reads(int round){
-	//run_shell_command("printf '\e[38;5;002m" "load_mapped_reads INVOKED" "\e[0m\n'");
 	string mapped_file = get_mapped_reads_file_name(round);
 	logger->info("Loading the mapped reads of round " + int2str(round) + " (" + int2str(rank) + "/" + int2str(mpiSize-1) + ")");
 	ifstream mapped_file_stream(mapped_file.c_str());

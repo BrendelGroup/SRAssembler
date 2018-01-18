@@ -84,7 +84,7 @@ int VmatchAligner::parse_output(const string& output_file, unordered_set<string>
 				new_read_count += 1;
 			}
 			mapped_reads.insert(seq_id);
-			tmp_file_stream << seq_number << endl;
+			tmp_file_stream << seq_number << '\n';
 		}
 	}
 	logger->debug("Found " + int2str(found_read) + " reads in part " + part_string);

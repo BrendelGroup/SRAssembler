@@ -126,27 +126,61 @@ string Library::get_split_read_prefix(string src_read){
 
 //void Library::do_split_files(int read_direction, int reads_per_file){
 	//string read_file = (read_direction == LEFT_READ)? this->left_read:this->right_read;
-	//string cmd = "split -l " + int2str(reads_per_file * 4) + " " + read_file + " " + get_split_read_prefix(read_file);
+	//string cmd;
+	 ////multiplier is based on the number of lines in a read. Assumes FASTQ to start.
+	//if (get_format() == FORMAT_FASTQ) {
+		 ////Use sed magic to turn fastq into fasta. Assumes single-line reads.
+		 ////Use awk to split in a controllable way that gives nice suffixes
+		//cmd = "< " + read_file + " sed -n -e '1~4s/^@/>/p;2~4p' | awk -v prefix=" + get_split_read_prefix(read_file) + " -v lines=" + int2str(reads_per_file * 2) + " 'NR%lines==1 {++i; file = prefix i \".fasta\"} {print > file}'";
+	//} else {
+		//cmd = "< " + read_file + " awk -v prefix=" + get_split_read_prefix(read_file) + " -v lines=" + int2str(reads_per_file * 2) + " 'NR%lines==1 {++i; file = prefix i \".fasta\"} {print > file}'";
+	//}
 	//logger->debug(cmd);
 	//run_shell_command(cmd);
 //}
+
 void Library::do_split_files(int read_direction, int reads_per_file){
-	//run_shell_command("printf '\e[38;5;002m" "do_split_files INVOKED" "\e[0m\n'");
 	string read_file = (read_direction == LEFT_READ)? this->left_read:this->right_read;
-	string cmd;
-	// multiplier is based on the number of lines in a read. Assumes FASTQ to start.
-	if (get_format() == FORMAT_FASTQ) {
-		//run_shell_command("printf '\e[38;5;002m" "split FASTQ files" "\e[0m\n'");
-		// Use sed magic to turn fastq into fasta. Assumes single-line reads.
-		// Use awk to split in a controllable way that gives nice suffixes
-		cmd = "< " + read_file + " sed -n -e '1~4s/^@/>/p;2~4p' | awk -v prefix=" + get_split_read_prefix(read_file) + " -v lines=" + int2str(reads_per_file * 2) + " 'NR%lines==1 {++i; file = prefix i \".fasta\"} {print > file}'";
-	} else {
-		//run_shell_command("printf '\e[38;5;002m" "split FASTA files" "\e[0m\n'");
-		cmd = "< " + read_file + " awk -v prefix=" + get_split_read_prefix(read_file) + " -v lines=" + int2str(reads_per_file * 2) + " 'NR%lines==1 {++i; file = prefix i \".fasta\"} {print > file}'";
+	ifstream in_stream(read_file.c_str());
+	string out_file;
+	int part = 1;
+	ofstream out_stream;
+	string line;
+	// Priming line
+	getline(in_stream, line);
+	// While not at end of input file
+	while(! in_stream.eof()) {
+		//cout << "Part = " + int2str(part) << '\n';
+		int linecount = 0;
+		out_file = get_split_read_prefix(read_file) + int2str(part) + ".fasta";
+		out_stream.open(out_file.c_str());
+		while( linecount < reads_per_file * 2){
+			// Write the header
+			out_stream << ">" << line.substr(1) << '\n';
+			linecount++;
+			// Get the read sequence and write it
+			getline(in_stream, line);
+			out_stream << line << '\n';
+			linecount++;
+			if (get_format() == FORMAT_FASTQ) {
+				// Get the plus line
+				getline(in_stream, line);
+				// Dump the plus line, get the quality score
+				getline(in_stream, line);
+			}
+			// Dump the quality line, get the next header. End writing early of last outfile.
+			if (! getline(in_stream, line)) {
+				//cerr << "break at linecount " + int2str(linecount) << endl;
+				break;
+			}
+		}
+		out_stream.close();
+		part++;
 	}
-	logger->debug(cmd);
-	run_shell_command(cmd);
+	out_stream.close();
+	in_stream.close();
 }
+
 Library::~Library() {
 	// TODO Auto-generated destructor stub
 }

@@ -191,10 +191,7 @@ void SRAssemblerMaster::do_preprocessing(){
 			}
 		}
 		logger->info("Splitting read library " + int2str(lib_index+1) + " ...");
-		cmd = "rm -f " + data_dir + "/lib" + int2str(lib_index+1) + "/" + get_file_base_name(lib->get_left_read()) + "*"; //delete old files
-		logger->debug(cmd);
-		run_shell_command(cmd);
-		cmd = "rm -f " + data_dir + "/lib" + int2str(lib_index+1) + "/" + get_file_base_name(lib->get_right_read()) + "*"; //delete old files
+		cmd = "rm -f " + data_dir + "/lib" + int2str(lib_index+1) + "/" + get_file_base_name(lib->get_left_read()) + "* " + data_dir + "/lib" + int2str(lib_index+1) + "/" + get_file_base_name(lib->get_right_read()) + "*"; //delete old files
 		logger->debug(cmd);
 		run_shell_command(cmd);
 		// Why would you name a variable 'from'?
@@ -554,7 +551,7 @@ void SRAssemblerMaster::save_query_list(){
 	if (query_list.size() > 0){
 		ofstream fs(fn.c_str());
 		for (unsigned i=0;i<query_list.size();i++)
-			fs << query_list[i] << endl;
+			fs << query_list[i] << '\n';
 		fs.close();
 	}
 }
@@ -751,13 +748,13 @@ void SRAssemblerMaster::process_long_contigs(int round, int k) {
 				vector<string> tokens;
 				tokenize(header.substr(1), tokens, " ");
 				if (long_contig_ids.find(tokens[0]) != long_contig_ids.end())
-					out_long_contig << header << endl << seq <<endl;
+					out_long_contig << header << '\n' << seq << '\n';
 				else {
 					if (seq.length() > this->ini_contig_size) {
-						out_contig << header << endl << seq << endl;
+						out_contig << header << '\n' << seq << '\n';
 					}
 					if (seq.length() > this->max_contig_lgth) {
-						out_candidate_contig << header << endl << seq.substr((seq.length() - max_contig_lgth) / 2,max_contig_lgth) << endl;
+						out_candidate_contig << header << '\n' << seq.substr((seq.length() - max_contig_lgth) / 2,max_contig_lgth) << '\n';
 					}
 				}
 			}
@@ -770,12 +767,12 @@ void SRAssemblerMaster::process_long_contigs(int round, int k) {
 	vector<string> tokens;
 	tokenize(header.substr(1), tokens, " ");
 	if (long_contig_ids.find(tokens[0]) != long_contig_ids.end())
-		out_long_contig << header << endl << seq <<endl;
+		out_long_contig << header << '\n' << seq << '\n';
 	else {
 		if (seq.length() > this->ini_contig_size)
-			out_contig << header << endl << seq << endl;
+			out_contig << header << '\n' << seq << '\n';
 		if (seq.length() > this->max_contig_lgth) {
-			out_candidate_contig << header << endl << seq.substr((seq.length() - max_contig_lgth) / 2,max_contig_lgth) << endl;
+			out_candidate_contig << header << '\n' << seq.substr((seq.length() - max_contig_lgth) / 2,max_contig_lgth) << '\n';
 		}
 	}
 	in_contig.close();
@@ -836,7 +833,7 @@ void SRAssemblerMaster::process_long_contigs(int round, int k) {
 			// For each potential read number, add to the complement if not in the vmatch output
 			for (int i=0; i < readcount; i++) {
 				if (i < str2int(line)) {
-					complement_stream << i << endl;
+					complement_stream << i << '\n';
 					continue;
 				}
 				// Because the vmatch output is sorted, we only iterate the vmatch_stream when we find matching numbers
@@ -845,7 +842,7 @@ void SRAssemblerMaster::process_long_contigs(int round, int k) {
 					continue;
 				}
 				// If vmatch_stream is empty, line will have no value and we keep all remaining read numbers
-				complement_stream << i << endl;
+				complement_stream << i << '\n';
 			}
 			vmatch_stream.close();
 			complement_stream.close();
@@ -893,7 +890,7 @@ void SRAssemblerMaster::remove_hit_contigs(vector<string> &contig_list, int roun
 				if (hit_seq)
 					saved_contig_file << ">contig" + int2str(contig_number++) + header.substr(header.find_first_of(" ")) + "\n" + seq + "\n";
 				else
-					tmp_file_stream << ">" << header << endl << seq << endl;
+					tmp_file_stream << ">" << header << '\n' << seq << '\n';
 			}
 			header = line.substr(1);
 			string contig_id = header.substr(0, header.find_first_of(" "));
@@ -907,7 +904,7 @@ void SRAssemblerMaster::remove_hit_contigs(vector<string> &contig_list, int roun
 		if (hit_seq)
 			saved_contig_file << ">contig" + int2str(contig_number++) + header.substr(header.find_first_of(" ")) + "\n" + seq + "\n";
 		else
-			tmp_file_stream << ">" << header << endl << seq << endl;
+			tmp_file_stream << ">" << header << '\n' << seq << '\n';
 	}
 	contig_file_stream.close();
 	tmp_file_stream.close();
@@ -930,7 +927,7 @@ void SRAssemblerMaster::prepare_final_contigs_file(int round){
 	ofstream final_contig(final_contigs_file.c_str());
 	string line;
 	while (getline(saved_contig, line))
-		final_contig << line << endl;
+		final_contig << line << '\n';
 	saved_contig.close();
 	string header = "";
 	string seq = "";
@@ -943,7 +940,7 @@ void SRAssemblerMaster::prepare_final_contigs_file(int round){
 				for (unsigned int i=1;i<header_tokens.size();i++){
 					header = header + header_tokens[i] + " ";
 				}
-				final_contig << header << endl << seq << endl;
+				final_contig << header << '\n' << seq << '\n';
 			}
 			header = line;
 			seq = "";
@@ -958,7 +955,7 @@ void SRAssemblerMaster::prepare_final_contigs_file(int round){
 		for (unsigned int i=1;i<header_tokens.size();i++){
 			header = header + header_tokens[i] + " ";
 		}
-		final_contig << header << endl << seq << endl;
+		final_contig << header << '\n' << seq << '\n';
 	}
 }
 
