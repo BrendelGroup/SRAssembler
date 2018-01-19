@@ -25,7 +25,7 @@ SRAssembler::~SRAssembler() {
 	cerr << "SRAssembler destructed" << endl ;
 }
 
-int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize, const int start_time) {
+int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 	//set the default values
 	init_match_length = INIT_MATCH_LENGTH_PROTEIN;
 	recur_match_length = RECUR_MATCH_LENGTH;
@@ -237,7 +237,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize, const int 
 		return -1;
 	}
 	tmp_dir = out_dir + "/tmp";
-	mem_dir = "/dev/shm/SRAssembler" + int2str(start_time);
+	mem_dir = "/dev/shm/SRAssembler" + int2str(getppid());
 	if (data_dir == "")
 		data_dir = out_dir + "/" + READS_DATA;
 	preprocessed_exist = file_exists(data_dir);
@@ -828,23 +828,22 @@ void finalized(){
 }
 
 int main(int argc, char * argv[] ) {
-
 	long int start_time = time(0);
 	int rank, mpiSize;
 
-	SRAssembler* srassembler = NULL;
+	SRAssembler* instance = NULL;
 	try {
 		mpi_init(argc,argv);
 		mpiSize=mpi_get_size();
 		rank=mpi_get_rank();
 
-		srassembler = SRAssembler::getInstance(rank);
-		int ret = srassembler->init(argc, argv, rank, mpiSize, start_time);
+		instance = SRAssembler::getInstance(rank);
+		int ret = instance->init(argc, argv, rank, mpiSize);
 		if (ret == -1) {
 			throw -1;
 		}
-		srassembler->do_preprocessing();
-		srassembler->do_walking();
+		instance->do_preprocessing();
+		instance->do_walking();
 	} catch (int e) {
 		mpi_code code;
 		code.action = ACTION_EXIT;
@@ -856,11 +855,11 @@ int main(int argc, char * argv[] ) {
 	}
 	finalized();
 	if (rank == 0) {
-		string cmd = "rm -rf /dev/shm/SRAssembler" + int2str(start_time);
-		srassembler->get_logger()->debug(cmd);
+		string cmd = "rm -rf /dev/shm/SRAssembler" + int2str(getppid());
+		instance->get_logger()->debug(cmd);
 		run_shell_command(cmd);
 		string str = "Execution time: " + int2str(time(0) - start_time) + " seconds";
-		srassembler->get_logger()->info(str);
+		instance->get_logger()->info(str);
 	}
 	return 0;
 }

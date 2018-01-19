@@ -59,7 +59,6 @@ void Library::set_insert_size(int insert_size){
 }
 
 void Library::set_num_parts(int num_parts){
-	//cerr << "Set library " + int2str(this->lib_idx + 1) + " to " + int2str(num_parts) + " parts." << endl;
 	this->num_parts = num_parts;
 }
 
@@ -170,7 +169,6 @@ void Library::do_split_files(int read_direction, int reads_per_file){
 			}
 			// Dump the quality line, get the next header. End writing early of last outfile.
 			if (! getline(in_stream, line)) {
-				//cerr << "break at linecount " + int2str(linecount) << endl;
 				break;
 			}
 		}

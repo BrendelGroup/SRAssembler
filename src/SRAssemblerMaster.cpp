@@ -12,9 +12,9 @@ SRAssemblerMaster::SRAssemblerMaster() {
 	//cerr << "SRAssemblerMaster constructed." << endl ;
 }
 
-int SRAssemblerMaster::init(int argc, char * argv[], int rank, int mpiSize, const int start_time) {
-	string cmd;
-	int ret = SRAssembler::init(argc, argv, rank, mpiSize, start_time);
+int SRAssemblerMaster::init(int argc, char * argv[], int rank, int mpiSize) {
+	string command;
+	int ret = SRAssembler::init(argc, argv, rank, mpiSize);
 	if (ret == -1)
 		return ret;
 	if (!get_aligner(Aligner::PROTEIN_ALIGNER)->is_available()) return -1;
@@ -24,11 +24,11 @@ int SRAssemblerMaster::init(int argc, char * argv[], int rank, int mpiSize, cons
 	this->start_round = (over_write)?1:get_start_round();
 	if (this->start_round == 1)
 		create_folders();
-	cmd = "Command: ";
+	command = "Command: ";
 	for (int i=0; i<argc;i++){
-		cmd.append(argv[i]).append(" ");
+		command.append(argv[i]).append(" ");
 	}
-	logger->info(cmd);
+	logger->info(command);
 	//logger->info("Dump directory is " + mem_dir);
 	output_header();
 	output_libraries();
@@ -276,8 +276,7 @@ int SRAssemblerMaster::get_start_round(){
 					return start_round;
 				logger->info("Previous results found. SRAssembler starts from round " + int2str(start_round));
 				//clean the temp results if it is not complete.
-				run_shell_command("rm -f " + tmp_dir + "/matched_reads_left_" + "r" + int2str(start_round) + "*");
-				run_shell_command("rm -f " + tmp_dir + "/matched_reads_right_" + "r" + int2str(start_round) + "*");
+				run_shell_command("rm -f " + tmp_dir + "/matched_reads_{left,right}_" + "r" + int2str(start_round) + "*");
 				for (unsigned int lib_idx=0;lib_idx<this->libraries.size();lib_idx++){
 					Library lib = this->libraries[lib_idx];
 					run_shell_command("cp " + lib.get_matched_left_reads_filename(i) + " " + lib.get_matched_left_reads_filename());
