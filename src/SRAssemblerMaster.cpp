@@ -12,9 +12,9 @@ SRAssemblerMaster::SRAssemblerMaster() {
 	//cerr << "SRAssemblerMaster constructed." << endl ;
 }
 
-int SRAssemblerMaster::init(int argc, char * argv[], int rank, int mpiSize, const int start_time) {
-	string cmd;
-	int ret = SRAssembler::init(argc, argv, rank, mpiSize, start_time);
+int SRAssemblerMaster::init(int argc, char * argv[], int rank, int mpiSize) {
+	string command;
+	int ret = SRAssembler::init(argc, argv, rank, mpiSize);
 	if (ret == -1)
 		return ret;
 	if (!get_aligner(Aligner::PROTEIN_ALIGNER)->is_available()) return -1;
@@ -24,11 +24,11 @@ int SRAssemblerMaster::init(int argc, char * argv[], int rank, int mpiSize, cons
 	this->start_round = (over_write)?1:get_start_round();
 	if (this->start_round == 1)
 		create_folders();
-	cmd = "Command: ";
+	command = "Command: ";
 	for (int i=0; i<argc;i++){
-		cmd.append(argv[i]).append(" ");
+		command.append(argv[i]).append(" ");
 	}
-	logger->info(cmd);
+	logger->info(command);
 	//logger->info("Dump directory is " + mem_dir);
 	output_header();
 	output_libraries();
@@ -191,10 +191,7 @@ void SRAssemblerMaster::do_preprocessing(){
 			}
 		}
 		logger->info("Splitting read library " + int2str(lib_index+1) + " ...");
-		cmd = "rm -f " + data_dir + "/lib" + int2str(lib_index+1) + "/" + get_file_base_name(lib->get_left_read()) + "*"; //delete old files
-		logger->debug(cmd);
-		run_shell_command(cmd);
-		cmd = "rm -f " + data_dir + "/lib" + int2str(lib_index+1) + "/" + get_file_base_name(lib->get_right_read()) + "*"; //delete old files
+		cmd = "rm -f " + data_dir + "/lib" + int2str(lib_index+1) + "/" + get_file_base_name(lib->get_left_read()) + "* " + data_dir + "/lib" + int2str(lib_index+1) + "/" + get_file_base_name(lib->get_right_read()) + "*"; //delete old files
 		logger->debug(cmd);
 		run_shell_command(cmd);
 		// Why would you name a variable 'from'?
@@ -279,8 +276,7 @@ int SRAssemblerMaster::get_start_round(){
 					return start_round;
 				logger->info("Previous results found. SRAssembler starts from round " + int2str(start_round));
 				//clean the temp results if it is not complete.
-				run_shell_command("rm -f " + tmp_dir + "/matched_reads_left_" + "r" + int2str(start_round) + "*");
-				run_shell_command("rm -f " + tmp_dir + "/matched_reads_right_" + "r" + int2str(start_round) + "*");
+				run_shell_command("rm -f " + tmp_dir + "/matched_reads_{left,right}_" + "r" + int2str(start_round) + "*");
 				for (unsigned int lib_idx=0;lib_idx<this->libraries.size();lib_idx++){
 					Library lib = this->libraries[lib_idx];
 					run_shell_command("cp " + lib.get_matched_left_reads_filename(i) + " " + lib.get_matched_left_reads_filename());
@@ -554,7 +550,7 @@ void SRAssemblerMaster::save_query_list(){
 	if (query_list.size() > 0){
 		ofstream fs(fn.c_str());
 		for (unsigned i=0;i<query_list.size();i++)
-			fs << query_list[i] << endl;
+			fs << query_list[i] << '\n';
 		fs.close();
 	}
 }
@@ -751,13 +747,13 @@ void SRAssemblerMaster::process_long_contigs(int round, int k) {
 				vector<string> tokens;
 				tokenize(header.substr(1), tokens, " ");
 				if (long_contig_ids.find(tokens[0]) != long_contig_ids.end())
-					out_long_contig << header << endl << seq <<endl;
+					out_long_contig << header << '\n' << seq << '\n';
 				else {
 					if (seq.length() > this->ini_contig_size) {
-						out_contig << header << endl << seq << endl;
+						out_contig << header << '\n' << seq << '\n';
 					}
 					if (seq.length() > this->max_contig_lgth) {
-						out_candidate_contig << header << endl << seq.substr((seq.length() - max_contig_lgth) / 2,max_contig_lgth) << endl;
+						out_candidate_contig << header << '\n' << seq.substr((seq.length() - max_contig_lgth) / 2,max_contig_lgth) << '\n';
 					}
 				}
 			}
@@ -770,12 +766,12 @@ void SRAssemblerMaster::process_long_contigs(int round, int k) {
 	vector<string> tokens;
 	tokenize(header.substr(1), tokens, " ");
 	if (long_contig_ids.find(tokens[0]) != long_contig_ids.end())
-		out_long_contig << header << endl << seq <<endl;
+		out_long_contig << header << '\n' << seq << '\n';
 	else {
 		if (seq.length() > this->ini_contig_size)
-			out_contig << header << endl << seq << endl;
+			out_contig << header << '\n' << seq << '\n';
 		if (seq.length() > this->max_contig_lgth) {
-			out_candidate_contig << header << endl << seq.substr((seq.length() - max_contig_lgth) / 2,max_contig_lgth) << endl;
+			out_candidate_contig << header << '\n' << seq.substr((seq.length() - max_contig_lgth) / 2,max_contig_lgth) << '\n';
 		}
 	}
 	in_contig.close();
@@ -836,7 +832,7 @@ void SRAssemblerMaster::process_long_contigs(int round, int k) {
 			// For each potential read number, add to the complement if not in the vmatch output
 			for (int i=0; i < readcount; i++) {
 				if (i < str2int(line)) {
-					complement_stream << i << endl;
+					complement_stream << i << '\n';
 					continue;
 				}
 				// Because the vmatch output is sorted, we only iterate the vmatch_stream when we find matching numbers
@@ -845,7 +841,7 @@ void SRAssemblerMaster::process_long_contigs(int round, int k) {
 					continue;
 				}
 				// If vmatch_stream is empty, line will have no value and we keep all remaining read numbers
-				complement_stream << i << endl;
+				complement_stream << i << '\n';
 			}
 			vmatch_stream.close();
 			complement_stream.close();
@@ -893,7 +889,7 @@ void SRAssemblerMaster::remove_hit_contigs(vector<string> &contig_list, int roun
 				if (hit_seq)
 					saved_contig_file << ">contig" + int2str(contig_number++) + header.substr(header.find_first_of(" ")) + "\n" + seq + "\n";
 				else
-					tmp_file_stream << ">" << header << endl << seq << endl;
+					tmp_file_stream << ">" << header << '\n' << seq << '\n';
 			}
 			header = line.substr(1);
 			string contig_id = header.substr(0, header.find_first_of(" "));
@@ -907,7 +903,7 @@ void SRAssemblerMaster::remove_hit_contigs(vector<string> &contig_list, int roun
 		if (hit_seq)
 			saved_contig_file << ">contig" + int2str(contig_number++) + header.substr(header.find_first_of(" ")) + "\n" + seq + "\n";
 		else
-			tmp_file_stream << ">" << header << endl << seq << endl;
+			tmp_file_stream << ">" << header << '\n' << seq << '\n';
 	}
 	contig_file_stream.close();
 	tmp_file_stream.close();
@@ -930,7 +926,7 @@ void SRAssemblerMaster::prepare_final_contigs_file(int round){
 	ofstream final_contig(final_contigs_file.c_str());
 	string line;
 	while (getline(saved_contig, line))
-		final_contig << line << endl;
+		final_contig << line << '\n';
 	saved_contig.close();
 	string header = "";
 	string seq = "";
@@ -943,7 +939,7 @@ void SRAssemblerMaster::prepare_final_contigs_file(int round){
 				for (unsigned int i=1;i<header_tokens.size();i++){
 					header = header + header_tokens[i] + " ";
 				}
-				final_contig << header << endl << seq << endl;
+				final_contig << header << '\n' << seq << '\n';
 			}
 			header = line;
 			seq = "";
@@ -958,7 +954,7 @@ void SRAssemblerMaster::prepare_final_contigs_file(int round){
 		for (unsigned int i=1;i<header_tokens.size();i++){
 			header = header + header_tokens[i] + " ";
 		}
-		final_contig << header << endl << seq << endl;
+		final_contig << header << '\n' << seq << '\n';
 	}
 }
 

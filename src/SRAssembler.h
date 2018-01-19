@@ -11,6 +11,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <sys/types.h>
 #include <unistd.h>
 #include <vector>
 #include "Utility.h"
@@ -37,7 +38,7 @@ class SRAssembler {
 public:
 	SRAssembler();
 	virtual ~SRAssembler();
-	virtual int init(int argc, char * argv[], int rank, int mpiSize, const int start_time);
+	virtual int init(int argc, char * argv[], int rank, int mpiSize);
 	virtual void do_preprocessing()=0;
 	virtual void do_walking()=0;
 	virtual void show_usage()=0;

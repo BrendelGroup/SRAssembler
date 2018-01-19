@@ -37,26 +37,26 @@ void SOAPDenovoAssembler::do_assembly(int kmer, const vector<Library>& libraries
 	for (unsigned int i=0; i<libraries.size();i++){
 		Library lib = libraries[i];
 		if (get_file_size(lib.get_matched_left_reads_filename()) == 0) continue;
-		outFile << "[LIB]" << endl;
-		outFile << "asm_flags=3" << endl;
-		outFile << "rank=" << (i+1) << endl;
+		outFile << "[LIB]" << '\n';
+		outFile << "asm_flags=3" << '\n';
+		outFile << "rank=" << (i+1) << '\n';
 		if (lib.get_paired_end()) {
-			outFile << "avg_ins=" << lib.get_insert_size() << endl;
+			outFile << "avg_ins=" << lib.get_insert_size() << '\n';
 			//if (lib.get_format() == FORMAT_FASTQ) {
 				//outFile << "q1=" << lib.get_matched_left_reads_filename() << endl;
 				//outFile << "q2=" << lib.get_matched_right_reads_filename() << endl;
 			//} else {
-			outFile << "f1=" << lib.get_matched_left_reads_filename() << endl;
-			outFile << "f2=" << lib.get_matched_right_reads_filename() << endl;
+			outFile << "f1=" << lib.get_matched_left_reads_filename() << '\n';
+			outFile << "f2=" << lib.get_matched_right_reads_filename() << '\n';
 			//}
 			if (lib.get_reversed()) {
-				outFile << "reverse_seq=1" << endl;
+				outFile << "reverse_seq=1" << '\n';
 			}
 		} else {
 			//if (lib.get_format() == FORMAT_FASTQ)
 				//outFile << "q=" << lib.get_matched_left_reads_filename() << endl;
 			//else
-				outFile << "f=" << lib.get_matched_left_reads_filename() << endl;
+				outFile << "f=" << lib.get_matched_left_reads_filename() << '\n';
 		}
 	}
 	outFile.close();

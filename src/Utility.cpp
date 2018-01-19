@@ -11,7 +11,6 @@
 #include <string>
 #include <algorithm>
 #include <vector>
-#include <regex>
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
@@ -31,35 +30,15 @@ string readfile(const string& fn) {
 	return filestring;
 };
 
-FASTA_file readFASTAfile(const string& fn) {
-	ifstream inFile(fn.c_str());
-	string line;
-	FASTA_file fasta;
-	getline(inFile,line);
-	fasta.header = line;
-	while(getline(inFile,line)) {
-		fasta.content.append(line);
-		//cout << line << endl;
-	}
-	inFile.close();
-	return fasta;
-};
-
-void writeFASTAfile(const string& fn, const FASTA_file& fasta) {
-	ofstream outFile(fn.c_str());
-	outFile << fasta.header << endl << fasta.content << endl;
-	outFile.close();
-};
-
 void fastq2fasta(const string& fq, const string& fa) {
 	ifstream in_file(fq.c_str());
 	ofstream out_file(fa.c_str());
 	string line;
 	while(getline(in_file,line)) {
 		if (line.substr(0,1) == "@"){
-			out_file << ">" << line.substr(1) << endl;
+			out_file << ">" << line.substr(1) << '\n';
 			getline(in_file, line);
-			out_file << line << endl;
+			out_file << line << '\n';
 			getline(in_file, line);
 			getline(in_file, line);
 		}
@@ -245,13 +224,13 @@ void remove_duplicate_reads(const string& filename, int read_format) {
 			if (line.substr(0,1) == lead_chr){
 				if (mapped_reads.find(line) == mapped_reads.end()) {
 					mapped_reads.insert(line);
-					tmp_stream << line << endl;
+					tmp_stream << line << '\n';
 					getline(src_stream, line);
-					tmp_stream << line << endl;
+					tmp_stream << line << '\n';
 					getline(src_stream, line);
-					tmp_stream << line << endl;
+					tmp_stream << line << '\n';
 					getline(src_stream, line);
-					tmp_stream << line << endl;
+					tmp_stream << line << '\n';
 				}
 				else {
 					getline(src_stream, line);
@@ -272,7 +251,7 @@ unsigned int count_letters(string &str) {
 	char const constexpr alpha[] = R"(abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ)";
 	for(std::string::size_type i = 0; i < str.size(); ++i) {
 		char test = str[i];
-	    if (any_of(begin(alpha), end(alpha), [test](char c){return c == test;})) {
+		if (any_of(begin(alpha), end(alpha), [test](char c){return c == test;})) {
 			count++;
 		}
 	}

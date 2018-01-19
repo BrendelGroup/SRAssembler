@@ -25,14 +25,7 @@ using namespace std;
 
 typedef boost::unordered_map<std::string, string> string_map;
 
-typedef struct {
-	string header;
-	string content;
-} FASTA_file;
-
 string readfile(const string& fn);
-FASTA_file readFASTAfile(const string& fn);
-void writeFASTAfile(const string& fn, const FASTA_file& fasta);
 void tokenize(const string& str, vector<string>& tokens, const string& delimiters);
 void run_shell_command(const string& cmd);
 string run_shell_command_with_return(const string& cmd);

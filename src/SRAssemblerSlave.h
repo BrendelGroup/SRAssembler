@@ -13,7 +13,7 @@
 class SRAssemblerSlave: public SRAssembler {
 public:
 	SRAssemblerSlave();
-	int init(int argc, char * argv[], int rank, int mpiSize, const int start_time);
+	int init(int argc, char * argv[], int rank, int mpiSize);
 	void show_usage();
 	void print_message(const string&);
 	void do_preprocessing();

@@ -76,9 +76,9 @@ string_map ExonerateAligner::get_aligned_contigs(const double& min_score, const 
 			tokenize(line, tokens, " ");
 			string contig_id = tokens[0].substr(1, tokens[0].length()-1);
 			if (std::find(contig_list.begin(), contig_list.end(), contig_id)!=contig_list.end()){
-				new_contig_fs << line << endl;
+				new_contig_fs << line << '\n';
 				getline(old_contig_fs, line);
-				new_contig_fs << line << endl;
+				new_contig_fs << line << '\n';
 			}
 		}
 	}
@@ -125,9 +125,9 @@ void ExonerateAligner::get_hit_contigs(const double& min_score, const double& mi
 			tokenize(line, tokens, " ");
 			string contig_id = tokens[0].substr(1, tokens[0].length()-1);
 			if (std::find(contig_list.begin(), contig_list.end(), contig_id)!=contig_list.end()){
-				new_contig_fs << line << endl;
+				new_contig_fs << line << '\n';
 				getline(old_contig_fs, line);
-				new_contig_fs << line << endl;
+				new_contig_fs << line << '\n';
 			}
 		}
 	}
