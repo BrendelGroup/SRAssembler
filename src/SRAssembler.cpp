@@ -26,6 +26,7 @@ SRAssembler::~SRAssembler() {
 }
 
 int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
+//cerr << "I am an instance and my PPID is " + int2str(getppid()) + ".\n";
 	//set the default values
 	init_match_length = INIT_MATCH_LENGTH_PROTEIN;
 	recur_match_length = RECUR_MATCH_LENGTH;
@@ -237,7 +238,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 		return -1;
 	}
 	tmp_dir = out_dir + "/tmp";
-	mem_dir = "/dev/shm/SRAssembler" + int2str(getppid());
+	//mem_dir = "/dev/shm/SRAssembler" + int2str(getppid());
 	if (data_dir == "")
 		data_dir = out_dir + "/" + READS_DATA;
 	preprocessed_exist = file_exists(data_dir);

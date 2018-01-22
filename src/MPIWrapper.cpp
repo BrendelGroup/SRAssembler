@@ -7,19 +7,26 @@
 
 #include "MPIWrapper.h"
 #include <string.h>
+//TODO remove temporary
+#include <iostream>
 #ifdef MPIMODE
 #include <mpi.h>
 #endif
 
-unsigned long get_mpi_code_value(mpi_code code){
-	return 100000000 * code.action + 1000000 * code.value1 + 100* code.value2 + code.value3;
+long long get_mpi_code_value(mpi_code code){
+	// code.action can be 2 digits
+	// code.value1 can be 4 digits
+	// code.value2 can be 10 digits
+	// code.value3 can be 2 digits
+	return 10000000000000000 * code.action + 1000000000000 * code.value1 + 100* code.value2 + code.value3;
 }
-
-mpi_code get_mpi_code(int code_value){
+//18,446,744,073,709,551,615
+// a,a11,111,111,122,222,233
+mpi_code get_mpi_code(long long code_value){
 	mpi_code code;
-	code.action = code_value / 100000000;
-	code.value1 = code_value / 1000000 % 100;
-	code.value2 = code_value / 100 % 10000;;
+	code.action = code_value / 10000000000000000;
+	code.value1 = code_value / 1000000000000 % 10000;
+	code.value2 = code_value / 100 % 10000000000;
 	code.value3 = code_value % 100;
 	return code;
 }
@@ -43,24 +50,25 @@ void mpi_receive( char* msg, int& from ) {
 	msg[len] = '\0';
 #endif
 }
-void mpi_send( const int& code, const int& to ) {
+void mpi_send( const long long& code_value, const int& to ) {
 #ifdef MPIMODE
-	MPI::COMM_WORLD.Send( &code, 1,   MPI::INT,  to, ( int )1 );
+	MPI::COMM_WORLD.Send( &code_value, 1,   MPI::LONG_LONG_INT,  to, ( int )1 );
 #endif
 }
-void mpi_bcast(const int& code) {
+void mpi_bcast(const long long& code_value) {
 	int mpiSize = mpi_get_size();
 	int rank = mpi_get_rank();
 	for (int i=0;i<mpiSize;i++)
 		if (rank != i)
-			mpi_send(code, i);
+			mpi_send(code_value, i);
 	//MPI::COMM_WORLD.Bcast( &code, 1,   MPI::INT, 0);
 }
-void mpi_receive( int& code, int& from ) {
+void mpi_receive( long long& code_value, int& from ) {
+//std::cerr << "Receiving MPI code_value: " << code_value << " at rank " << mpi_get_rank() << "\n";
 #ifdef MPIMODE
 	MPI::Status status;
 
-	MPI::COMM_WORLD.Recv( &code, 1, MPI::INT, MPI::ANY_SOURCE,MPI::ANY_TAG,  status );
+	MPI::COMM_WORLD.Recv( &code_value, 1, MPI::LONG_LONG_INT, MPI::ANY_SOURCE,MPI::ANY_TAG,  status );
 	from = ( ( int )status.Get_source(  ) );
 #endif
 }

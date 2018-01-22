@@ -33,7 +33,7 @@ void SRAssemblerSlave::do_walking(){
 
 void SRAssemblerSlave::process_message(){
 	int action;
-	int code_value;
+	long long code_value;
 	int value1;
 	int value2;
 	int value3;
@@ -74,6 +74,9 @@ void SRAssemblerSlave::process_message(){
 		if (action == ACTION_LOAD_PREVIOUS){  //do alignment
 			load_mapped_reads(value1);
 			send_code(from, ACTION_RETURN, 0, 0, 0);
+		}
+		if (action == ACTION_MEMDIR) {
+			this->mem_dir="/dev/shm/SRAssembler" + int2str(value2);
 		}
 	}
 }
