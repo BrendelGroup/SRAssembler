@@ -269,8 +269,8 @@ int SRAssemblerMaster::get_start_round(){
 				}
 			//}
 			if (found_previous) {
-				string cmd = "mkdir -p " + mem_dir;
-				run_shell_command(cmd);
+				//string cmd = "mkdir -p " + mem_dir;
+				//run_shell_command(cmd);
 				start_round = i+1;
 				if (start_round > this->num_rounds)
 					return start_round;
@@ -311,11 +311,6 @@ void SRAssemblerMaster::do_walking(){
 		broadcast_code(ACTION_EXIT, 0, 0, 0);
 		return;
 	}
-	// Set unique directory for files stored in RAM
-	int procID=getpid();
-	broadcast_code(ACTION_MEMDIR, 0, procID, 0);
-	this->mem_dir="/dev/shm/SRAssembler" + int2str(procID);
-	run_shell_command("mkdir " + mem_dir);
 
 	logger->info("Start chromosome walking ...");
 	logger->info("Total processors: " + int2str(mpiSize));
@@ -521,7 +516,9 @@ void SRAssemblerMaster::do_walking(){
 	outFile << output_content << endl;
 	outFile.close();
 	//RM HERE
-	run_shell_command("rm -rf " + query_file + ".* " + tmp_dir + "/qindex.*");
+	string cmd = "rm -rf " + query_file + ".* " + tmp_dir + "/qindex.* " + mem_dir;
+	logger->debug(cmd);
+	run_shell_command(cmd);
 }
 
 void SRAssemblerMaster::clean_tmp_files(int round){
@@ -990,6 +987,11 @@ void SRAssemblerMaster::create_folders(){
 	run_shell_command(cmd);
 	cmd = "mkdir " + tmp_dir;
 	run_shell_command(cmd);
+		// Set unique directory for files stored in RAM
+	int procID=getpid();
+	broadcast_code(ACTION_MEMDIR, 0, procID, 0);
+	this->mem_dir="/dev/shm/SRAssembler" + int2str(procID);
+	run_shell_command("mkdir -p " + mem_dir);
 }
 
 void SRAssemblerMaster::remove_no_hit_contigs(int round){

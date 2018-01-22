@@ -15,18 +15,17 @@
 
 long long get_mpi_code_value(mpi_code code){
 	// code.action can be 2 digits
-	// code.value1 can be 4 digits
-	// code.value2 can be 10 digits
+	// code.value1 can be 5 digits
+	// code.value2 can be 9 digits
 	// code.value3 can be 2 digits
-	return 10000000000000000 * code.action + 1000000000000 * code.value1 + 100* code.value2 + code.value3;
+	return 10000000000000000 * code.action + 100000000000 * code.value1 + 100* code.value2 + code.value3;
 }
-//18,446,744,073,709,551,615
-// a,a11,111,111,122,222,233
+
 mpi_code get_mpi_code(long long code_value){
 	mpi_code code;
 	code.action = code_value / 10000000000000000;
-	code.value1 = code_value / 1000000000000 % 10000;
-	code.value2 = code_value / 100 % 10000000000;
+	code.value1 = code_value / 100000000000 % 100000;
+	code.value2 = code_value / 100 % 1000000000;
 	code.value3 = code_value % 100;
 	return code;
 }
