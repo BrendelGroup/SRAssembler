@@ -357,7 +357,7 @@ void SRAssemblerMaster::do_walking(){
 					while(completed < lib.get_num_parts()){
 						mpi_receive(code_value, from);
 						code = get_mpi_code(code_value);
-						int found_new_reads = code.value1;
+						int found_new_reads = code.value2;
 						new_reads_count += found_new_reads;
 						completed++;
 					}
@@ -369,8 +369,8 @@ void SRAssemblerMaster::do_walking(){
 					while (completed < lib.get_num_parts()){
 						mpi_receive(code_value, from);
 						code = get_mpi_code(code_value);
-						int found_new_reads = code.value1;
-						int file_idx = code.value2;
+						int found_new_reads = code.value2;
+						int file_idx = code.value1;
 						new_reads_count += found_new_reads;
 						completed++;
 						// As files are completed, new files are sent to slaves to be aligned
@@ -390,8 +390,8 @@ void SRAssemblerMaster::do_walking(){
 		}
 		merge_mapped_files(round);
 		int read_count = get_total_read_count(round);
-		logger->debug("Found new reads: " + int2str(new_reads_count));
-		logger->debug("Total matched reads: " + int2str(read_count));
+		logger->info("Found new reads: " + int2str(new_reads_count));
+		logger->info("Total matched reads: " + int2str(read_count));
 		if (assembly_round <= round){
 			unsigned int longest_contig = do_assembly(round);
 			summary_best += int2str(read_count) + "\n";
