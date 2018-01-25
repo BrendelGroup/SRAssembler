@@ -792,9 +792,12 @@ Assembly_stats SRAssembler::get_assembly_stats(int round, int k) {
 
 void SRAssembler::save_found_reads(int round){
 	string matched_file = get_matched_reads_file_name(round);
-	ofstream matched_file_stream(matched_file.c_str());
-	for (unordered_set<string>::iterator it = found_reads.begin();it != found_reads.end(); ++it)
-		 matched_file_stream << *it << '\n';
+	ofstream matched_file_stream;
+	// Open the file in append mode
+	matched_file_stream.open(matched_file.c_str(), ios_base::app);
+	for (unordered_set<string>::iterator it = found_reads.begin();it != found_reads.end(); ++it) {
+		matched_file_stream << string(*it) + '\n';
+	}
 	matched_file_stream.close();
 }
 
@@ -803,12 +806,13 @@ void SRAssembler::load_found_reads(int round){
 	logger->info("Loading the matched reads of round " + int2str(round) + " (" + int2str(rank) + "/" + int2str(mpiSize-1) + ")");
 	ifstream matched_file_stream(matched_file.c_str());
 	string seq_id;
+	int read_count;
 	while (getline(matched_file_stream, seq_id)){
 		found_reads.insert(seq_id);
+		read_count++;
 	}
 	matched_file_stream.close();
-	int read_count = get_total_read_count(round);
-	logger->info("Found matched reads from round " + int2str(round) + ": " + int2str(read_count));
+	logger->info("Found matched read (pairs) from round " + int2str(round) + ": " + int2str(read_count));
 }
 
 SRAssembler* SRAssembler::getInstance(int pid){

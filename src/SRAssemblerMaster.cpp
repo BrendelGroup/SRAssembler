@@ -383,8 +383,18 @@ void SRAssemblerMaster::do_walking(){
 				}
 			}
 		}
-		save_found_reads(round);
-
+		// At the end of the round save found reads
+		if (mpiSize == 1){
+			save_found_reads(round);
+		} else {
+			// Have each slave save its found reads
+			int slave;
+			for (slave=1; slave < mpiSize; slave++) {
+				send_code(slave, ACTION_SAVE, round, 0, 0);
+				// Wait until all the slaves have saved their found reads
+				mpi_receive(code_value, from);
+			}
+		}
 
 		if (new_reads_count == 0) {
 			logger->info("The walking is terminated: No new reads found.");

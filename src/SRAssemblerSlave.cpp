@@ -71,12 +71,16 @@ void SRAssemblerSlave::process_message(){
 			int found_new_reads = do_alignment(value1, value3, value2);
 			send_code(from, ACTION_RETURN, value2, found_new_reads, 0);
 		}
-		if (action == ACTION_LOAD_PREVIOUS){  //do alignment
+		if (action == ACTION_LOAD_PREVIOUS){  //load previous reads
 			load_found_reads(value1);
 			send_code(from, ACTION_RETURN, 0, 0, 0);
 		}
 		if (action == ACTION_MEMDIR) {
 			this->mem_dir="/dev/shm/SRAssembler" + int2str(value2);
+		}
+		if (action == ACTION_SAVE){  //load previous reads
+			save_found_reads(value1);
+			send_code(from, ACTION_RETURN, 0, 0, 0);
 		}
 	}
 }

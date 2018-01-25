@@ -20,17 +20,15 @@ VmatchAligner::VmatchAligner(int log_level, string log_file):Aligner(log_level, 
  * Add new found reads to the found_reads_list
  * Add sequences of found reads to out_left_read and out_right_read
  *
- * Then it reads through ALL of the reads for that library and pulls out the reads whose IDs were found
- * TODO change the read search into something using an index.
  * Parameters:
  * output_file: the Vmatch alignment report file
  * found_reads: the reads currently found in this node
- * source_read: the split reads file name for this part
+ * lib_idx: the integer number of the library for this part
+ * read_part: the integer count of the split reads file for this part
+ * left_read_index: the index name of the left reads of this library
+ * right_read_index: the index name of the right reads of this library
  * out_left_read: the matched left-end reads file name
  * out_right_read: the matched left-end reads file name
- * joined_read: the matched joined reads file name
- * fastq_format: interleaved or split
- * format: fastq or fasta
  *
  */
 int VmatchAligner::parse_output(const string& output_file, unordered_set<string>& found_reads, const int lib_idx, const int read_part, const string& left_read_index, const string& right_read_index, const string& out_left_read, const string& out_right_read) {
@@ -41,7 +39,7 @@ int VmatchAligner::parse_output(const string& output_file, unordered_set<string>
 	//logger->debug("found_reads max_load_factor = " + int2str(found_reads.max_load_factor()));
 	bool paired_end = (out_right_read != "");
 	ifstream report_file_stream(output_file.c_str());
-	int found_read = 0;
+	int read_found = 0;
 	int new_read_count = 0;
 	// parse the output file and get the mapped reads have not found yet
 	string line;
@@ -49,11 +47,12 @@ int VmatchAligner::parse_output(const string& output_file, unordered_set<string>
 	string part_string = int2str(read_part); //Calculate this once rather than over and over
 	string lib_string = int2str(lib_idx);
 	string tmpvseqselectfile = out_left_read + "-tmp";
+	//TODO put the temporary file in mem_dir
 	ofstream tmp_file_stream(tmpvseqselectfile.c_str());
 	//run_shell_command("touch " + tmpvseqselectfile);
 
 	while (getline(report_file_stream, line)) {
-		found_read++;
+		read_found++;
 		string seq_number = line;
 		//logger->debug("seq_number " + seq_number);
 		string seq_id = "lib" + lib_string + ",part" + part_string + ",read" + seq_number;
@@ -69,7 +68,7 @@ int VmatchAligner::parse_output(const string& output_file, unordered_set<string>
 			tmp_file_stream << seq_number << '\n';
 		}
 	}
-	logger->debug("Found " + int2str(found_read) + " reads in part " + part_string);
+	logger->debug("Matched " + int2str(read_found) + " reads in library " + int2str(lib_idx + 1) + ", part " + part_string);
 	report_file_stream.close();
 	tmp_file_stream.close();
 
