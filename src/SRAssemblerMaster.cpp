@@ -609,6 +609,7 @@ int SRAssemblerMaster::do_assembly(int round) {
 	logger->info("Doing assembly, round: " + int2str(round));
 	int best_k = 0;
 	unsigned int max_longest_contig = 0;
+	unsigned int contig_count = 0;
 	int total_k = (end_k-start_k)/step_k + 1;
 	int from;
 	int i = 0;
@@ -659,7 +660,7 @@ int SRAssemblerMaster::do_assembly(int round) {
 	for (int k=start_k;k<=end_k;k+=step_k) {
 		Assembly_stats kstats = stats[i];
 		if (kstats.longest_contig > 0) {
-			logger->info("The longest contig assembled in round\t" + int2str(round) + " is of length\t" + int2str(kstats.longest_contig) + " with k =\t" + int2str(k));
+			logger->info("The longest contig (out of " + int2str(kstats.total_contig) + ") assembled in round\t" + int2str(round) + " is of length\t" + int2str(kstats.longest_contig) + " with k =\t" + int2str(k));
 		}
 		else {
 			logger->info("No contig of the specified minimum length has been assembled by round\t" + int2str(round) + " with k =\t" + int2str(k));
