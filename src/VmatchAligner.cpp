@@ -68,7 +68,7 @@ int VmatchAligner::parse_output(const string& output_file, unordered_set<string>
 			tmp_file_stream << seq_number << '\n';
 		}
 	}
-	logger->debug("Matched " + int2str(read_found) + " reads in library " + int2str(lib_idx + 1) + ", part " + part_string);
+	logger->debug("Matched " + int2str(read_found) + " reads and " + int2str(new_read_count) + " new reads in library " + int2str(lib_idx + 1) + ", part " + part_string);
 	report_file_stream.close();
 	tmp_file_stream.close();
 
