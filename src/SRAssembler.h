@@ -58,7 +58,7 @@ protected:
 	void mask_contigs(int round);
 	std::string get_query_fasta_file_name_masked(int round);
 	std::string get_contig_file_name(int round);
-	std::string get_mapped_reads_file_name(int round);
+	std::string get_matched_reads_file_name(int round);
 	std::string get_vmatch_output_filename(int round, int lib_idx, int idx);
 	std::string get_type(int round);
 	int get_match_length(int round);

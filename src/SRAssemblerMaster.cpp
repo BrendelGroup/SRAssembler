@@ -390,8 +390,7 @@ void SRAssemblerMaster::do_walking(){
 		}
 		merge_mapped_files(round);
 		int read_count = get_total_read_count(round);
-		logger->info("Found new reads: " + int2str(new_reads_count));
-		logger->info("Total matched reads: " + int2str(read_count));
+		logger->info("Found new reads: " + int2str(new_reads_count) + "  Total matched reads: " + int2str(read_count));
 		if (assembly_round <= round){
 			unsigned int longest_contig = do_assembly(round);
 			summary_best += int2str(read_count) + "\n";

@@ -14,24 +14,6 @@ VmatchAligner::VmatchAligner(int log_level, string log_file):Aligner(log_level, 
 
 }
 
-//TODO I think this is a vestigial function. Confirm and delete it.
-unordered_set<string> VmatchAligner::get_hit_list(const string& output_file) {
-	logger->debug("get hit list from output file " + output_file);
-	ifstream report_file_stream(output_file.c_str());
-	boost::unordered_set<string> current_mapped_reads;
-	string line;
-	while (getline(report_file_stream, line)) {
-	//TODO this could probably be more efficient
-		if (line[0] != '#') {
-			vector<string> tokens;
-			tokenize(line, tokens, " ");
-			string seq_id = tokens[0];
-			current_mapped_reads.insert(seq_id);
-		}
-	}
-	report_file_stream.close();
-	return current_mapped_reads;
-}
 /*
  * Parse Vmatch output file.
  * This function needs to :

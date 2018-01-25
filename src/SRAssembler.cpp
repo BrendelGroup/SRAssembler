@@ -557,7 +557,7 @@ string SRAssembler:: get_contig_file_name(int round){
 	return intermediate_dir + "/contigs_" + "r" + int2str(round) + ".fasta";
 }
 
-string SRAssembler:: get_mapped_reads_file_name(int round){
+string SRAssembler:: get_matched_reads_file_name(int round){
 	//return tmp_dir + "/matched_reads_" + "r" + int2str(round) + "_" + "rank" + int2str(this->rank) + ".list";
 	return tmp_dir + "/matched_reads_" + "r" + int2str(round) + "_" + "rank" + "0" + ".list";
 }
@@ -791,17 +791,15 @@ Assembly_stats SRAssembler::get_assembly_stats(int round, int k) {
 }
 
 void SRAssembler::save_mapped_reads(int round){
-	logger->debug("save_mapped_reads INVOKED");
-	string mapped_file = get_mapped_reads_file_name(round);
+	string mapped_file = get_matched_reads_file_name(round);
 	ofstream mapped_file_stream(mapped_file.c_str());
 	for (unordered_set<string>::iterator it = mapped_reads.begin();it != mapped_reads.end(); ++it)
 		 mapped_file_stream << *it << '\n';
 	mapped_file_stream.close();
-	logger->debug("save_mapped_reads FINISHED");
 }
 
 void SRAssembler::load_mapped_reads(int round){
-	string mapped_file = get_mapped_reads_file_name(round);
+	string mapped_file = get_matched_reads_file_name(round);
 	logger->info("Loading the mapped reads of round " + int2str(round) + " (" + int2str(rank) + "/" + int2str(mpiSize-1) + ")");
 	ifstream mapped_file_stream(mapped_file.c_str());
 	string seq_id;
