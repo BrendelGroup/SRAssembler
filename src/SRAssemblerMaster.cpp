@@ -269,8 +269,10 @@ int SRAssemblerMaster::get_start_round(){
 				}
 			//}
 			if (found_previous) {
-				//string cmd = "mkdir -p " + mem_dir;
-				//run_shell_command(cmd);
+				int procID=getpid();
+				broadcast_code(ACTION_MEMDIR, 0, procID, 0);
+				this->mem_dir="/dev/shm/SRAssembler" + int2str(procID);
+				run_shell_command("mkdir -p " + mem_dir);
 				start_round = i+1;
 				if (start_round > this->num_rounds)
 					return start_round;
