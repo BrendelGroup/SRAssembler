@@ -33,7 +33,7 @@ mpirun -n 4 ../bin/SRAssembler_MPI -q input/LOC_Os06g04560.pep -t protein -p SRA
 echo "============================================================================================================"
 echo " Test5.1: Stop after 4 rounds of assembly. Then continue the current assembly with a new SRAssembler run."
 echo "============================================================================================================"
-rm -rf Stestout5
+rm -rf Stestout5 Stestout5.1 Stestout5.2
 mkdir -p Stestout5
 ../bin/SRAssembler -q input/LOC_Os06g04560.pep -t protein -p SRAssembler.conf -l libraries_200bp.conf -r ./reads_data -x 15000 -o Stestout5 -A 0 -S 0 -s arabidopsis -n  4
 cp -r Stestout5 Stestout5.1
