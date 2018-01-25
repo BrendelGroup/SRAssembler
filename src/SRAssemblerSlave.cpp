@@ -72,7 +72,7 @@ void SRAssemblerSlave::process_message(){
 			send_code(from, ACTION_RETURN, value2, found_new_reads, 0);
 		}
 		if (action == ACTION_LOAD_PREVIOUS){  //do alignment
-			load_mapped_reads(value1);
+			load_found_reads(value1);
 			send_code(from, ACTION_RETURN, 0, 0, 0);
 		}
 		if (action == ACTION_MEMDIR) {

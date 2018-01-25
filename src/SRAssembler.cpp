@@ -581,16 +581,16 @@ int SRAssembler::do_alignment(int round, int lib_idx, int read_part) {
 		aligner->do_alignment(get_contigs_index_name(round), get_type(round), get_match_length(round), get_mismatch_allowed(round), lib.get_split_file_name(read_part, LEFT_READ), params, get_vmatch_output_filename(round, lib_idx, read_part));
 		if (lib.get_paired_end())
 			aligner->do_alignment(get_contigs_index_name(round), get_type(round), get_match_length(round), get_mismatch_allowed(round), lib.get_split_file_name(read_part, RIGHT_READ), params, get_vmatch_output_filename(round, lib_idx, read_part));
-		new_read_count = aligner->parse_output(get_vmatch_output_filename(round, lib_idx, read_part), mapped_reads, lib_idx, read_part, lib.get_read_part_index_name(read_part, LEFT_READ), lib.get_read_part_index_name(read_part, RIGHT_READ), lib.get_matched_left_reads_filename(round, read_part), lib.get_matched_right_reads_filename(round, read_part));
-		//save_mapped_reads(round);
+		new_read_count = aligner->parse_output(get_vmatch_output_filename(round, lib_idx, read_part), found_reads, lib_idx, read_part, lib.get_read_part_index_name(read_part, LEFT_READ), lib.get_read_part_index_name(read_part, RIGHT_READ), lib.get_matched_left_reads_filename(round, read_part), lib.get_matched_right_reads_filename(round, read_part));
+		//save_found_reads(round);
 		return new_read_count;
 	// After round 1 we use the masked contig file as the query
 	} else {
 		aligner->do_alignment(lib.get_read_part_index_name(read_part, LEFT_READ), get_type(round), get_match_length(round), get_mismatch_allowed(round), get_query_fasta_file_name_masked(round), params, get_vmatch_output_filename(round, lib_idx, read_part));
 		if (lib.get_paired_end())
 			aligner->do_alignment(lib.get_read_part_index_name(read_part, RIGHT_READ), get_type(round), get_match_length(round), get_mismatch_allowed(round), get_query_fasta_file_name_masked(round), params, get_vmatch_output_filename(round, lib_idx, read_part));
-		new_read_count = aligner->parse_output(get_vmatch_output_filename(round, lib_idx, read_part), mapped_reads, lib_idx, read_part, lib.get_read_part_index_name(read_part, LEFT_READ), lib.get_read_part_index_name(read_part, RIGHT_READ), lib.get_matched_left_reads_filename(round, read_part), lib.get_matched_right_reads_filename(round, read_part));
-		//save_mapped_reads(round);
+		new_read_count = aligner->parse_output(get_vmatch_output_filename(round, lib_idx, read_part), found_reads, lib_idx, read_part, lib.get_read_part_index_name(read_part, LEFT_READ), lib.get_read_part_index_name(read_part, RIGHT_READ), lib.get_matched_left_reads_filename(round, read_part), lib.get_matched_right_reads_filename(round, read_part));
+		//save_found_reads(round);
 		return new_read_count;
 	}
 }
@@ -790,21 +790,21 @@ Assembly_stats SRAssembler::get_assembly_stats(int round, int k) {
 	return stats;
 }
 
-void SRAssembler::save_mapped_reads(int round){
+void SRAssembler::save_found_reads(int round){
 	string mapped_file = get_matched_reads_file_name(round);
 	ofstream mapped_file_stream(mapped_file.c_str());
-	for (unordered_set<string>::iterator it = mapped_reads.begin();it != mapped_reads.end(); ++it)
+	for (unordered_set<string>::iterator it = found_reads.begin();it != found_reads.end(); ++it)
 		 mapped_file_stream << *it << '\n';
 	mapped_file_stream.close();
 }
 
-void SRAssembler::load_mapped_reads(int round){
+void SRAssembler::load_found_reads(int round){
 	string mapped_file = get_matched_reads_file_name(round);
 	logger->info("Loading the mapped reads of round " + int2str(round) + " (" + int2str(rank) + "/" + int2str(mpiSize-1) + ")");
 	ifstream mapped_file_stream(mapped_file.c_str());
 	string seq_id;
 	while (getline(mapped_file_stream, seq_id)){
-		mapped_reads.insert(seq_id);
+		found_reads.insert(seq_id);
 	}
 	mapped_file_stream.close();
 	int read_count = get_total_read_count(round);

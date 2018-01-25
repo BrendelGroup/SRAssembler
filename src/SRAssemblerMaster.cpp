@@ -296,7 +296,7 @@ int SRAssemblerMaster::get_start_round(){
 					}
 				}
 				else
-					load_mapped_reads(start_round - 1);
+					load_found_reads(start_round - 1);
 				load_long_contigs();
 				break;
 			}
@@ -381,7 +381,7 @@ void SRAssemblerMaster::do_walking(){
 				}
 			}
 		}
-		save_mapped_reads(round);
+		save_found_reads(round);
 
 
 		if (new_reads_count == 0) {

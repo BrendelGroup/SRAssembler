@@ -24,7 +24,7 @@ VmatchAligner::VmatchAligner(int log_level, string log_file):Aligner(log_level, 
  * TODO change the read search into something using an index.
  * Parameters:
  * output_file: the Vmatch alignment report file
- * mapped_reads: the reads currently found in this node
+ * found_reads: the reads currently found in this node
  * source_read: the split reads file name for this part
  * out_left_read: the matched left-end reads file name
  * out_right_read: the matched left-end reads file name
@@ -33,12 +33,12 @@ VmatchAligner::VmatchAligner(int log_level, string log_file):Aligner(log_level, 
  * format: fastq or fasta
  *
  */
-int VmatchAligner::parse_output(const string& output_file, unordered_set<string>& mapped_reads, const int lib_idx, const int read_part, const string& left_read_index, const string& right_read_index, const string& out_left_read, const string& out_right_read) {
+int VmatchAligner::parse_output(const string& output_file, unordered_set<string>& found_reads, const int lib_idx, const int read_part, const string& left_read_index, const string& right_read_index, const string& out_left_read, const string& out_right_read) {
 	logger->debug("parsing output file " + output_file);
-	//logger->debug("mapped_reads size = " + int2str(mapped_reads.size()));
-	//logger->debug("mapped_reads bucket_count = " + int2str(mapped_reads.bucket_count()));
-	//logger->debug("mapped_reads load_factor = " + int2str(mapped_reads.load_factor()));
-	//logger->debug("mapped_reads max_load_factor = " + int2str(mapped_reads.max_load_factor()));
+	//logger->debug("found_reads size = " + int2str(found_reads.size()));
+	//logger->debug("found_reads bucket_count = " + int2str(found_reads.bucket_count()));
+	//logger->debug("found_reads load_factor = " + int2str(found_reads.load_factor()));
+	//logger->debug("found_reads max_load_factor = " + int2str(found_reads.max_load_factor()));
 	bool paired_end = (out_right_read != "");
 	ifstream report_file_stream(output_file.c_str());
 	int found_read = 0;
@@ -58,14 +58,14 @@ int VmatchAligner::parse_output(const string& output_file, unordered_set<string>
 		//logger->debug("seq_number " + seq_number);
 		string seq_id = "lib" + lib_string + ",part" + part_string + ",read" + seq_number;
 		// boost::unordered_set.find() produces past-the-end pointer if a key isn't found
-		if (mapped_reads.find(seq_id) == mapped_reads.end()) {
+		if (found_reads.find(seq_id) == found_reads.end()) {
 			//logger->debug(seq_number + " is new");
 			new_read_count += 1;
 			// We are catching two new reads if the library is paired end
 			if (paired_end) {
 				new_read_count += 1;
 			}
-			mapped_reads.insert(seq_id);
+			found_reads.insert(seq_id);
 			tmp_file_stream << seq_number << '\n';
 		}
 	}

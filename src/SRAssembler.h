@@ -71,8 +71,8 @@ protected:
 	int count_preprocessed_reads(int lib_idx);
 	void merge_mapped_files(int round);
 	Assembly_stats get_assembly_stats(int round, int k);
-	void save_mapped_reads(int round);
-	void load_mapped_reads(int round);
+	void save_found_reads(int round);
+	void load_found_reads(int round);
 	//void prepare_contig_file(int round, int k);
 	void keep_long_contigs(string in_file, string out_file, unsigned int min_length);
 	int get_total_read_count(int round);
@@ -129,7 +129,7 @@ protected:
 	std::string final_long_contig_file;
 	std::string summary_file;
 	std::string mapped_readnumbers_file;
-	boost::unordered_set<std::string> mapped_reads;
+	boost::unordered_set<std::string> found_reads;
 	std::vector<Library> libraries;
 	Logger* logger;
 private:
