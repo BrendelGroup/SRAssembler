@@ -791,22 +791,22 @@ Assembly_stats SRAssembler::get_assembly_stats(int round, int k) {
 }
 
 void SRAssembler::save_found_reads(int round){
-	string mapped_file = get_matched_reads_file_name(round);
-	ofstream mapped_file_stream(mapped_file.c_str());
+	string matched_file = get_matched_reads_file_name(round);
+	ofstream matched_file_stream(matched_file.c_str());
 	for (unordered_set<string>::iterator it = found_reads.begin();it != found_reads.end(); ++it)
-		 mapped_file_stream << *it << '\n';
-	mapped_file_stream.close();
+		 matched_file_stream << *it << '\n';
+	matched_file_stream.close();
 }
 
 void SRAssembler::load_found_reads(int round){
-	string mapped_file = get_matched_reads_file_name(round);
-	logger->info("Loading the mapped reads of round " + int2str(round) + " (" + int2str(rank) + "/" + int2str(mpiSize-1) + ")");
-	ifstream mapped_file_stream(mapped_file.c_str());
+	string matched_file = get_matched_reads_file_name(round);
+	logger->info("Loading the matched reads of round " + int2str(round) + " (" + int2str(rank) + "/" + int2str(mpiSize-1) + ")");
+	ifstream matched_file_stream(matched_file.c_str());
 	string seq_id;
-	while (getline(mapped_file_stream, seq_id)){
+	while (getline(matched_file_stream, seq_id)){
 		found_reads.insert(seq_id);
 	}
-	mapped_file_stream.close();
+	matched_file_stream.close();
 	int read_count = get_total_read_count(round);
 	logger->info("Found matched reads from round " + int2str(round) + ": " + int2str(read_count));
 }
