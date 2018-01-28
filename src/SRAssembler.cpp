@@ -263,7 +263,12 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 		if (!file_exists(param_file)){
 			print_message("Parameter file : " + param_file + " does not exist!");
 			return -1;
+		//} else {
+		//parameter_dict = read_param_file();
 		}
+	} else {
+		print_message("Parameter file required!");
+		return -1;
 	}
 
 	if (library_file != ""){
@@ -335,6 +340,36 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 }
 
 //TODO this should read through one time and store all of the potential parameters so that we aren't always rereading the file
+//boost::unordered_map<std::string,Params> SRAssembler::read_param_file() {
+	//ifstream param_file(this->param_file.c_str());
+	//string line;
+	//Params params;
+	//string program_name;
+	//while (getline(param_file, line)){
+		//line = trim(line);
+		//if (line.length() == 0) continue;
+		//if (line.substr(0,1) == "[") {
+			//program_name = line.substr(1, line.length() - 2)
+			//found_program = true;
+			//continue;
+		//}
+		//if (line.substr(0,1) == "#") continue;
+		//if (found_program && line.substr(0,1) == "[") break;
+		//if (found_program){
+			//vector<string> tokens;
+			//tokenize(line, tokens, "=");
+			//if (tokens.size() == 2){
+				//string param = trim(tokens[0]);
+				//string value = trim(tokens[1]);
+				//params.insert(Params::value_type(param, value));
+			//}
+		//}
+	//}
+	//return params;
+//}
+
+//Params SRAssembler::get_parameters(string program_name) {
+//}
 Params SRAssembler::read_param_file(string program_name) {
 	ifstream param_file(this->param_file.c_str());
 	string line;
@@ -559,7 +594,8 @@ string SRAssembler:: get_contig_file_name(int round){
 
 string SRAssembler:: get_matched_reads_file_name(int round){
 	//return tmp_dir + "/matched_reads_" + "r" + int2str(round) + "_" + "rank" + int2str(this->rank) + ".list";
-	return tmp_dir + "/matched_reads_" + "r" + int2str(round) + "_" + "rank" + "0" + ".list";
+	//return tmp_dir + "/matched_reads_" + "r" + int2str(round) + "_" + "rank" + "0" + ".list";
+	return tmp_dir + "/found_reads_" + "r" + int2str(round) + ".list";
 }
 
 int SRAssembler::do_alignment(int round, int lib_idx, int read_part) {
