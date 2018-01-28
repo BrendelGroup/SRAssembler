@@ -263,8 +263,8 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 		if (!file_exists(param_file)){
 			print_message("Parameter file : " + param_file + " does not exist!");
 			return -1;
-		//} else {
-		//parameter_dict = read_param_file();
+		} else {
+		parameters_dict = read_param_file();
 		}
 	} else {
 		print_message("Parameter file required!");
@@ -340,50 +340,27 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 }
 
 //TODO this should read through one time and store all of the potential parameters so that we aren't always rereading the file
-//boost::unordered_map<std::string,Params> SRAssembler::read_param_file() {
-	//ifstream param_file(this->param_file.c_str());
-	//string line;
-	//Params params;
-	//string program_name;
-	//while (getline(param_file, line)){
-		//line = trim(line);
-		//if (line.length() == 0) continue;
-		//if (line.substr(0,1) == "[") {
-			//program_name = line.substr(1, line.length() - 2)
-			//found_program = true;
-			//continue;
-		//}
-		//if (line.substr(0,1) == "#") continue;
-		//if (found_program && line.substr(0,1) == "[") break;
-		//if (found_program){
-			//vector<string> tokens;
-			//tokenize(line, tokens, "=");
-			//if (tokens.size() == 2){
-				//string param = trim(tokens[0]);
-				//string value = trim(tokens[1]);
-				//params.insert(Params::value_type(param, value));
-			//}
-		//}
-	//}
-	//return params;
-//}
-
-//Params SRAssembler::get_parameters(string program_name) {
-//}
-Params SRAssembler::read_param_file(string program_name) {
+boost::unordered_map<std::string,Params> SRAssembler::read_param_file() {
 	ifstream param_file(this->param_file.c_str());
 	string line;
+	boost::unordered_map<std::string,Params> parameters_dict;
 	Params params;
+	string program_name;
 	bool found_program = false;
 	while (getline(param_file, line)){
 		line = trim(line);
 		if (line.length() == 0) continue;
-		if (line == ("[" + program_name + "]")) {
+		if (line.substr(0,1) == "[") {
+			if (found_program) {
+				parameters_dict.insert(make_pair(program_name, params));
+				params.clear();
+			}
+			// This should capture the string between the brackets
+			program_name = line.substr(1, line.length() - 2);
 			found_program = true;
 			continue;
 		}
 		if (line.substr(0,1) == "#") continue;
-		if (found_program && line.substr(0,1) == "[") break;
 		if (found_program){
 			vector<string> tokens;
 			tokenize(line, tokens, "=");
@@ -394,7 +371,11 @@ Params SRAssembler::read_param_file(string program_name) {
 			}
 		}
 	}
-	return params;
+	return parameters_dict;
+}
+
+Params SRAssembler::get_parameters(string program_name) {
+	return this->parameters_dict[program_name];
 }
 
 bool SRAssembler::read_library_file() {
@@ -610,7 +591,7 @@ int SRAssembler::do_alignment(int round, int lib_idx, int read_part) {
 	}
 	logger->debug("... using Vmatch criteria: " + program_name);
 	//TODO we read this parameter file A LOT. We should import the parameters for each program_name once.
-	Params params = this->read_param_file(program_name);
+	Params params = this->get_parameters(program_name);
 	int new_read_count;
 	// Reads as queries are necessary when searching against a protein.
 	if (round == 1 && type == "protein") {
@@ -641,7 +622,7 @@ void SRAssembler::do_spliced_alignment() {
 	logger->info("Doing the final spliced alignment ...");
 	SplicedAligner* spliced_aligner = get_spliced_aligner();
 	string program_name = spliced_aligner->get_program_name();
-	Params params = this->read_param_file(program_name);
+	Params params = this->get_parameters(program_name);
 	spliced_aligner->do_spliced_alignment(this->final_contigs_file, type, this->query_file, this->species, params, this->spliced_alignment_output_file);
 	spliced_aligner->get_hit_contigs(min_score, min_coverage, min_contig_lgth, this->final_contigs_file, this->hit_contigs_file, this->spliced_alignment_output_file);
 	logger->info("Done.");
@@ -651,7 +632,7 @@ string_map SRAssembler::do_spliced_alignment(int round) {
 	logger->info("Now running the spliced alignment program ...");
 	SplicedAligner* spliced_aligner = get_spliced_aligner();
 	string program_name = spliced_aligner->get_program_name();
-	Params params = this->read_param_file(program_name);
+	Params params = this->get_parameters(program_name);
 	string contig_file = get_contig_file_name(round);
 	string output_file = tmp_dir + "/query-vs-contig_" + "r" + int2str(round) + ".aln";
 	string hit_file = tmp_dir + "/hit_contigs_" + "r" + int2str(round) + ".fasta";
@@ -671,7 +652,7 @@ void SRAssembler::do_gene_finding() {
 		return;
 	logger->info("Now running the ab initio gene finding program ...");
 	string program_name = gene_finder->get_program_name();
-	Params params = this->read_param_file(program_name);
+	Params params = this->get_parameters(program_name);
 	gene_finder->do_gene_finding(this->hit_contigs_file, this->species, params, this->gene_finding_output_file, this->gene_finding_output_protein_file);
 	logger->info("Done.");
 }

@@ -82,7 +82,8 @@ protected:
 	Assembler* get_assembler();
 	SplicedAligner* get_spliced_aligner();
 	GeneFinder* get_gene_finder();
-	Params read_param_file(string program_name);
+	boost::unordered_map<std::string,Params> read_param_file();
+	Params get_parameters(string program_name);
 	std::string query_file, species, type, out_dir;
 	int init_match_length;
 	int recur_match_length;
@@ -132,6 +133,7 @@ protected:
 	boost::unordered_set<std::string> found_reads;
 	std::vector<Library> libraries;
 	Logger* logger;
+	boost::unordered_map<std::string,Params> parameters_dict;
 private:
 	static SRAssembler* _srassembler;
 	bool read_library_file();

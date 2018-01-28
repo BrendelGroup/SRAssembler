@@ -818,7 +818,7 @@ void SRAssemblerMaster::process_long_contigs(int round, int k) {
 			// Use the contigs as queries against the matched reads to identify matchy reads
 			string program_name = aligner->get_program_name();
 			program_name += "_contig_vs_reads";
-			Params params = read_param_file(program_name);
+			Params params = get_parameters(program_name);
 			string vmatch_outfile = tmp_dir + "/long_contig_vs_reads.lib" + int2str(lib_idx+1) + ".round" + int2str(round) + ".vmatch";
 //			run_shell_command("rm " + vmatch_outfile);
 			aligner->do_alignment(tmp_dir + "/left_reads_index", "cdna", 30, 2, contig_file, params, vmatch_outfile);
@@ -1018,7 +1018,7 @@ run_shell_command("cp " + contig_file + " " + contig_file + ".original");
 	//aligner->create_index(tmp_dir + "/qindex", type, query_file);
 	string program_name = aligner->get_program_name();
 	program_name += "_" + get_type(1) + "_vs_contig";
-	Params params = read_param_file(program_name);
+	Params params = get_parameters(program_name);
 	string out_file = tmp_dir + "/query_vs_contig.round" + int2str(round) + ".vmatch";
 	aligner->do_alignment(tmp_dir + "/qindex", type, get_match_length(1), get_mismatch_allowed(1), contig_file, params, out_file);
 	logger->debug("remove contigs without hits against query sequences in round " + int2str(round));
@@ -1054,7 +1054,7 @@ void SRAssemblerMaster::remove_unmapped_reads(int round){
 		// Use the contigs as queries against the matched reads to identify matchy reads
 		string program_name = aligner->get_program_name();
 		program_name += "_contig_vs_reads";
-		Params params = read_param_file(program_name);
+		Params params = get_parameters(program_name);
 		string vmatch_outfile = tmp_dir + "/contig_vs_reads.lib" + int2str(lib_idx+1) + ".round" + int2str(round) + ".vmatch";
 		aligner->do_alignment(tmp_dir + "/left_reads_index", "cdna", 30, 2, contig_file, params, vmatch_outfile);
 		if (lib.get_paired_end()) {
