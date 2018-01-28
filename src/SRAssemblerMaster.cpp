@@ -469,7 +469,8 @@ void SRAssemblerMaster::do_walking(){
 					cleaned = true;
 				}
 			}
-			if (clean_round > 2 && !cleaned) {
+			// I don't know why this used to check if clean_round > 2
+			if (round > 1 && !cleaned) {
 				if (round % clean_round == 0) {
 					// Assembled contigs that don't have some degree of hit to the query are removed.
 					remove_no_hit_contigs(round);
@@ -609,7 +610,6 @@ int SRAssemblerMaster::do_assembly(int round) {
 	logger->info("Doing assembly, round: " + int2str(round));
 	int best_k = 0;
 	unsigned int max_longest_contig = 0;
-	unsigned int contig_count = 0;
 	int total_k = (end_k-start_k)/step_k + 1;
 	int from;
 	int i = 0;
