@@ -278,7 +278,7 @@ int SRAssemblerMaster::get_start_round(){
 					return start_round;
 				logger->info("Previous results found. SRAssembler starts from round " + int2str(start_round));
 				//clean the temp results if it is not complete.
-				run_shell_command("rm -f " + tmp_dir + "/matched_reads_{left,right}_" + "r" + int2str(start_round) + "*");
+				run_shell_command("find " + tmp_dir + " -name \"matched_reads_left_" + "r" + int2str(start_round) + "*\" -o -name \"matched_reads_right_" + "r" + int2str(start_round) + "*\" -delete");
 				for (unsigned int lib_idx=0;lib_idx<this->libraries.size();lib_idx++){
 					Library lib = this->libraries[lib_idx];
 					run_shell_command("cp " + lib.get_matched_left_reads_filename(i) + " " + lib.get_matched_left_reads_filename());
@@ -615,7 +615,6 @@ int SRAssemblerMaster::do_assembly(int round) {
 	logger->info("Doing assembly, round: " + int2str(round));
 	int best_k = 0;
 	unsigned int max_longest_contig = 0;
-	unsigned int max_number_contigs = 0;
 	int total_k = (end_k-start_k)/step_k + 1;
 	int from;
 	int i = 0;
@@ -659,7 +658,6 @@ int SRAssemblerMaster::do_assembly(int round) {
 		if (kstats.longest_contig > max_longest_contig){
 			best_k = k;
 			max_longest_contig = kstats.longest_contig;
-			max_number_contigs = kstats.total_contig;
 		}
 		stats.push_back(kstats);
 	}
