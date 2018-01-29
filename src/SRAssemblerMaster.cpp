@@ -1039,8 +1039,40 @@ run_shell_command("cp " + contig_file + " " + contig_file + ".original");
 //TODO I think maybe it makes sense to apply this to MASKED contigs
 void SRAssemblerMaster::remove_unmapped_reads(int round){
 	logger->info("Removing found reads without matched contigs ...");
-	for (unsigned int lib_idx=0; lib_idx < this->libraries.size(); lib_idx++) {
+	int from;
+	unsigned int completed = 0;
+	long long code_value;
+	mpi_code code;
+	if (mpiSize == 1){
+		for (unsigned int lib_idx=0; lib_idx < this->libraries.size(); lib_idx++) {
 		SRAssembler::remove_unmapped_reads(lib_idx, round);
+		}
+	} else {
+		if (int(this->libraries.size()) < mpiSize){
+			for (unsigned int lib_idx = 0; lib_idx < this->libraries.size(); lib_idx++){
+				send_code(lib_idx + 1, ACTION_CLEAN, lib_idx, round, 0);
+			}
+			while (completed < this->libraries.size()){
+				mpi_receive(code_value, from);
+				completed++;
+			}
+		// If there are more libraries than processors
+		} else {
+			for (int lib_idx = 0; lib_idx < mpiSize - 1; lib_idx++){ // Zero indexes libraries
+				send_code(lib_idx + 1, ACTION_CLEAN, lib_idx, round, 0);
+			}
+			while (completed < this->libraries.size()){
+				mpi_receive(code_value, from);
+				code = get_mpi_code(code_value);
+				int lib_idx = code.value1;
+				completed++;
+				// As libraries are completed, new libraries are sent to slaves to be cleaned
+				int next_lib_idx = lib_idx + mpiSize - 1;
+				if (next_lib_idx < int(this->libraries.size())) {
+					send_code(from, ACTION_CLEAN, next_lib_idx, round, 0);
+				}
+			}
+		}
 	}
 }
 
