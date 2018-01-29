@@ -72,6 +72,7 @@ protected:
 	Assembly_stats get_assembly_stats(int round, int k);
 	void save_found_reads(int round);
 	void load_found_reads(int round);
+	void remove_unmapped_reads(unsigned int lib_idx, int round);
 	//void prepare_contig_file(int round, int k);
 	void keep_long_contigs(string in_file, string out_file, unsigned int min_length);
 	long get_total_read_count(int round);

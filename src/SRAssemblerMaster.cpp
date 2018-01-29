@@ -345,7 +345,6 @@ void SRAssemblerMaster::do_walking(){
 		for (unsigned lib_idx=0;lib_idx<this->libraries.size();lib_idx++){
 			int completed = 0;
 			Library lib = this->libraries[lib_idx];
-			// If not parallelized, start a new alignment every 1/2 second?
 			if (mpiSize == 1){
 				for (read_part=1; read_part<=lib.get_num_parts(); read_part++){
 					new_reads_count += do_alignment(round, lib_idx, read_part);
@@ -641,7 +640,7 @@ int SRAssemblerMaster::do_assembly(int round) {
 				mpi_receive(code_value, from);
 				completed++;
 				if (i <= total_k) {
-					send_code(from, ACTION_ASSEMBLY, round, start_k + (i-1)*step_k, 0);
+					send_code(from, ACTION_ASSEMBLY, round, start_k + (i-1)*step_k, 1);
 					i++;
 				}
 			}
@@ -878,7 +877,7 @@ void SRAssemblerMaster::process_long_contigs(int round, int k) {
 				cmd = "vseqselect -seqnum " + vmatch_complement + " " + tmp_dir + "/right_reads_index | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' > " + right_matched_reads;
 				logger->debug(cmd);
 				run_shell_command(cmd);
-				cmd = "cp " + left_matched_reads + " " + lib.get_matched_left_reads_filename(round);
+				cmd = "cp " + right_matched_reads + " " + lib.get_matched_right_reads_filename(round);
 				logger->debug(cmd);
 				run_shell_command(cmd);
 			}
@@ -1040,55 +1039,9 @@ run_shell_command("cp " + contig_file + " " + contig_file + ".original");
 //TODO I think maybe it makes sense to apply this to MASKED contigs
 void SRAssemblerMaster::remove_unmapped_reads(int round){
 	logger->info("Removing found reads without matched contigs ...");
-	string cmd;
-	string contig_file = get_contig_file_name(round);
-	Aligner* aligner = get_aligner(round);
 	for (unsigned int lib_idx=0; lib_idx < this->libraries.size(); lib_idx++) {
-		Library lib = this->libraries[lib_idx];
-		// Index current matched reads
-		string left_matched_reads = lib.get_matched_left_reads_filename();
-		string right_matched_reads;
-		if (lib.get_paired_end()) {
-			 right_matched_reads = lib.get_matched_right_reads_filename();
-		}
-		aligner->create_index(tmp_dir + "/left_reads_index", "dna", left_matched_reads);
-		if (lib.get_paired_end()) {
-			aligner->create_index(tmp_dir + "/right_reads_index", "dna", right_matched_reads);
-		}
-
-		// Use the contigs as queries against the matched reads to identify matchy reads
-		string program_name = aligner->get_program_name();
-		program_name += "_contig_vs_reads";
-		Params params = get_parameters(program_name);
-		string vmatch_outfile = tmp_dir + "/contig_vs_reads.lib" + int2str(lib_idx+1) + ".round" + int2str(round) + ".vmatch";
-		aligner->do_alignment(tmp_dir + "/left_reads_index", "cdna", 30, 2, contig_file, params, vmatch_outfile);
-		if (lib.get_paired_end()) {
-			aligner->do_alignment(tmp_dir + "/right_reads_index", "cdna", 30, 2, contig_file, params, vmatch_outfile);
-		}
-
-		// Use vseqselect to collect matchy reads
-		logger->debug("remove reads without hits against contigs in round " + int2str(round));
-		cmd = "vseqselect -seqnum " + vmatch_outfile + " " + tmp_dir + "/left_reads_index | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' > " + left_matched_reads;
-		logger->debug(cmd);
-		run_shell_command(cmd);
-		cmd = "cp " + left_matched_reads + " " + lib.get_matched_left_reads_filename(round);
-		logger->debug(cmd);
-		run_shell_command(cmd);
-		if (lib.get_paired_end()) {
-			cmd = "vseqselect -seqnum " + vmatch_outfile + " " + tmp_dir + "/right_reads_index | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' > " + right_matched_reads;
-			logger->debug(cmd);
-			run_shell_command(cmd);
-			cmd = "cp " + left_matched_reads + " " + lib.get_matched_left_reads_filename(round);
-			logger->debug(cmd);
-			run_shell_command(cmd);
-		}
-		//RM here
-		run_shell_command("rm " + vmatch_outfile);
+		SRAssembler::remove_unmapped_reads(lib_idx, round);
 	}
-	//RM here
-	cmd = "rm -f " + tmp_dir + "/left_reads_index* " + tmp_dir + "/right_reads_index*";
-	logger->debug(cmd);
-	run_shell_command(cmd);
 }
 
 SRAssemblerMaster::~SRAssemblerMaster() {

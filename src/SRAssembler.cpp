@@ -843,6 +843,55 @@ SRAssembler* SRAssembler::getInstance(int pid){
 	return NULL;
 }
 
+void SRAssembler::remove_unmapped_reads(unsigned int lib_idx, int round){
+	string cmd;
+	string contig_file = get_contig_file_name(round);
+	Aligner* aligner = get_aligner(round);
+	Library lib = this->libraries[lib_idx];
+	// Index current matched reads
+	string left_matched_reads = lib.get_matched_left_reads_filename();
+	string left_reads_index = tmp_dir + "/left_lib" + int2str(lib_idx + 1) + "_index";
+	aligner->create_index(left_reads_index, "dna", left_matched_reads);
+	string right_matched_reads;
+	string right_reads_index;
+	if (lib.get_paired_end()) {
+		right_matched_reads = lib.get_matched_right_reads_filename();
+		right_reads_index = tmp_dir + "/right_lib" + int2str(lib_idx + 1) + "_index";
+		aligner->create_index(right_reads_index, "dna", right_matched_reads);
+	}
+
+	// Use the contigs as queries against the matched reads to identify matchy reads
+	string program_name = aligner->get_program_name();
+	program_name += "_contig_vs_reads";
+	Params params = get_parameters(program_name);
+	string vmatch_outfile = tmp_dir + "/contig_vs_reads.lib" + int2str(lib_idx+1) + ".round" + int2str(round) + ".vmatch";
+	aligner->do_alignment(left_reads_index, "cdna", 30, 2, contig_file, params, vmatch_outfile);
+	if (lib.get_paired_end()) {
+		aligner->do_alignment(right_reads_index, "cdna", 30, 2, contig_file, params, vmatch_outfile);
+	}
+
+	// Use vseqselect to collect matchy reads
+logger->info("remove reads without hits against contigs in round " + int2str(round));
+	cmd = "vseqselect -seqnum " + vmatch_outfile + " " + left_reads_index + " | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' > " + left_matched_reads;
+	logger->debug(cmd);
+	run_shell_command(cmd);
+	cmd = "cp " + left_matched_reads + " " + lib.get_matched_left_reads_filename(round);
+	logger->debug(cmd);
+	run_shell_command(cmd);
+	if (lib.get_paired_end()) {
+		cmd = "vseqselect -seqnum " + vmatch_outfile + " " + right_reads_index + " | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' > " + right_matched_reads;
+		logger->debug(cmd);
+		run_shell_command(cmd);
+		cmd = "cp " + right_matched_reads + " " + lib.get_matched_right_reads_filename(round);
+		logger->debug(cmd);
+		run_shell_command(cmd);
+	}
+	//RM here
+	cmd = "rm -f " + vmatch_outfile + " " + left_reads_index + "* " + right_reads_index + "*";
+	logger->debug(cmd);
+	run_shell_command(cmd);
+}
+
 void finalized(){
 	mpi_finalize();
 }
