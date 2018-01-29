@@ -612,10 +612,10 @@ int SRAssembler::do_alignment(int round, int lib_idx, int read_part) {
 	}
 }
 
-void SRAssembler::do_assembly(int round, int k) {
+void SRAssembler::do_assembly(int round, int k, int threads) {
 	logger->info("Doing assembly: round = " + int2str(round) + ", k = " + int2str(k));
 	Assembler* assembler = get_assembler();
-	assembler->do_assembly(k, this->libraries, tmp_dir + "/assembly_" + "k" + int2str(k) + "_" + "r" + int2str(round));
+	assembler->do_assembly(k, this->libraries, tmp_dir + "/assembly_" + "k" + int2str(k) + "_" + "r" + int2str(round), threads);
 }
 
 void SRAssembler::do_spliced_alignment() {

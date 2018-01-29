@@ -64,7 +64,7 @@ void SRAssemblerSlave::process_message(){
 			send_code(from, ACTION_RETURN, 0, value2, 0);
 		}
 		if (action == ACTION_ASSEMBLY){  //do_assmebly
-			do_assembly(value1, value2);
+			do_assembly(value1, value2, value3);
 			send_code(from, ACTION_RETURN, 0, 0, 0);
 		}
 		if (action == ACTION_ALIGNMENT){  //do alignment
