@@ -544,10 +544,12 @@ void SRAssemblerMaster::clean_tmp_files(int round){
 	string cmd = "rm -f " + tmp_dir + "/vmatch_" + "r" + int2str(round) + "_*";
 	logger->debug(cmd);
 	run_shell_command(cmd);
-	cmd = "rm -f " + tmp_dir + "/matched_reads_left_" + "r" + int2str(round) + "_*";
+	//cmd = "rm -f " + tmp_dir + "/matched_reads_left_" + "r" + int2str(round) + "_*";
+cmd = "rm -f " + tmp_dir + "/matched_reads_left_" + "r" + int2str(round) + "_part*";
 	logger->debug(cmd);
 	run_shell_command(cmd);
-	cmd = "rm -f " + tmp_dir + "/matched_reads_right_" + "r" + int2str(round) + "_*";
+	//cmd = "rm -f " + tmp_dir + "/matched_reads_right_" + "r" + int2str(round) + "_*";
+cmd = "rm -f " + tmp_dir + "/matched_reads_right_" + "r" + int2str(round) + "_part*";
 	logger->debug(cmd);
 	run_shell_command(cmd);
 	cmd = "rm -f " + tmp_dir + "/matched_reads_" + "r" + int2str(round) + "_*";
