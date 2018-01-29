@@ -401,19 +401,25 @@ void SRAssemblerMaster::do_walking(){
 			break;
 		}
 		merge_mapped_files(round);
-		int read_count = get_total_read_count(round);
-		logger->info("Found new reads: " + int2str(new_reads_count) + "  Total matched reads: " + int2str(read_count));
+		long read_count = get_total_read_count(round);
+		logger->info("Found new reads: " + int2str(new_reads_count) + " \tTotal matched reads: " + int2str(read_count));
 		if (assembly_round <= round){
 			unsigned int longest_contig = do_assembly(round);
 			summary_best += int2str(read_count) + "\n";
+// This is a hack to avoid contig explosion slowdown
+string contig_count = run_shell_command_with_return("wc -l " + get_contig_file_name(round));
+if (str2int(contig_count) > 1500) {
+logger->info("The walking is terminated: Too many contigs produced. This is not a good run.");
+break;
+}
 			bool no_reads = true;
+			// if no reads found, stop
 			for (unsigned int lib_idx=0; lib_idx < this->libraries.size(); lib_idx++){
 				if (get_file_size(libraries[lib_idx].get_matched_left_reads_filename()) > 0) {
 					no_reads = false;
 					break;
 				}
 			}
-			// if no reads found, stop
 			if (no_reads){
 				logger->info("The walking is terminated: No new reads found after removing reads associated with the assembled contigs.");
 				break;
@@ -436,7 +442,6 @@ void SRAssemblerMaster::do_walking(){
 				round++;
 				continue;
 			}
-			//if reach the max round, stop
 
 			bool cleaned = false;
 			//do spliced alignment and remove the query sequences already assembled
@@ -610,6 +615,7 @@ int SRAssemblerMaster::do_assembly(int round) {
 	logger->info("Doing assembly, round: " + int2str(round));
 	int best_k = 0;
 	unsigned int max_longest_contig = 0;
+	unsigned int max_number_contigs = 0;
 	int total_k = (end_k-start_k)/step_k + 1;
 	int from;
 	int i = 0;
@@ -653,6 +659,7 @@ int SRAssemblerMaster::do_assembly(int round) {
 		if (kstats.longest_contig > max_longest_contig){
 			best_k = k;
 			max_longest_contig = kstats.longest_contig;
+			max_number_contigs = kstats.total_contig;
 		}
 		stats.push_back(kstats);
 	}

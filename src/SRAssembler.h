@@ -75,7 +75,7 @@ protected:
 	void load_found_reads(int round);
 	//void prepare_contig_file(int round, int k);
 	void keep_long_contigs(string in_file, string out_file, unsigned int min_length);
-	int get_total_read_count(int round);
+	long get_total_read_count(int round);
 	void send_code(const int& to, const int& action, const int& value1, const int& value2, const int& value3);
 	void broadcast_code(const int& action, const int& value1, const int& value2, const int& value3);
 	Aligner* get_aligner(int round);

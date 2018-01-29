@@ -747,8 +747,8 @@ void SRAssembler::merge_mapped_files(int round){
 	logger->debug("done.");
 }
 
-int SRAssembler::get_total_read_count(int round){
-	int count = 0;
+long SRAssembler::get_total_read_count(int round){
+	long count = 0;
 	for (unsigned short int lib_idx=0; lib_idx< this->libraries.size();lib_idx++) {
 		Library lib = this->libraries[lib_idx];
 		count += get_read_count(lib.get_matched_left_reads_filename(), FORMAT_FASTA);
