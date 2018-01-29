@@ -407,11 +407,11 @@ void SRAssemblerMaster::do_walking(){
 			unsigned int longest_contig = do_assembly(round);
 			summary_best += int2str(read_count) + "\n";
 // This is a hack to avoid contig explosion slowdown
-string contig_count = run_shell_command_with_return("wc -l " + get_contig_file_name(round));
-if (str2int(contig_count) > 1500) {
-logger->info("The walking is terminated: Too many contigs produced. This is not a good run.");
-break;
-}
+//string contig_count = run_shell_command_with_return("wc -l " + get_contig_file_name(round));
+//if (str2int(contig_count) > 1500) {
+//logger->info("The walking is terminated: Too many contigs produced. This is not a good run.");
+//break;
+//}
 			bool no_reads = true;
 			// if no reads found, stop
 			for (unsigned int lib_idx=0; lib_idx < this->libraries.size(); lib_idx++){
