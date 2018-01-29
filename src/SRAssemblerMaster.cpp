@@ -622,20 +622,20 @@ int SRAssemblerMaster::do_assembly(int round) {
 	long long code_value;
 	if (mpiSize == 1){
 		for (i=1; i<=total_k; i++)
-			SRAssembler::do_assembly(round, start_k + (i-1)*step_k);
+			SRAssembler::do_assembly(round, start_k + (i-1)*step_k, 1);
 	} else {
 		if (total_k < mpiSize-1){
+			int threads = (mpiSize - 1) / total_k;
 			for (i=1; i<=total_k; i++){
-				send_code(i, ACTION_ASSEMBLY, round, start_k + (i-1)*step_k, 0);
+				send_code(i, ACTION_ASSEMBLY, round, start_k + (i-1)*step_k, threads);
 			}
 			while(completed < total_k){
 				mpi_receive(code_value, from);
 				completed++;
 			}
-		}
-		else {
+		} else {
 			for (i=1;i<mpiSize;i++){
-				send_code(i, ACTION_ASSEMBLY, round, start_k + (i-1)*step_k, 0);
+				send_code(i, ACTION_ASSEMBLY, round, start_k + (i-1)*step_k, 1);
 			}
 			while(completed < total_k){
 				mpi_receive(code_value, from);

@@ -50,8 +50,7 @@ protected:
 	void do_spliced_alignment();
 	string_map do_spliced_alignment(int);
 	void do_gene_finding();
-	void do_assembly(int, int);
-	int do_assembly(int);
+	void do_assembly(int, int, int threads);
 	void create_index(int round);
 	std::string get_contigs_index_name(int round);
 	std::string get_query_fasta_file_name(int round);

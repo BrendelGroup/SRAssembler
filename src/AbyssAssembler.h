@@ -13,7 +13,7 @@
 class AbyssAssembler: public Assembler {
 public:
 	AbyssAssembler(int, string);
-	void do_assembly(int kmer, const vector<Library>& libraries, const string& output_file);
+	void do_assembly(int kmer, const vector<Library>& libraries, const string& output_file, int threads);
 	bool is_available();
 	void clean_files(const string& dir);
 	string get_output_contig_file_name(string prefix);
