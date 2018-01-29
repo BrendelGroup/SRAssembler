@@ -36,6 +36,7 @@ static const int ACTION_RETURN=7;
 static const int ACTION_LOAD_PREVIOUS=8;
 static const int ACTION_MEMDIR=9;
 static const int ACTION_SAVE=10;
+static const int ACTION_CLEAN=11;
 static const int FASTQ_JOINED=1;
 static const int FASTQ_INTERLEAVED=2;
 static const int START_K=15;

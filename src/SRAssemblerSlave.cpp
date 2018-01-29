@@ -82,6 +82,10 @@ void SRAssemblerSlave::process_message(){
 			save_found_reads(value1);
 			send_code(from, ACTION_RETURN, 0, 0, 0);
 		}
+		if (action == ACTION_CLEAN){
+			SRAssembler::remove_unmapped_reads(value1, value2);
+			send_code(from, ACTION_RETURN, value1, 0, 0);
+		}
 	}
 }
 
