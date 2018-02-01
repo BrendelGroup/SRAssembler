@@ -843,12 +843,18 @@ SRAssembler* SRAssembler::getInstance(int pid){
 	return NULL;
 }
 
+/* Unlike other DNA vs DNA searches in SRAssembler, we are indexing the contig queries, not the reads.
+ * This is so that we can set vmatch to do a complete match, mapping the full read length to the contig.
+ */
 void SRAssembler::remove_unmapped_reads(unsigned int lib_idx, int round){
 	string cmd;
 	string contig_file = get_contig_file_name(round);
+	// Contig index exists from remove_no_hit_contigs
+	string contig_index = tmp_dir + "/cindex";
 	Aligner* aligner = get_aligner(round);
 	Library lib = this->libraries[lib_idx];
-	// Index current matched reads
+
+	// Index current matched reads for extraction purposes
 	string left_matched_reads = lib.get_matched_left_reads_filename();
 	string left_reads_index = tmp_dir + "/left_lib" + int2str(lib_idx + 1) + "_index";
 	aligner->create_index(left_reads_index, "dna", left_matched_reads);
@@ -860,14 +866,14 @@ void SRAssembler::remove_unmapped_reads(unsigned int lib_idx, int round){
 		aligner->create_index(right_reads_index, "dna", right_matched_reads);
 	}
 
-	// Use the contigs as queries against the matched reads to identify matchy reads
+	// Use the found reads as queries against the contigs to identify matchy reads
 	string program_name = aligner->get_program_name();
-	program_name += "_contig_vs_reads";
+	program_name += "_reads_vs_contigs";
 	Params params = get_parameters(program_name);
-	string vmatch_outfile = tmp_dir + "/contig_vs_reads.lib" + int2str(lib_idx+1) + ".round" + int2str(round) + ".vmatch";
-	aligner->do_alignment(left_reads_index, "cdna", 30, 2, contig_file, params, vmatch_outfile);
+	string vmatch_outfile = tmp_dir + "/reads_vs_contigs.lib" + int2str(lib_idx+1) + ".round" + int2str(round) + ".vmatch";
+	aligner->do_alignment(contig_index, "reads", 0, 2, left_matched_reads, params, vmatch_outfile);
 	if (lib.get_paired_end()) {
-		aligner->do_alignment(right_reads_index, "cdna", 30, 2, contig_file, params, vmatch_outfile);
+		aligner->do_alignment(contig_index, "reads", 0, 2, right_matched_reads, params, vmatch_outfile);
 	}
 
 	// Use vseqselect to collect matchy reads

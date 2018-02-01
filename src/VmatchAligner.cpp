@@ -101,12 +101,18 @@ void VmatchAligner::create_index(const string& index_name, const string& type, c
  * This is suitable input for vseqselect to pull those hits out of the mkvtree index.
  */
 void VmatchAligner::do_alignment(const string& index_name, const string& type, int match_length, int mismatch_allowed, const string& query_file, const Params& params, const string& output_file) {
-	// Is this a protein query (round 1 only)? If not, empty string.
-	string align_type = (type == "protein") ? "-dnavsprot 1": "";
 	// Are mismatches allowed? If not, empty string.
 	string e_option = "";
-	if (mismatch_allowed > 0)
+	string l_option;
+	if (mismatch_allowed > 0) {
 		e_option = " -e " + int2str(mismatch_allowed);
+	}
+	// If match_length is 0, use "-complete" for a complete length match
+	if (match_length > 0) {
+		l_option = " -l " + int2str(match_length);
+	} else {
+		l_option = " -complete";
+	}
 	// Other parameters are set up here.
 	string param_list = "";
 	for ( Params::const_iterator it = params.begin(); it != params.end(); ++it ){
@@ -125,12 +131,15 @@ void VmatchAligner::do_alignment(const string& index_name, const string& type, i
 	string cmd;
 	string tmpvmfile = output_file + "-tmp";
 	/* Vmatch output is appended to the output file so that left and right read searches for one part go into the same output file.
-	 * AWK selects only the column containing the sequence number. It is different for proteins because the reads are used as queries.
+	 * In the DNA searches, the "-d -p" options search both strands.
+	 * AWK selects only the column containing the sequence number. It is different for proteins and reads because the reads are used as queries.
 	 */
 	if (type == "protein" ) {
-		cmd = "vmatch " + align_type + " -q " + query_file + " -d" + " -l " + int2str(match_length) + " " + e_option + " " + param_list + " -nodist -noevalue -noscore -noidentity " + index_name + " | awk '$0 !~ /^#.*/ {print $6}' >> " + output_file + "; sort -nu " + output_file + " > " + tmpvmfile + "; \\mv " + tmpvmfile + " " + output_file;
+		cmd = "vmatch -dnavsprot 1 -q " + query_file + " -d" + l_option + e_option + " " + param_list + " -nodist -noevalue -noscore -noidentity " + index_name + " | awk '$0 !~ /^#.*/ {print $6}' >> " + output_file + "; sort -nu " + output_file + " > " + tmpvmfile + "; \\mv " + tmpvmfile + " " + output_file;
 	} else if (type == "cdna" ) {
-		cmd = "vmatch " + align_type + " -q " + query_file + " -d -p" + " -l " + int2str(match_length) + " " + e_option + " " + param_list + " -nodist -noevalue -noscore -noidentity " + index_name + " | awk '$0 !~ /^#.*/ {print $2}' >> " + output_file + "; sort -nu " + output_file + " > " + tmpvmfile + "; \\mv " + tmpvmfile + " " + output_file;
+		cmd = "vmatch -q " + query_file + " -d -p" + l_option + e_option + " " + param_list + " -nodist -noevalue -noscore -noidentity " + index_name + " | awk '$0 !~ /^#.*/ {print $2}' >> " + output_file + "; sort -nu " + output_file + " > " + tmpvmfile + "; \\mv " + tmpvmfile + " " + output_file;
+	} else if (type == "reads") {
+		cmd = "vmatch -q " + query_file + " -d -p" + l_option + e_option + " " + param_list + " -nodist -noevalue -noscore -noidentity " + index_name + " | awk '$0 !~ /^#.*/ {print $6}' >> " + output_file + "; sort -nu " + output_file + " > " + tmpvmfile + "; \\mv " + tmpvmfile + " " + output_file;
 	}
 	logger->debug(cmd);
 	run_shell_command(cmd);
@@ -168,10 +177,10 @@ void VmatchAligner::align_long_contigs(const string& long_contig_candidate_file,
 	cmd = "vmatch -q " + long_contig_candidate_file + " -d -p" + " -l " + int2str(max_contig_size) + " -showdesc 0 -nodist -noevalue -noscore -noidentity " + indexname + " | awk '{print $1,$2,$3,$4,$5,$6}' | uniq -f5 > " + vmatch_out_file;
 	logger->debug(cmd);
 	run_shell_command(cmd);
-	ifstream out_file_stream(vmatch_out_file.c_str());
+	ifstream vmatch_file_stream(vmatch_out_file.c_str());
 	//parse the output file and remove the long contigs and associated reads.
 	string line;
-	while (getline(out_file_stream, line)){
+	while (getline(vmatch_file_stream, line)){
 		if (line[0] != '#'){
 			vector<string> tokens;
 			tokenize(line, tokens, " ");
@@ -181,7 +190,7 @@ void VmatchAligner::align_long_contigs(const string& long_contig_candidate_file,
 			candidate_ids.insert(candidate_contig_id);
 		}
 	}
-	out_file_stream.close();
+	vmatch_file_stream.close();
 	//RM here
 	cmd = "rm " + vmatch_out_file + " " + indexname + "*";
 	logger->debug(cmd);

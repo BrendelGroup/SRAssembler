@@ -327,9 +327,11 @@ void SRAssemblerMaster::do_walking(){
 		return;
 	}
 	output_summary_header();
+	bool assembled;
 	while(true){
 		logger->info("Starting round " + int2str(round) + " ...");
 		int new_reads_count = 0;
+		assembled = false;
 
 		// Index the query in round 1 for the dnavsprot vmatch step
 		if (round == 1) {
@@ -404,13 +406,17 @@ void SRAssemblerMaster::do_walking(){
 		logger->info("Found new reads: " + int2str(new_reads_count) + " \tTotal matched reads: " + int2str(read_count));
 		if (assembly_round <= round){
 			unsigned int longest_contig = do_assembly(round);
+			assembled = true;
 			summary_best += int2str(read_count) + "\n";
+
 // This is a hack to avoid contig explosion slowdown
-string contig_count = run_shell_command_with_return("wc -l " + get_contig_file_name(round));
-if (str2int(contig_count) > 6000) {
+string contig_line_count = run_shell_command_with_return("wc -l " + get_contig_file_name(round));
+if (str2int(contig_line_count) > 6000) {
 logger->info("The walking is terminated: Too many contigs produced. This is not a good run.");
 break;
 }
+
+			//TODO What exactly is being tested here?
 			bool no_reads = true;
 			// if no reads found, stop
 			for (unsigned int lib_idx=0; lib_idx < this->libraries.size(); lib_idx++){
@@ -423,6 +429,7 @@ break;
 				logger->info("The walking is terminated: No new reads found after removing reads associated with the assembled contigs.");
 				break;
 			}
+
 			// if no contigs found, stop
 			if (get_file_size(get_contig_file_name(round)) == 0) {
 				logger->info("The walking is terminated: No contigs found.");
@@ -498,12 +505,12 @@ break;
 		//RM HERE
 		clean_tmp_files(round-1);
 	}
-	// notify all slaves to stop listening
-	broadcast_code(ACTION_EXIT, 0, 0, 0);
-	//not assembled yet, do assembling
-	if (assembly_round > round){
+	// If this round has not been assembled yet, do assembling
+	if ( ! assembled && assembly_round > round){
 		do_assembly(round);
 	}
+	// notify all slaves to stop listening
+	broadcast_code(ACTION_EXIT, 0, 0, 0);
 	// if the final contig size is 0, then report the previous round
 	while (round > 1) {
 		logger->info("Checking the final contigs assembled in round " + int2str(round) + " ...");
@@ -608,6 +615,7 @@ void SRAssemblerMaster::load_saved_contigs(){
 	}
 }
 
+// This is used for saving contigs that reach the max length, and for contigs that have matched one query when there are multiple queries.
 string SRAssemblerMaster::get_saved_contig_file_name(){
 	return tmp_dir + "/saved_contig.fasta";
 }
@@ -721,6 +729,7 @@ void SRAssemblerMaster::load_long_contigs() {
 }
 
 //TODO This should probably be refactored
+// This function doesn't just process long contigs, it processes all contigs for length, including removing the short ones.
 void SRAssemblerMaster::process_long_contigs(int round, int k) {
 	string long_contig_candidate_file = tmp_dir + "/long_contig_candidate_" + "r" + int2str(round-1)+ ".fasta";
 	string long_contig_candidate_next_file = tmp_dir + "/long_contig_candidate_" + "r" + int2str(round)+ ".fasta";
@@ -735,8 +744,11 @@ void SRAssemblerMaster::process_long_contigs(int round, int k) {
 	saved_contig_file.open(saved_contig_file_name.c_str(), fstream::app);
 	string line;
 	if (file_exists(long_contig_candidate_file) && get_file_size(long_contig_candidate_file) > 0){
+		// Candidate long contigs from last round are aligned against this round's assembled contigs.
+		// The ids of candidates that hit are stored in candidate_ids list.
+		// The id of the matching contig from this round is stored in long_contig_ids list.
 		this->get_aligner(round)->align_long_contigs(long_contig_candidate_file, tmp_dir, this->get_assembly_file_name(round, k), this->max_contig_lgth, candidate_ids, long_contig_ids);
-		//add candidate contigs to accepted long contigs
+		// The matched candidate long contigs are added to the save file for contigs and to the accepted long contigs file.
 		ifstream candidate_file(long_contig_candidate_file.c_str());
 		while (getline(candidate_file, line)){
 			vector<string> tokens;
@@ -756,6 +768,7 @@ void SRAssemblerMaster::process_long_contigs(int round, int k) {
 		candidate_file.close();
 	}
 
+	// Check the contigs of this round for any that exceed the max_length and make them candidate long contigs for the next round.
 	ifstream in_contig(get_assembly_file_name(round, k).c_str());
 	ofstream out_contig(get_query_fasta_file_name(round+1).c_str());
 	ofstream out_candidate_contig(long_contig_candidate_next_file.c_str());
@@ -768,13 +781,17 @@ void SRAssemblerMaster::process_long_contigs(int round, int k) {
 			if (header.length() > 0) {
 				vector<string> tokens;
 				tokenize(header.substr(1), tokens, " ");
+				// Contigs from this round that matched a candidate long contig from last round go into long_contig_original.fasta
 				if (long_contig_ids.find(tokens[0]) != long_contig_ids.end())
 					out_long_contig << header << '\n' << seq << '\n';
 				else {
+					// If a contig meets the length minimum for searching it goes into this round's list of assembled contigs and is a query in the next round's search
 					if (seq.length() > this->ini_contig_size) {
 						out_contig << header << '\n' << seq << '\n';
 					}
+					// If a contig exceed the maximum contig length, a substring is stored in the candidate file to check and see if it is assembled again next round.
 					if (seq.length() > this->max_contig_lgth) {
+						// A substring of the sequence is taken from the middle.
 						out_candidate_contig << header << '\n' << seq.substr((seq.length() - max_contig_lgth) / 2,max_contig_lgth) << '\n';
 					}
 				}
@@ -785,6 +802,7 @@ void SRAssemblerMaster::process_long_contigs(int round, int k) {
 		else
 			seq.append(line);
 	}
+	// Finish processing the last contig.
 	vector<string> tokens;
 	tokenize(header.substr(1), tokens, " ");
 	if (long_contig_ids.find(tokens[0]) != long_contig_ids.end())
@@ -806,11 +824,12 @@ void SRAssemblerMaster::process_long_contigs(int round, int k) {
 		// Remove associated reads.
 		//TODO make this a function that remove_unmapped_reads also uses
 		string cmd;
-		string contig_file = long_contig_file;
+		string long_contig_index = tmp_dir + "/long_cindex";
 		Aligner* aligner = get_aligner(round);
+		aligner->create_index(long_contig_index, "dna", long_contig_file);
 		for (unsigned int lib_idx=0; lib_idx < this->libraries.size(); lib_idx++) {
 			Library lib = this->libraries[lib_idx];
-			// Index current matched reads
+			// Index current matched reads for extraction purposes
 			string left_matched_reads = lib.get_matched_left_reads_filename();
 			string right_matched_reads;
 			if (lib.get_paired_end()) {
@@ -821,16 +840,16 @@ void SRAssemblerMaster::process_long_contigs(int round, int k) {
 				aligner->create_index(tmp_dir + "/right_reads_index", "dna", right_matched_reads);
 			}
 
-			// Use the contigs as queries against the matched reads to identify matchy reads
+			// Use the found reads as queries against the long contigs to identify matchy reads
 			string program_name = aligner->get_program_name();
-			program_name += "_contig_vs_reads";
+			program_name += "_reads_vs_contigs";
 			Params params = get_parameters(program_name);
-			string vmatch_outfile = tmp_dir + "/long_contig_vs_reads.lib" + int2str(lib_idx+1) + ".round" + int2str(round) + ".vmatch";
+			string vmatch_outfile = tmp_dir + "/reads_vs_long_contigs.lib" + int2str(lib_idx+1) + ".round" + int2str(round) + ".vmatch";
 //			run_shell_command("rm " + vmatch_outfile);
-			aligner->do_alignment(tmp_dir + "/left_reads_index", "cdna", 30, 2, contig_file, params, vmatch_outfile);
-			if (lib.get_paired_end()) {
-				aligner->do_alignment(tmp_dir + "/right_reads_index", "cdna", 30, 2, contig_file, params, vmatch_outfile);
-			}
+			aligner->do_alignment(long_contig_index, "reads", 0, 2, left_matched_reads, params, vmatch_outfile);
+				if (lib.get_paired_end()) {
+					aligner->do_alignment(long_contig_index, "reads", 0, 2, right_matched_reads, params, vmatch_outfile);
+				}
 
 			// Use vseqselect to AVOID matchy reads
 
@@ -847,7 +866,7 @@ void SRAssemblerMaster::process_long_contigs(int round, int k) {
 			reads_index_prj_stream.close();
 
 			// Complement the set of matched reads
-			string vmatch_complement = tmp_dir + "/long_contig_vs_reads.lib" + int2str(lib_idx+1) + ".round" + int2str(round) + ".complement";
+			string vmatch_complement = tmp_dir + "/reads_vs_long_contigs.lib" + int2str(lib_idx+1) + ".round" + int2str(round) + ".complement";
 			ifstream vmatch_stream(vmatch_outfile.c_str());
 			ofstream complement_stream(vmatch_complement.c_str());
 			getline(vmatch_stream, line);
@@ -1033,7 +1052,7 @@ run_shell_command("cp " + contig_file + " " + contig_file + ".original");
 	run_shell_command(cmd);
 	//RM here
 	//string cmd = "rm -f " + tmp_dir + "/qindex*";
-	cmd = "rm -f " + tmp_dir + "/cindex* " + out_file;
+	cmd = "rm -f " + out_file;
 	logger->debug(cmd);
 	run_shell_command(cmd);
 }
