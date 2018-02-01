@@ -107,12 +107,6 @@ void VmatchAligner::do_alignment(const string& index_name, const string& type, i
 	if (mismatch_allowed > 0) {
 		e_option = " -e " + int2str(mismatch_allowed);
 	}
-	// If match_length is 0, use "-complete" for a complete length match
-	if (match_length > 0) {
-		l_option = " -l " + int2str(match_length);
-	} else {
-		l_option = " -complete";
-	}
 	// Other parameters are set up here.
 	string param_list = "";
 	for ( Params::const_iterator it = params.begin(); it != params.end(); ++it ){
@@ -127,6 +121,12 @@ void VmatchAligner::do_alignment(const string& index_name, const string& type, i
 				match_length = str2int(it->second);
 			else
 				param_list += " -" + it->first + " " + it->second;
+	}
+	// If match_length is 0, use "-complete" for a complete length match
+	if (match_length > 0) {
+		l_option = " -l " + int2str(match_length);
+	} else {
+		l_option = " -complete";
 	}
 	string cmd;
 	string tmpvmfile = output_file + "-tmp";
