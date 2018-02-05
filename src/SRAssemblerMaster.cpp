@@ -192,7 +192,7 @@ void SRAssemblerMaster::do_preprocessing(){
 		}
 		logger->info("Splitting read library " + int2str(lib_index+1) + " ...");
 		cmd = "rm -f " + data_dir + "/lib" + int2str(lib_index+1) + "/" + get_file_base_name(lib->get_left_read()) + "* " + data_dir + "/lib" + int2str(lib_index+1) + "/" + get_file_base_name(lib->get_right_read()) + "*"; //delete old files
-		logger->debug(cmd);
+		//logger->debug(cmd);
 		run_shell_command(cmd);
 		// Why would you name a variable 'from'?
 		int from;
@@ -548,27 +548,27 @@ void SRAssemblerMaster::clean_tmp_files(int round){
 	if (round == 0) return;
 	//else: remove data of previous round
 	string cmd = "rm -f " + tmp_dir + "/vmatch_" + "r" + int2str(round) + "_*";
-	logger->debug(cmd);
+	//logger->debug(cmd);
 	run_shell_command(cmd);
 	//cmd = "rm -f " + tmp_dir + "/matched_reads_left_" + "r" + int2str(round) + "_*";
 cmd = "rm -f " + tmp_dir + "/matched_reads_left_" + "r" + int2str(round) + "_part*";
-	logger->debug(cmd);
+	//logger->debug(cmd);
 	run_shell_command(cmd);
 	//cmd = "rm -f " + tmp_dir + "/matched_reads_right_" + "r" + int2str(round) + "_*";
 cmd = "rm -f " + tmp_dir + "/matched_reads_right_" + "r" + int2str(round) + "_part*";
-	logger->debug(cmd);
+	//logger->debug(cmd);
 	run_shell_command(cmd);
 	cmd = "rm -f " + tmp_dir + "/matched_reads_" + "r" + int2str(round) + "_*";
-	logger->debug(cmd);
+	//logger->debug(cmd);
 	run_shell_command(cmd);
 	cmd = "rm -f " + tmp_dir + "/query-vs-contig_" + "r" + int2str(round) + ".*";
-	logger->debug(cmd);
+	//logger->debug(cmd);
 	run_shell_command(cmd);
 	cmd = "rm -f " + tmp_dir + "/hit_contigs_" +"r" + int2str(round) + ".*";
-	logger->debug(cmd);
+	//logger->debug(cmd);
 	run_shell_command(cmd);
 	cmd = "rm -f " + tmp_dir + "/long_contig_candidate_" + "r" + int2str(round) + ".*";
-	logger->debug(cmd);
+	//logger->debug(cmd);
 	run_shell_command(cmd);
 }
 
@@ -905,7 +905,7 @@ void SRAssemblerMaster::process_long_contigs(int round, int k) {
 		}
 		//RM here
 		cmd = "rm -f " + tmp_dir + "/left_reads_index* " + tmp_dir + "/right_reads_index*";
-		logger->debug(cmd);
+		//logger->debug(cmd);
 		run_shell_command(cmd);
 	}
 }
@@ -1053,7 +1053,7 @@ run_shell_command("cp " + contig_file + " " + contig_file + ".original");
 	//RM here
 	//string cmd = "rm -f " + tmp_dir + "/qindex*";
 	cmd = "rm -f " + out_file;
-	logger->debug(cmd);
+	//logger->debug(cmd);
 	run_shell_command(cmd);
 }
 

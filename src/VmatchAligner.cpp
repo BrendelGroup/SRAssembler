@@ -32,7 +32,7 @@ VmatchAligner::VmatchAligner(int log_level, string log_file):Aligner(log_level, 
  *
  */
 int VmatchAligner::parse_output(const string& output_file, unordered_set<string>& found_reads, const int lib_idx, const int read_part, const string& left_read_index, const string& right_read_index, const string& out_left_read, const string& out_right_read) {
-	logger->debug("parsing output file " + output_file);
+	//logger->debug("parsing output file " + output_file);
 	//logger->debug("found_reads size = " + int2str(found_reads.size()));
 	//logger->debug("found_reads bucket_count = " + int2str(found_reads.bucket_count()));
 	//logger->debug("found_reads load_factor = " + int2str(found_reads.load_factor()));
@@ -60,15 +60,11 @@ int VmatchAligner::parse_output(const string& output_file, unordered_set<string>
 		if (found_reads.find(seq_id) == found_reads.end()) {
 			//logger->debug(seq_number + " is new");
 			new_read_count += 1;
-			// We are catching two new reads if the library is paired end
-			if (paired_end) {
-				new_read_count += 1;
-			}
 			found_reads.insert(seq_id);
 			tmp_file_stream << seq_number << '\n';
 		}
 	}
-	logger->debug("Matched " + int2str(read_found) + " reads and " + int2str(new_read_count) + " new reads in library " + int2str(lib_idx + 1) + ", part " + part_string);
+	logger->debug("Matched " + int2str(read_found) + " reads and " + int2str(new_read_count / 2) + " new read (pairs) in library " + int2str(lib_idx + 1) + ", part " + part_string);
 	report_file_stream.close();
 	tmp_file_stream.close();
 
@@ -82,10 +78,15 @@ int VmatchAligner::parse_output(const string& output_file, unordered_set<string>
 		run_shell_command(cmd);
 	}
 	//TODO make this part of a cleanup function.
+	//RM here
 	cmd = "\\rm " + tmpvseqselectfile;
-	logger->debug(cmd);
+	//logger->debug(cmd);
 	run_shell_command(cmd);
 
+	// We are catching two new reads if the library is paired end
+	if (paired_end) {
+		new_read_count *= 2;
+	}
 	return new_read_count;
 }
 
@@ -193,7 +194,7 @@ void VmatchAligner::align_long_contigs(const string& long_contig_candidate_file,
 	vmatch_file_stream.close();
 	//RM here
 	cmd = "rm " + vmatch_out_file + " " + indexname + "*";
-	logger->debug(cmd);
+	//logger->debug(cmd);
 	run_shell_command(cmd);
 }
 

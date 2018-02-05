@@ -452,14 +452,14 @@ bool SRAssembler::read_library_file() {
 
 int SRAssembler::get_file_count(string search_pattern){
 	string cmd = "ls -l " + search_pattern + " | wc -l";
-	logger->debug(cmd);
+	//logger->debug(cmd);
 	return str2int(run_shell_command_with_return(cmd));
 }
 
 int SRAssembler::count_preprocessed_reads(int lib_idx){
 	// This uses a system call to count the lines in all the fasta files in the split reads directory
 	string cmd = "wc -l " + data_dir + "/lib" + int2str(lib_idx+1) + "/*part*.fasta | tail -n 1 | cut -d' ' -f3";
-	logger->debug(cmd);
+	//logger->debug(cmd);
 	return str2int(run_shell_command_with_return(cmd)) / 2;
 }
 
@@ -744,7 +744,7 @@ void SRAssembler::merge_mapped_files(int round){
 	string cmd = "rm -f " + get_contigs_index_name(round) + ".*";;
 	logger->debug(cmd);
 	run_shell_command(cmd);
-	logger->debug("done.");
+	//logger->debug("done.");
 }
 
 long SRAssembler::get_total_read_count(int round){
@@ -882,19 +882,19 @@ logger->info("remove reads without hits against contigs in round " + int2str(rou
 	logger->debug(cmd);
 	run_shell_command(cmd);
 	cmd = "cp " + left_matched_reads + " " + lib.get_matched_left_reads_filename(round);
-	logger->debug(cmd);
+	//logger->debug(cmd);
 	run_shell_command(cmd);
 	if (lib.get_paired_end()) {
 		cmd = "vseqselect -seqnum " + vmatch_outfile + " " + right_reads_index + " | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' > " + right_matched_reads;
 		logger->debug(cmd);
 		run_shell_command(cmd);
 		cmd = "cp " + right_matched_reads + " " + lib.get_matched_right_reads_filename(round);
-		logger->debug(cmd);
+		//logger->debug(cmd);
 		run_shell_command(cmd);
 	}
 	//RM here
 	cmd = "rm -f " + vmatch_outfile + " " + left_reads_index + "* " + right_reads_index + "*";
-	logger->debug(cmd);
+	//logger->debug(cmd);
 	run_shell_command(cmd);
 }
 
