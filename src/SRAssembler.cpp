@@ -581,7 +581,7 @@ string SRAssembler:: get_matched_reads_file_name(int round){
 
 int SRAssembler::do_alignment(int round, int lib_idx, int read_part) {
 	Library lib = this->libraries[lib_idx];
-	logger->info("Aligning: round = " + int2str(round) + " Lib (" + int2str(lib_idx+1) + "/" + int2str(this->libraries.size()) + "), Reads (" + int2str(read_part) + "/" + int2str(lib.get_num_parts()) + ")");
+	logger->info("Aligning: Round " + int2str(round) + ", Lib " + int2str(lib_idx+1) + " of " + int2str(this->libraries.size()) + ", Reads part " + int2str(read_part) + " of " + int2str(lib.get_num_parts()));
 	Aligner* aligner = get_aligner(round);
 	string program_name = aligner->get_program_name();
 	if (round == 1) {
