@@ -849,9 +849,10 @@ SRAssembler* SRAssembler::getInstance(int pid){
 void SRAssembler::remove_unmapped_reads(unsigned int lib_idx, int round){
 	string cmd;
 	string contig_file = get_contig_file_name(round);
-	// Contig index exists from remove_no_hit_contigs
 	string contig_index = tmp_dir + "/cindex";
 	Aligner* aligner = get_aligner(round);
+	// Index new good contigs
+	aligner->create_index(contig_index, "dna", contig_file);
 	Library lib = this->libraries[lib_idx];
 
 	// Index current matched reads for extraction purposes
