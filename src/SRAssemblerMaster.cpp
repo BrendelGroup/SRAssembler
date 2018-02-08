@@ -1053,7 +1053,7 @@ run_shell_command("cp " + contig_file + " " + contig_file + ".original");
 	run_shell_command(cmd);
 	//RM here
 	//string cmd = "rm -f " + tmp_dir + "/qindex*";
-	cmd = "rm -f " + out_file + " " + contig_index;
+	cmd = "rm -f " + out_file + " " + contig_index + "*";
 	//logger->debug(cmd);
 	run_shell_command(cmd);
 	// Create a new index of the good contigs for remove_unmapped_reads to use. Happens here because remove_unmapped_reads can be parallel
