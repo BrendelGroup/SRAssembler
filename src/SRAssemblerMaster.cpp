@@ -1035,10 +1035,11 @@ void SRAssemblerMaster::remove_no_hit_contigs(int round){
 	logger->info("Removing contigs without hits ...");
 	string cmd;
 	string contig_file = get_contig_file_name(round);
+	string contig_index = tmp_dir + "/cindex";
 run_shell_command("cp " + contig_file + " " + contig_file + ".original");
 	Aligner* aligner = get_aligner(round);
 	// Index contigs for easy extraction of hit contigs
-	aligner->create_index(tmp_dir + "/cindex", "dna", contig_file);
+	aligner->create_index(contig_index, "dna", contig_file);
 	// Why are we remaking this index every time?
 	//aligner->create_index(tmp_dir + "/qindex", type, query_file);
 	string program_name = aligner->get_program_name();
@@ -1047,12 +1048,12 @@ run_shell_command("cp " + contig_file + " " + contig_file + ".original");
 	string out_file = tmp_dir + "/query_vs_contig.round" + int2str(round) + ".vmatch";
 	aligner->do_alignment(tmp_dir + "/qindex", type, get_match_length(1), get_mismatch_allowed(1), contig_file, params, out_file);
 	logger->debug("remove contigs without hits against query sequences in round " + int2str(round));
-	cmd = "vseqselect -seqnum " + out_file + " " + tmp_dir + "/cindex | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' > " + contig_file;
+	cmd = "vseqselect -seqnum " + out_file + " " + contig_index + " | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' > " + contig_file;
 	logger->debug(cmd);
 	run_shell_command(cmd);
 	//RM here
 	//string cmd = "rm -f " + tmp_dir + "/qindex*";
-	cmd = "rm -f " + out_file;
+	cmd = "rm -f " + out_file + " " + contig_index;
 	//logger->debug(cmd);
 	run_shell_command(cmd);
 }
