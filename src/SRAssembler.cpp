@@ -734,11 +734,9 @@ void SRAssembler::merge_mapped_files(int round){
 			logger->debug(cmd);
 			run_shell_command(cmd);
 		}
-		if (round > 1) {
-			run_shell_command("cp " + lib.get_matched_left_reads_filename() + " " + lib.get_matched_left_reads_filename(round));
-			if (lib.get_paired_end())
-				run_shell_command("cp " + lib.get_matched_right_reads_filename() + " " + lib.get_matched_right_reads_filename(round));
-		}
+		run_shell_command("cp " + lib.get_matched_left_reads_filename() + " " + lib.get_matched_left_reads_filename(round));
+		if (lib.get_paired_end())
+			run_shell_command("cp " + lib.get_matched_right_reads_filename() + " " + lib.get_matched_right_reads_filename(round));
 	}
 	//RM HERE
 	string cmd = "rm -f " + get_contigs_index_name(round) + ".*";;
