@@ -45,6 +45,7 @@ public:
 	virtual void print_message(const std::string&)=0;
 	static SRAssembler* getInstance(int pid);
 	Logger* get_logger();
+	//void signalHandler(int signum);
 protected:
 	int do_alignment(int round, int lib_idx, int idx);
 	void do_spliced_alignment();

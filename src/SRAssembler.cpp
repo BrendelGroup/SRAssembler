@@ -11,6 +11,7 @@
 #include "SRAssemblerSlave.h"
 #include "SRAssemblerSlave.h"
 #include <vector>
+//#include <csignal>
 
 
 SRAssembler* SRAssembler::_srassembler = NULL;
@@ -238,7 +239,6 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 		return -1;
 	}
 	tmp_dir = out_dir + "/tmp";
-	//mem_dir = "/dev/shm/SRAssembler" + int2str(getppid());
 	if (data_dir == "")
 		data_dir = out_dir + "/" + READS_DATA;
 	preprocessed_exist = file_exists(data_dir);
@@ -900,9 +900,17 @@ void finalized(){
 	mpi_finalize();
 }
 
+//void signalHandler(int signum) {
+	//cout << "Interrupt signal (" << signum << ") received.\n";
+	//finalized();
+	//run_shell_command("rm -rf " + mem_dir);
+	//exit(signum);
+//}
+
 int main(int argc, char * argv[] ) {
 	long int start_time = time(0);
 	int rank, mpiSize;
+	//signal(SIGINT, signalHandler);
 
 	SRAssembler* instance = NULL;
 	try {
