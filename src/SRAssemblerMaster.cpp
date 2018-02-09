@@ -412,8 +412,8 @@ void SRAssemblerMaster::do_walking(){
 // This is a hack to avoid contig explosion slowdown
 string contig_line_count = run_shell_command_with_return("wc -l " + get_contig_file_name(round));
 if (str2int(contig_line_count) > 6000) {
-logger->info("The walking is terminated: Too many contigs produced. This is not a good run.");
-break;
+logger->info("The walking is terminated: Too many contigs produced. This is not a good run. Consider adjusting parameters such as Vmatch_protein_vs_contigs or -i initial_contig_min");
+return;
 }
 
 			//TODO What exactly is being tested here?
