@@ -113,6 +113,7 @@ protected:
 	unsigned int min_contig_lgth;
 	unsigned int max_contig_lgth;
 	bool preprocessed_exist;
+	bool ignore_contig_explosion;
 	std::string library_file;
 	std::string tmp_dir;
 	std::string mem_dir;

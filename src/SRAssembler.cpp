@@ -35,6 +35,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 	num_rounds = NUM_ROUNDS;
 	verbose = VERBOSE;
 	assembly_round = ASSEMBLY_ROUND;
+	ignore_contig_explosion = false;
 	reads_per_file = READS_PER_FILE;
 	fastq_format = FASTQ_INTERLEAVED;
 	out_dir = OUT_DIR;
@@ -115,124 +116,127 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 
 	char c;
 	while((c = getopt(argc, argv, "q:t:p:l:1:2:z:r:o:Px:A:k:S:s:G:i:m:M:e:c:n:a:b:wyvh")) != -1) {
-		 switch (c){
-			 case 'q':
-				 query_file = optarg;
-				 break;
-			 case 't':
-				 type = optarg;
-				 break;
-			 case 'p':
-			 	 param_file = optarg;
-			 	 break;
-			 case 'l':
-				 library_file = optarg;
-				 break;
-			 case '1':
-				 left_read = optarg;
-				 break;
-			 case '2':
-				 right_read = optarg;
-				 break;
-			 case 'z':
-				 insert_size = str2int(optarg);
-				 break;
-			 case 'r':
-			 	 data_dir = optarg;
-			 	 break;
-			 case 'o':
-				 out_dir = optarg;
-				 break;
-			 case 'P':
-			 	 preprocessing_only = 1;
-			 	 break;
-			 case 'x':
-				 reads_per_file = str2int(optarg);
-				 break;
-			 case 'A':
-			 	 assembler_program = str2int(optarg);
-			 	 break;
-			 case 'k': {
-				 vector<string> tokens;
-				 tokenize(optarg, tokens, ":");
-			 	 if (tokens.size() != 3)
-			 		k_format = false;
-			 	 start_k = str2int(tokens[0]);
-			 	 step_k = str2int(tokens[1]);
-			 	 end_k = str2int(tokens[2]);
-			 	 if (start_k <= 0 || start_k > 150 || start_k % 2 == 0) {
-			 		k_format = false;
-			 		break;
-			 	 }
-			 	 if (end_k <= 0 || end_k > 150 || end_k % 2 == 0 || end_k < start_k) {
-			 		k_format = false;
-			 		break;
-			 	 }
-			 	 if (step_k <= 0 || step_k > 150 || step_k % 2 == 1) {
-			 		k_format = false;
-			 		break;
-			 	 }
-			 	 int k_value = start_k;
-			 	 while (k_value < end_k)
-			 		k_value += step_k;
-			 	 if (k_value > step_k)
-			 		 end_k = k_value;
-			 	 break;
-			 }
-			 case 'S':
-				 spliced_alignment_program = str2int(optarg);
-				 break;
-			 case 's':
-				 species = optarg;
-				 break;
-			 case 'G':
-			 	 gene_finding_program = str2int(optarg);
-			 	 break;
-			 case 'i':
-				 ini_contig_size = str2int(optarg);
-				 break;
-			 case 'm':
-				 min_contig_lgth = str2int(optarg);
-				 break;
-			 case 'M':
-				 max_contig_lgth = str2int(optarg);
-				 break;
-			 case 'e':
-				 min_score = str2double(optarg);
-				 break;
-			 case 'c':
-				 min_coverage = str2double(optarg);
-				 break;
-			 case 'n':
-				 num_rounds = str2int(optarg);
-				 break;
-			 case 'a':
-				 assembly_round = str2int(optarg);
-				 if (assembly_round == 0)
-					 assembly_round = 9999;
-				 break;
-			 case 'b':
-				 clean_round = str2int(optarg);
-				 break;
-			 case 'w':
-				 check_gene_assembled = 0;
-				 break;
-			 case 'y':
-			 	 over_write = 1;
-			 	 break;
-			 case 'v':
-				 verbose = 1;
-				 break;
-			 case 'h':
-				 show_usage();
-				 return -1;
-			 	 break;
-			 case '?':
-				 string msg = "input error! unknown option : -";
-				 msg.append(1,optopt);
-				 print_message(msg);         //unknown options
-				 return -1;
-		  }
+		switch (c){
+			case '1':
+				left_read = optarg;
+				break;
+			case '2':
+				right_read = optarg;
+				break;
+			case 'a':
+				assembly_round = str2int(optarg);
+				if (assembly_round == 0)
+					assembly_round = 9999;
+				break;
+			case 'A':
+				assembler_program = str2int(optarg);
+				break;
+			case 'b':
+				clean_round = str2int(optarg);
+				break;
+			case 'c':
+				min_coverage = str2double(optarg);
+				break;
+			case 'e':
+				min_score = str2double(optarg);
+				break;
+			case 'f':
+				ignore_contig_explosion = true;
+				break;
+			case 'G':
+				gene_finding_program = str2int(optarg);
+				break;
+			case 'h':
+				show_usage();
+				return -1;
+				break;
+			case 'i':
+				ini_contig_size = str2int(optarg);
+				break;
+			case 'k': {
+				vector<string> tokens;
+				tokenize(optarg, tokens, ":");
+				if (tokens.size() != 3)
+					k_format = false;
+				start_k = str2int(tokens[0]);
+				step_k = str2int(tokens[1]);
+				end_k = str2int(tokens[2]);
+				if (start_k <= 0 || start_k > 150 || start_k % 2 == 0) {
+					k_format = false;
+					break;
+				}
+				if (end_k <= 0 || end_k > 150 || end_k % 2 == 0 || end_k < start_k) {
+					k_format = false;
+					break;
+				}
+				if (step_k <= 0 || step_k > 150 || step_k % 2 == 1) {
+					k_format = false;
+					break;
+				}
+				int k_value = start_k;
+				while (k_value < end_k)
+					k_value += step_k;
+				if (k_value > step_k)
+					end_k = k_value;
+				break;
+			}
+			case 'l':
+				library_file = optarg;
+				break;
+			case 'm':
+				min_contig_lgth = str2int(optarg);
+				break;
+			case 'M':
+				max_contig_lgth = str2int(optarg);
+				break;
+			case 'n':
+				num_rounds = str2int(optarg);
+				break;
+			case 'o':
+				out_dir = optarg;
+				break;
+			case 'p':
+				param_file = optarg;
+				break;
+			case 'P':
+				preprocessing_only = 1;
+				break;
+			case 'q':
+				query_file = optarg;
+				break;
+			case 'r':
+				data_dir = optarg;
+				break;
+			case 's':
+				species = optarg;
+				break;
+			case 'S':
+				spliced_alignment_program = str2int(optarg);
+				break;
+			case 't':
+				type = optarg;
+				break;
+			case 'v':
+				verbose = 1;
+				break;
+			case 'w':
+				check_gene_assembled = 0;
+				break;
+			case 'x':
+				reads_per_file = str2int(optarg);
+				break;
+			case 'y':
+				over_write = 1;
+				break;
+			case 'z':
+				insert_size = str2int(optarg);
+				break;
+			case '?':
+				string msg = "input error! unknown option : -";
+				msg.append(1,optopt);
+				print_message(msg);         //unknown options
+				return -1;
+		}
 	}
 	if (argc == 1){
 		show_usage();
