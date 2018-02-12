@@ -271,8 +271,11 @@ int SRAssemblerMaster::get_start_round(){
 			if (found_previous) {
 				int procID=getpid();
 				broadcast_code(ACTION_MEMDIR, 0, procID, 0);
+				// Make sure there is a mem_dir
 				this->mem_dir="/dev/shm/SRAssembler" + int2str(procID);
 				run_shell_command("mkdir -p " + mem_dir);
+				// Make sure the query is indexed for cleaning rounds
+				SRAssembler::create_index(1);
 				start_round = i+1;
 				if (start_round > this->num_rounds)
 					return start_round;
@@ -296,9 +299,9 @@ int SRAssemblerMaster::get_start_round(){
 						mpi_receive(code_value, from);
 						completed++;
 					}
-				}
-				else
+				} else {
 					load_found_reads(start_round - 1);
+				}
 				load_long_contigs();
 				break;
 			}
