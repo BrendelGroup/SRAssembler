@@ -115,7 +115,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 
 
 	char c;
-	while((c = getopt(argc, argv, "q:t:p:l:1:2:z:r:o:Px:A:k:S:s:G:i:m:M:e:c:n:a:b:wyvh")) != -1) {
+	while((c = getopt(argc, argv, "q:t:p:l:1:2:z:r:o:Px:A:k:S:s:G:i:m:M:e:c:n:a:b:wyvh:f")) != -1) {
 		switch (c){
 			case '1':
 				left_read = optarg;
