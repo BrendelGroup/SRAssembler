@@ -399,7 +399,6 @@ void SRAssemblerMaster::do_walking(){
 				mpi_receive(code_value, from);
 			}
 		}
-
 		if (new_reads_count == 0) {
 			logger->info("The walking is terminated: No new reads found.");
 			break;
@@ -407,22 +406,35 @@ void SRAssemblerMaster::do_walking(){
 		merge_mapped_files(round);
 		long read_count = get_total_read_count(round);
 		logger->info("Found new reads: " + int2str(new_reads_count) + " \tTotal matched reads: " + int2str(read_count));
+
 		if (assembly_round <= round){
 			unsigned int longest_contig = do_assembly(round);
 			assembled = true;
 			summary_best += int2str(read_count) + "\n";
+			bool cleaned = false;
 
 			// This is a hack to avoid contig explosion slowdown
 			if (! ignore_contig_explosion) {
 				string contig_line_count = run_shell_command_with_return("wc -l " + get_contig_file_name(round));
-				if (str2int(contig_line_count) > 6000) {
-					logger->info("The walking is terminated: Too many contigs produced in round " + int2str(round) + ". This is not a good run. Consider adjusting parameters such as Vmatch_protein_vs_contigs or -i initial_contig_min");
-					broadcast_code(ACTION_EXIT, 0, 0, 0);
-					if (round > 1) {
-						//RM HERE
-						clean_tmp_files(round-1);
+				int contig_count = str2int(contig_line_count) / 2;
+				// If there are too many contigs, first try cleaning them of bad ones.
+				if (contig_count > 1000) {
+					remove_no_hit_contigs(round);
+					contig_line_count = run_shell_command_with_return("wc -l " + get_contig_file_name(round));
+					contig_count = str2int(contig_line_count) / 2;
+					// If cleaning didn't work, bail on this run
+					if (contig_count > 1000) {
+						logger->info("The walking is terminated: " + int2str(contig_count) + " contigs produced in round " + int2str(round) + ". This is too many to be a good run. Consider adjusting parameters such as Vmatch_protein_vs_contigs or increasing -i initial_contig_min. You can also rerun with the -f argument to ignore contig numbers.");
+						broadcast_code(ACTION_EXIT, 0, 0, 0);
+						if (round > 1) {
+							//RM HERE
+							clean_tmp_files(round-1);
+						}
+						return;
 					}
-					return;
+					// If cleaning no_hit_contigs did work, finish cleaning by removing bad reads
+					remove_unmapped_reads(round);
+					cleaned = true;
 				}
 			}
 
@@ -451,7 +463,7 @@ void SRAssemblerMaster::do_walking(){
 				logger->info("The walking is terminated: The maximum round (" + int2str(num_rounds) + ") has been reached.");
 				break;
 			}
-			// If we haven't yet found a contig that meets the required length
+			// If we haven't yet found a contig that meets the required length, we try the next round.
 			if (longest_contig < min_contig_lgth) {
 				//RM HERE
 				clean_tmp_files(round-1);
@@ -459,7 +471,6 @@ void SRAssemblerMaster::do_walking(){
 				continue;
 			}
 
-			bool cleaned = false;
 			//do spliced alignment and remove the query sequences already assembled
 			if (round > 1 && check_gene_assembled){
 				string_map query_map = do_spliced_alignment(round);
@@ -496,6 +507,7 @@ void SRAssemblerMaster::do_walking(){
 					// Assembled contigs that don't have some degree of hit to the query are removed.
 					remove_no_hit_contigs(round);
 					remove_unmapped_reads(round);
+					cleaned = true;
 				}
 			}
 		} else {
