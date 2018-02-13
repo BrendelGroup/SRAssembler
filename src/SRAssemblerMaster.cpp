@@ -418,12 +418,12 @@ void SRAssemblerMaster::do_walking(){
 				string contig_line_count = run_shell_command_with_return("wc -l " + get_contig_file_name(round));
 				int contig_count = str2int(contig_line_count) / 2;
 				// If there are too many contigs, first try cleaning them of bad ones.
-				if (contig_count > 1000) {
+				if (contig_count > 500) {
 					remove_no_hit_contigs(round);
 					contig_line_count = run_shell_command_with_return("wc -l " + get_contig_file_name(round));
 					contig_count = str2int(contig_line_count) / 2;
 					// If cleaning didn't work, bail on this run
-					if (contig_count > 1000) {
+					if (contig_count > 500) {
 						logger->info("The walking is terminated: " + int2str(contig_count) + " contigs produced in round " + int2str(round) + ". This is too many to be a good run. Consider adjusting parameters such as Vmatch_protein_vs_contigs or increasing -i initial_contig_min. You can also rerun with the -f argument to ignore contig numbers.");
 						broadcast_code(ACTION_EXIT, 0, 0, 0);
 						if (round > 1) {

@@ -879,7 +879,7 @@ void SRAssembler::remove_unmapped_reads(unsigned int lib_idx, int round){
 	}
 
 	// Use vseqselect to collect matchy reads
-logger->info("remove reads without hits against contigs in round " + int2str(round));
+logger->debug("removing reads in library " + int2str(lib_idx + 1) + " without hits against contigs in round " + int2str(round));
 	cmd = "vseqselect -seqnum " + vmatch_outfile + " " + left_reads_index + " | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' > " + left_matched_reads;
 	logger->debug(cmd);
 	run_shell_command(cmd);
