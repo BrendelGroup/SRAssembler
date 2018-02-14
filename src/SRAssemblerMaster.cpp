@@ -656,9 +656,10 @@ int SRAssemblerMaster::do_assembly(int round) {
 			SRAssembler::do_assembly(round, start_k + (i-1)*step_k, 1);
 	} else {
 		if (total_k < mpiSize-1){
-			int threads = (mpiSize - 1) / total_k;
+			// Multithreading this doesn't work because SOAPdenovo2 can't just use the nodes that aren't in use.
+			//int threads = (mpiSize - 1) / total_k;
 			for (i=1; i<=total_k; i++){
-				send_code(i, ACTION_ASSEMBLY, round, start_k + (i-1)*step_k, threads);
+				send_code(i, ACTION_ASSEMBLY, round, start_k + (i-1)*step_k, 1);
 			}
 			while(completed < total_k){
 				mpi_receive(code_value, from);
