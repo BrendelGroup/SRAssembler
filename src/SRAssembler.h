@@ -109,6 +109,8 @@ protected:
 	int assembler_program;
 	double min_score;
 	double min_coverage;
+	// A dictionary for tracking the best contigs found between rounds.
+	tuple_map best_hits;
 	unsigned int ini_contig_size;
 	unsigned int min_contig_lgth;
 	unsigned int max_contig_lgth;

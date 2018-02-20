@@ -628,7 +628,7 @@ void SRAssembler::do_spliced_alignment() {
 	string program_name = spliced_aligner->get_program_name();
 	Params params = this->get_parameters(program_name);
 	spliced_aligner->do_spliced_alignment(this->final_contigs_file, type, this->query_file, this->species, params, this->spliced_alignment_output_file);
-	spliced_aligner->get_hit_contigs(min_score, min_coverage, min_contig_lgth, this->final_contigs_file, this->hit_contigs_file, this->spliced_alignment_output_file);
+	spliced_aligner->get_hit_contigs(min_score, min_coverage, min_contig_lgth, this->final_contigs_file, this->hit_contigs_file, this->spliced_alignment_output_file, this->best_hits);
 	logger->info("Done.");
 }
 
@@ -641,7 +641,7 @@ string_map SRAssembler::do_spliced_alignment(int round) {
 	string output_file = tmp_dir + "/query-vs-contig_" + "r" + int2str(round) + ".aln";
 	string hit_file = tmp_dir + "/hit_contigs_" + "r" + int2str(round) + ".fasta";
 	spliced_aligner->do_spliced_alignment(contig_file, type, this->query_file, this->species, params, output_file);
-	string_map query_map = spliced_aligner->get_aligned_contigs(min_score, min_coverage, min_contig_lgth, contig_file, hit_file, output_file);
+	string_map query_map = spliced_aligner->get_aligned_contigs(min_score, min_coverage, min_contig_lgth, contig_file, hit_file, output_file, round, best_hits);
 	//RM HERE
 	spliced_aligner->clean_files(contig_file);
 	logger->info("Done.");

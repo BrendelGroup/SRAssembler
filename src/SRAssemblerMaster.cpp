@@ -17,6 +17,8 @@ int SRAssemblerMaster::init(int argc, char * argv[], int rank, int mpiSize) {
 	int ret = SRAssembler::init(argc, argv, rank, mpiSize);
 	if (ret == -1)
 		return ret;
+	best_hits.insert(make_pair("score", std::make_tuple(0, 0.0))); // <round, alignment score>
+	best_hits.insert(make_pair("coverage", std::make_tuple(0, 0.0))); // <round, coverage>
 	if (!get_aligner(Aligner::PROTEIN_ALIGNER)->is_available()) return -1;
 	if (!get_aligner(Aligner::DNA_ALIGNER)->is_available()) return -1;
 	if (!get_assembler()->is_available()) return -1;
@@ -253,6 +255,7 @@ void SRAssemblerMaster::do_preprocessing(){
 int SRAssemblerMaster::get_start_round(){
 	int start_round = 1;
 	if (file_exists(tmp_dir)){
+		// This is counting backwards from the maximum round number until i=2
 		for (int i=this->num_rounds;i>1;i--){
 			bool found_previous = true;
 			int mpiSize = (this->mpiSize == 0)? 1: this->mpiSize;
@@ -475,6 +478,8 @@ void SRAssemblerMaster::do_walking(){
 			if (round > 1 && check_gene_assembled){
 				string_map query_map = do_spliced_alignment(round);
 				//string_map query_map = this->get_spliced_aligner()->get_aligned_query_list();
+cerr << "Best score is in round " + int2str(std::get<0>(best_hits["score"])) + " with score " + double2str(std::get<1>(best_hits["score"])) + "." << endl;
+cerr << "Best coverage is in round " + int2str(std::get<0>(best_hits["coverage"])) + " with coverage " + double2str(std::get<1>(best_hits["coverage"])) + "." << endl;
 				vector<string> contig_list;
 				BOOST_FOREACH(string_map::value_type item, query_map) {
 					contig_list.push_back(item.second);
