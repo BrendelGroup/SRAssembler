@@ -56,7 +56,7 @@ string_map GTHAligner::get_aligned_contigs(const double& min_score, const double
 	aligned_query_list.clear();
 	logger->debug("Finding the aligned contigs");
 	num_matches = 0;
-	output_string = "<B>Contig\tStrand\tQuery\tStrand\tScore\tLength\tCov\tG/P/C</B>\n";
+	//output_string = "<B>Contig\tStrand\tQuery\tStrand\tScore\tLength\tCov\tG/P/C</B>\n";
 	output_string = "<B>" + string_format("%-15s %-8s %-30s %-8s %-10s %-15s %-15s %-15s","Contig","Strand","Query","Strand","Score","Length","Coverage","G/P/C") + "</B>\n";
 	output_string += "--------------------------------------------------------------------------------------------------------------------\n";
 	while (getline(alignment_fs, line)) {
@@ -118,6 +118,10 @@ string_map GTHAligner::get_aligned_contigs(const double& min_score, const double
 }
 
 void GTHAligner::get_hit_contigs(const double& min_score, const double& min_coverage, const unsigned int& min_contig_lgth, const string& final_contigs_file, const string& hit_contig_file, const string& alignment_file, tuple_map& best_hits){
+	double best_score = std::get<1>(best_hits["score"]);
+	double best_coverage = std::get<1>(best_hits["coverage"]);
+	double final_high_score = 0.0;
+	double final_high_coverage = 0.0;
 	ifstream old_contig_fs(final_contigs_file.c_str());
 	ifstream alignment_fs(alignment_file.c_str());
 	ofstream new_contig_fs(hit_contig_file.c_str());
@@ -142,7 +146,6 @@ void GTHAligner::get_hit_contigs(const double& min_score, const double& min_cove
 		}
 		// Measure the length of the query
 		if (line.find("Sequence") != std::string::npos) {
-			//cerr << "Query is " + line << endl;
 			query_length = 0;
 			sscanf(line.c_str(), "%s Sequence %*s", query_type);
 			while (getline(alignment_fs, query_sequence_line)) {
@@ -155,12 +158,8 @@ void GTHAligner::get_hit_contigs(const double& min_score, const double& min_cove
 					}
 					sscanf(query_sequence_line.c_str(),"Genomic Template: %*s %*s %*s %*s description=%s length %d %*s",currentid,&contig_length);
 					logger->debug("... checking contig:\t" + std::string(currentid) + "\tof length:\t" + int2str(contig_length));
-					//cerr << "Query length is " + int2str(query_length) << endl;
-					//cerr << "min_coverage is " << min_coverage << endl;
-					//cerr << "Min match length is " + int2str(min_match_length) << endl;
 					break;
 				}
-				//cerr << query_sequence_line << endl;
 				query_length += count_letters(query_sequence_line);
 			}
 			continue;
@@ -178,6 +177,14 @@ void GTHAligner::get_hit_contigs(const double& min_score, const double& min_cove
 			string cov = tokens[5];
 			string type = tokens[6];
 
+			if (str2double(score) > final_high_score) {
+				final_high_score = str2double(score);
+			}
+			if (str2double(cov) > final_high_coverage) {
+				final_high_coverage = str2double(cov);
+			}
+
+			// It annoys me that this can actually decide that a match with high coverage of the CONTIG meets requirements, but better than a false negative.
 			if (str2double(score) > min_score && str2double(cov) > min_coverage && contig_length >= min_contig_lgth && str2double(length) >= min_match_length) {
 				output_string += string_format("%-15s %-8s %-30s %-10s %-15s %-15s %-15s",contig_id.c_str(),strand.c_str(),query.c_str(),score.c_str(),length.c_str(),cov.c_str(),type.c_str()) + "\n";
 				num_matches++;
@@ -186,6 +193,14 @@ void GTHAligner::get_hit_contigs(const double& min_score, const double& min_cove
 				contig_list.push_back(contig_id);
 			}
 		}
+	}
+	if (best_score > final_high_score) {
+		logger->warn("Contig with better alignment score found in round " + int2str(std::get<0>(best_hits["score"])));
+		//TODO Maybe run spliced aligner on contigs from this round?
+	}
+	if (best_coverage > final_high_coverage) {
+		logger->warn("Contig with better coverage found in round " + int2str(std::get<0>(best_hits["coverage"])));
+		//TODO Maybe run spliced aligner on contigs from this round?
 	}
 	output_string += "\nLength: cumulative length of scored exons\nCov G/P/C: coverage of contig (G) or cDNA (C) or protein (P), whichever is highest";
 	alignment_fs.close();
