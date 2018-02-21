@@ -478,8 +478,8 @@ void SRAssemblerMaster::do_walking(){
 			if (round > 1 && check_gene_assembled){
 				string_map query_map = do_spliced_alignment(round);
 				//string_map query_map = this->get_spliced_aligner()->get_aligned_query_list();
-cerr << "Best score is in round " + int2str(std::get<0>(best_hits["score"])) + " with score " + double2str(std::get<1>(best_hits["score"])) + "." << endl;
-cerr << "Best coverage is in round " + int2str(std::get<0>(best_hits["coverage"])) + " with coverage " + double2str(std::get<1>(best_hits["coverage"])) + "." << endl;
+logger->info("Best score so far is in round " + int2str(std::get<0>(best_hits["score"])) + " with score " + double2str(std::get<1>(best_hits["score"])) + ".");
+logger->info("Best coverage so far is in round " + int2str(std::get<0>(best_hits["coverage"])) + " with coverage " + double2str(std::get<1>(best_hits["coverage"])) + ".");
 				vector<string> contig_list;
 				BOOST_FOREACH(string_map::value_type item, query_map) {
 					contig_list.push_back(item.second);
