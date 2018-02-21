@@ -593,8 +593,7 @@ int SRAssembler::do_alignment(int round, int lib_idx, int read_part) {
 	} else {
 		program_name += "_extend_contig";
 	}
-	logger->debug("... using Vmatch criteria: " + program_name);
-	//TODO we read this parameter file A LOT. We should import the parameters for each program_name once.
+//	logger->debug("... using Vmatch criteria: " + program_name);
 	Params params = this->get_parameters(program_name);
 	int new_read_count;
 	// Reads as queries are necessary when searching against a protein.
