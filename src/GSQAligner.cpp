@@ -52,7 +52,7 @@ void GSQAligner::do_spliced_alignment(const string& genomic_file, const string& 
 }
 
 string_map GSQAligner::get_aligned_contigs(const double& min_score, const double& min_coverage, const unsigned int& min_contig_lgth, const string& all_contig_file, const string& hit_contig_file, const string& alignment_file, const int round, tuple_map& best_hits){
-	double best_score = std::get<1>(best_hits["score"]);
+	//double best_score = std::get<1>(best_hits["score"]);
 	double best_coverage = std::get<1>(best_hits["coverage"]);
 	ifstream old_contig_fs(all_contig_file.c_str());
 	ifstream alignment_fs(alignment_file.c_str());
@@ -87,13 +87,13 @@ string_map GSQAligner::get_aligned_contigs(const double& min_score, const double
 			num_matches++;
 			output_string += "\n";
 			logger->info("   ... MATCH found with coverage:\t" + cov + " " + type + "\tscore:\t" + score + "\tlength:\t" + int2str(contig_length));
-			if (str2double(score) > best_score) {
-				get<0>(best_hits["score"]) = round;
-				get<1>(best_hits["score"]) = str2double(score);
-				best_score = str2double(score);
-			}
+			//if (str2double(score) > best_score) {
+				//get<0>(best_hits["score"]) = round;
+				//get<1>(best_hits["score"]) = str2double(score);
+				//best_score = str2double(score);
+			//}
 			if (type == "P" || type == "C"){
-				if (str2double(cov) > best_coverage) {
+				if (str2double(score) > min_score && str2double(cov) > best_coverage) {
 					get<0>(best_hits["coverage"]) = round;
 					get<1>(best_hits["coverage"]) = str2double(cov);
 					best_coverage = str2double(cov);
@@ -124,9 +124,9 @@ string_map GSQAligner::get_aligned_contigs(const double& min_score, const double
 }
 
 void GSQAligner::get_hit_contigs(const double& min_score, const double& min_coverage, const unsigned int& min_contig_lgth, const string& final_contigs_file, const string& hit_contig_file, const string& alignment_file, tuple_map& best_hits){
-	double best_score = std::get<1>(best_hits["score"]);
+	//double best_score = std::get<1>(best_hits["score"]);
 	double best_coverage = std::get<1>(best_hits["coverage"]);
-	double final_high_score = 0.0;
+	//double final_high_score = 0.0;
 	double final_high_coverage = 0.0;
 	ifstream old_contig_fs(final_contigs_file.c_str());
 	ifstream alignment_fs(alignment_file.c_str());
@@ -179,9 +179,9 @@ void GSQAligner::get_hit_contigs(const double& min_score, const double& min_cove
 			string cov = tokens[5];
 			string type = tokens[6];
 
-			if (str2double(score) > final_high_score) {
-				final_high_score = str2double(score);
-			}
+			//if (str2double(score) > final_high_score) {
+				//final_high_score = str2double(score);
+			//}
 			if (str2double(cov) > final_high_coverage) {
 				final_high_coverage = str2double(cov);
 			}
@@ -196,10 +196,10 @@ void GSQAligner::get_hit_contigs(const double& min_score, const double& min_cove
 			}
 		}
 	}
-	if (best_score > final_high_score) {
-		logger->warn("Contig with better alignment score found in round " + int2str(std::get<0>(best_hits["score"])));
-		//TODO Maybe run spliced aligner on contigs from this round?
-	}
+	//if (best_score > final_high_score) {
+		//logger->warn("Contig with better alignment score found in round " + int2str(std::get<0>(best_hits["score"])));
+		////TODO Maybe run spliced aligner on contigs from this round?
+	//}
 	if (best_coverage > final_high_coverage) {
 		logger->warn("Contig with better coverage found in round " + int2str(std::get<0>(best_hits["coverage"])));
 		//TODO Maybe run spliced aligner on contigs from this round?
