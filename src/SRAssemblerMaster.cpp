@@ -422,6 +422,7 @@ void SRAssemblerMaster::do_walking(){
 				int contig_count = str2int(contig_line_count) / 2;
 				// If there are too many contigs, first try cleaning them of bad ones.
 				if (contig_count > 500) {
+					logger->debug("Alarmingly high (" + int2str(contig_count) + ") number of contigs assembled, attempting clean.");
 					remove_no_hit_contigs(round);
 					contig_line_count = run_shell_command_with_return("wc -l " + get_contig_file_name(round));
 					contig_count = str2int(contig_line_count) / 2;
