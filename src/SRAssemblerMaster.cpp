@@ -325,11 +325,13 @@ void SRAssemblerMaster::do_walking() {
 	}
 	output_summary_header();
 	bool assembled;
+	int rounds_since_cleaning = 0;
 	// Walking begins.
 	while(true){
 		logger->info("Starting round " + int2str(round) + " ...");
 		int new_reads_count = 0;
 		assembled = false;
+		rounds_since_cleaning += 1;
 
 		// Index the query in round 1 for the dnavsprot vmatch step.
 		if (round == 1) {
@@ -431,6 +433,7 @@ void SRAssemblerMaster::do_walking() {
 					// If cleaning no_hit_contigs did work, finish cleaning by removing the reads that don't match the contigs that were kept.
 					remove_unmapped_reads(round);
 					cleaned = true;
+					rounds_since_cleaning = 0;
 				}
 			}
 
@@ -497,14 +500,16 @@ void SRAssemblerMaster::do_walking() {
 					remove_no_hit_contigs(round);
 					remove_unmapped_reads(round);
 					cleaned = true;
+					rounds_since_cleaning = 0;
 				}
 			}
 			if (round > 1 && !cleaned) {
-				if (round % clean_round == 0) {
+				if (rounds_since_cleaning == clean_round) {
 					// Assembled contigs that don't have some degree of hit to the query are removed.
 					remove_no_hit_contigs(round);
 					remove_unmapped_reads(round);
 					cleaned = true;
+					rounds_since_cleaning = 0;
 				}
 			}
 		} else {
