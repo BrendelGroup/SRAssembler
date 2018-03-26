@@ -14,10 +14,10 @@
 #endif
 
 long long get_mpi_code_value(mpi_code code){
-	// code.action can be 2 digits
-	// code.value1 can be 5 digits
-	// code.value2 can be 9 digits
-	// code.value3 can be 2 digits
+	// code.action can be 2 digits.
+	// code.value1 can be 5 digits.
+	// code.value2 can be 9 digits.
+	// code.value3 can be 2 digits.
 	return 10000000000000000 * code.action + 100000000000 * code.value1 + 100* code.value2 + code.value3;
 }
 

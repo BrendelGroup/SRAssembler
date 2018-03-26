@@ -63,7 +63,7 @@ void SRAssemblerSlave::process_message(){
 			SRAssembler::preprocess_read_part(value1, value2);
 			send_code(from, ACTION_RETURN, 0, value2, 0);
 		}
-		if (action == ACTION_ASSEMBLY){  //do_assmebly
+		if (action == ACTION_ASSEMBLY){  //do_assembly
 			do_assembly(value1, value2, value3);
 			send_code(from, ACTION_RETURN, 0, 0, 0);
 		}

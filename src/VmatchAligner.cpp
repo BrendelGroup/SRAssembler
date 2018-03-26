@@ -32,16 +32,11 @@ VmatchAligner::VmatchAligner(int log_level, string log_file):Aligner(log_level, 
  *
  */
 int VmatchAligner::parse_output(const string& output_file, unordered_set<string>& found_reads, const int lib_idx, const int read_part, const string& left_read_index, const string& right_read_index, const string& out_left_read, const string& out_right_read) {
-	//logger->debug("parsing output file " + output_file);
-	//logger->debug("found_reads size = " + int2str(found_reads.size()));
-	//logger->debug("found_reads bucket_count = " + int2str(found_reads.bucket_count()));
-	//logger->debug("found_reads load_factor = " + int2str(found_reads.load_factor()));
-	//logger->debug("found_reads max_load_factor = " + int2str(found_reads.max_load_factor()));
+	// Parse the output file and get the mapped reads that had not been found yet.
 	bool paired_end = (out_right_read != "");
 	ifstream report_file_stream(output_file.c_str());
 	int read_found = 0;
 	int new_read_count = 0;
-	// parse the output file and get the mapped reads have not found yet
 	string line;
 	string cmd;
 	string part_string = int2str(read_part); //Calculate this once rather than over and over
@@ -49,16 +44,13 @@ int VmatchAligner::parse_output(const string& output_file, unordered_set<string>
 	string tmpvseqselectfile = out_left_read + "-tmp";
 	//TODO put the temporary file in mem_dir
 	ofstream tmp_file_stream(tmpvseqselectfile.c_str());
-	//run_shell_command("touch " + tmpvseqselectfile);
 
 	while (getline(report_file_stream, line)) {
 		read_found++;
 		string seq_number = line;
-		//logger->debug("seq_number " + seq_number);
 		string seq_id = "lib" + lib_string + ",part" + part_string + ",read" + seq_number;
-		// boost::unordered_set.find() produces past-the-end pointer if a key isn't found
+		// boost::unordered_set.find() produces past-the-end pointer if a key isn't found.
 		if (found_reads.find(seq_id) == found_reads.end()) {
-			//logger->debug(seq_number + " is new");
 			new_read_count += 1;
 			found_reads.insert(seq_id);
 			tmp_file_stream << seq_number << '\n';
@@ -68,7 +60,7 @@ int VmatchAligner::parse_output(const string& output_file, unordered_set<string>
 	report_file_stream.close();
 	tmp_file_stream.close();
 
-	// Use awk to strip out linebreaks from within the sequence
+	// Use awk to strip out linebreaks from within the sequence.
 	cmd = "vseqselect -seqnum " + tmpvseqselectfile + " " + left_read_index + " | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' >> " + out_left_read;
 	logger->debug(cmd);
 	run_shell_command(cmd);
@@ -80,7 +72,6 @@ int VmatchAligner::parse_output(const string& output_file, unordered_set<string>
 	//TODO make this part of a cleanup function.
 	//RM here
 	cmd = "\\rm " + tmpvseqselectfile;
-	//logger->debug(cmd);
 	run_shell_command(cmd);
 
 	// We are catching two new reads if the library is paired end
@@ -123,7 +114,7 @@ void VmatchAligner::do_alignment(const string& index_name, const string& type, i
 			else
 				param_list += " -" + it->first + " " + it->second;
 	}
-	// If match_length is 0, use "-complete" for a complete length match
+	// If match_length is 0, use "-complete" for a complete length match.
 	if (match_length > 0) {
 		l_option = " -l " + int2str(match_length);
 	} else {
@@ -179,7 +170,7 @@ void VmatchAligner::align_long_contigs(const string& long_contig_candidate_file,
 	logger->debug(cmd);
 	run_shell_command(cmd);
 	ifstream vmatch_file_stream(vmatch_out_file.c_str());
-	//parse the output file and remove the long contigs and associated reads.
+	// parse the output file and remove the long contigs and associated reads.
 	string line;
 	while (getline(vmatch_file_stream, line)){
 		if (line[0] != '#'){

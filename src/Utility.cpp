@@ -24,7 +24,6 @@ string readfile(const string& fn) {
 	string line;
 	while(getline(inFile,line)) {
 		filestring.append(line + "\n");
-		//cout << line << endl;
 	}
 	inFile.close();
 	return filestring;
@@ -202,7 +201,7 @@ string string_format(const string fmt, ...) {
 	}
 }
 
-// Why isn't this set up for FASTA as well as FASTQ?
+// This function is not used.
 void remove_duplicate_reads(const string& filename, int read_format) {
 	if (read_format == FORMAT_FASTA) {
 		string tmp_file = filename + ".tmp";

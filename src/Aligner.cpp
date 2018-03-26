@@ -21,7 +21,7 @@ Aligner::~Aligner() {
 	// TODO Auto-generated destructor stub
 }
 
-//singleton implementation
+// singleton implementation
 Aligner* Aligner::getInstance(int type, int log_level, string log_file){
 	if (type == PROTEIN_ALIGNER){
 		if (protein_aligner == NULL)

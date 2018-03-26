@@ -149,7 +149,6 @@ void Library::do_split_files(int read_direction, int reads_per_file){
 	getline(in_stream, line);
 	// While not at end of input file
 	while(! in_stream.eof()) {
-		//cout << "Part = " + int2str(part) << '\n';
 		int linecount = 0;
 		out_file = get_split_read_prefix(read_file) + int2str(part) + ".fasta";
 		out_stream.open(out_file.c_str());

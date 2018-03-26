@@ -13,7 +13,6 @@ Assembler* Assembler::assembler = NULL;
 
 Assembler::Assembler(int log_level, string log_file) {
 	logger = Logger::getInstance(log_level, log_file);
-
 }
 
 Assembler::~Assembler() {
@@ -21,7 +20,7 @@ Assembler::~Assembler() {
 }
 
 
-//singleton implementation
+// singleton implementation
 Assembler* Assembler::getInstance(int type, int log_level, string log_file){
 	if (type == ABYSS_ASSEMBLER){
 		if (assembler == NULL)

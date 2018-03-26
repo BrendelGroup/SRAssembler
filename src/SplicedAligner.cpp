@@ -30,7 +30,7 @@ int SplicedAligner::get_match_num(){
 string SplicedAligner::get_output_summary(){
 	return this->output_string;
 }
-//singleton implementation
+// singleton implementation
 SplicedAligner* SplicedAligner::getInstance(int type, int log_level, string log_file){
 	if (type == SplicedAligner::GENOMETHREADER){
 		if (spliced_aligner == NULL)
