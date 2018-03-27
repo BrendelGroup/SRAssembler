@@ -446,7 +446,6 @@ void SRAssemblerMaster::do_walking() {
 				}
 			}
 
-			//TODO What exactly is being tested here?
 			bool no_reads = true;
 			// if no reads found, stop
 			for (unsigned int lib_idx=0; lib_idx < this->libraries.size(); lib_idx++){

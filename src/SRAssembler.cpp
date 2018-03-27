@@ -494,18 +494,19 @@ void SRAssembler::broadcast_code(const int& action, const int& value1, const int
 	code.value3 = value3;
 	mpi_bcast(get_mpi_code_value(code));
 }
-//TODO This may become unnecessary
+
 string SRAssembler:: get_contigs_index_name(int round){
    return tmp_dir + "/round" + int2str(round);
 }
 
+
+string SRAssembler:: get_query_fasta_file_name(int round){
 /* It appears that this function is deceptively named.
  * It does not just return a string naming a fasta file that contains all of the matched reads.
  * This function is also responsible for assembling the contents of that file.
  */
  //TODO break into multiple functions, this is ridiculous
-string SRAssembler:: get_query_fasta_file_name(int round){
-	if (round > 1){
+ 	if (round > 1){
 		if (assembly_round < round)
 			return get_contig_file_name(round-1);
 		else {

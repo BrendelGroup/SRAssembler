@@ -7,7 +7,6 @@
 
 #include "MPIWrapper.h"
 #include <string.h>
-//TODO remove temporary
 #include <iostream>
 #ifdef MPIMODE
 #include <mpi.h>

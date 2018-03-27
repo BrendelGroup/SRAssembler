@@ -152,7 +152,6 @@ long get_file_size(const string& filename) {
 }
 
 long get_read_count(const string& filename, int format) {
-	//TODO would this be faster using bash wc?
 	ifstream inFile(filename.c_str());
 	string line;
 	long line_count = 0;
