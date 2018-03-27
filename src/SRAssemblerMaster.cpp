@@ -266,8 +266,14 @@ int SRAssemblerMaster::get_start_round(){
 				int procID=getpid();
 				broadcast_code(ACTION_MEMDIR, 0, procID, 0);
 				// Make sure there is a mem_dir.
-				this->mem_dir="/dev/shm/SRAssembler" + int2str(procID);
-				run_shell_command("mkdir -p " + mem_dir);
+				this->mem_dir="/dev/shm/SRAssemblermem" + int2str(procID);
+				string cmd = "mkdir -p " + mem_dir;
+				logger->debug(cmd);
+				run_shell_command(cmd);
+				// Make sure that the existence of the mem_dir is obvious in case of disrupted run.
+				cmd = "ln --symbolic --target-directory=" + out_dir + " " + mem_dir;
+				logger->debug(cmd);
+				run_shell_command(cmd);
 				// Make sure the query is indexed for cleaning rounds.
 				SRAssembler::create_index(1);
 				start_round = i+1;
@@ -308,6 +314,9 @@ void SRAssemblerMaster::do_walking() {
 	if (preprocessing_only) {
 		logger->info("Do pre-processing of reads only. The chromosome walking is skipped.");
 		broadcast_code(ACTION_EXIT, 0, 0, 0);
+		//RM here
+		// Remove the unnecessary mem_dir and symlink reminder.
+		run_shell_command("rm -rf " + out_dir + "/" + get_file_name(mem_dir) + " " + mem_dir);
 		return;
 	}
 
@@ -565,7 +574,8 @@ void SRAssemblerMaster::do_walking() {
 	outFile << output_content << endl;
 	outFile.close();
 	//RM HERE
-	string cmd = "rm -rf " + query_file + ".* " + tmp_dir + "/qindex.* " + mem_dir;
+	// Now that we're done, clean up unneccessary temporary files and the link to the mem_dir
+	string cmd = "rm -rf " + query_file + ".* " + tmp_dir + "/qindex.* " + tmp_dir + "/cindex.* " + out_dir + "/" + get_file_name(mem_dir) + " " + mem_dir;
 	logger->debug(cmd);
 	run_shell_command(cmd);
 }
@@ -1048,11 +1058,19 @@ void SRAssemblerMaster::create_folders(){
 	run_shell_command(cmd);
 	cmd = "mkdir " + tmp_dir;
 	run_shell_command(cmd);
-		// Set unique directory for files stored in RAM
+
+	// Set unique directory for files stored in RAM.
+	// If the run is disrupted, these files will remain until a computer reboot, potentially slowing down the computer.
 	int procID=getpid();
 	broadcast_code(ACTION_MEMDIR, 0, procID, 0);
-	this->mem_dir="/dev/shm/SRAssembler" + int2str(procID);
-	run_shell_command("mkdir -p " + mem_dir);
+	this->mem_dir="/dev/shm/SRAssemblermem" + int2str(procID);
+	cmd = "mkdir -p " + mem_dir;
+	logger->debug(cmd);
+	run_shell_command(cmd);
+	// Make sure that the existence of the mem_dir is obvious in case of disrupted run.
+	cmd = "ln --symbolic --target-directory=" + out_dir + " " + mem_dir;
+	logger->debug(cmd);
+	run_shell_command(cmd);
 }
 
 void SRAssemblerMaster::remove_no_hit_contigs(int round){

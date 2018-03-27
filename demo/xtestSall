@@ -84,7 +84,7 @@ mkdir -p Stestout9
 echo "============================================================================================================"
 echo " Test10: Pre-process reads only (-P)."
 echo "============================================================================================================"
-rm -rf testout10
+rm -rf Stestout10
 rm -rf reads_data
 mkdir -p Stestout10
 ../bin/SRAssembler -q input/LOC_Os06g04560.pep -t protein -p SRAssembler.conf -l libraries_200bp.conf -r ./reads_data -x 15000 -o Stestout10 -P

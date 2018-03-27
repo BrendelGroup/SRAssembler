@@ -76,7 +76,7 @@ void SRAssemblerSlave::process_message(){
 			send_code(from, ACTION_RETURN, 0, 0, 0);
 		}
 		if (action == ACTION_MEMDIR) {
-			this->mem_dir="/dev/shm/SRAssembler" + int2str(value2);
+			this->mem_dir="/dev/shm/SRAssemblermem" + int2str(value2);
 		}
 		if (action == ACTION_SAVE){  //load previous reads
 			save_found_reads(value1);
