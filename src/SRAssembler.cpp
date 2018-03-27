@@ -48,6 +48,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 	end_k = END_K;
 	step_k = STEP_K;
 	clean_round = CLEAN_ROUND;
+	contig_limit = CONTIG_LIMIT;
 	over_write = OVER_WRITE;
 	check_gene_assembled = CHECK_GENE_ASSEMBLED;
 	preprocessing_only = PREPROCESSING_ONLY;
@@ -74,26 +75,28 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 	usage.append("-q: Required; FASTA-formatted query file.\n");
 	usage.append("-t: Query file type; options: 'protein', 'cdna' [Default: " + QUERY_TYPE + "].\n");
 	usage.append("-p: Required; SRAssembler parameter configuration file.\n\n");
+	usage.append("-o: SRAssembler output directory [Default: current directory].\n\n");
 
-	usage.append("-l: Required if the -1 option is not used; reads library file.\n");
+	usage.append("-l: Required if the -1 option is not used; sequencing reads library file.\n");
 	usage.append("-1: Required if the -l option is not used; use this option to specify the single-end reads file\n");
 	usage.append("    or the left-end reads file for paired-end reads.\n");
 	usage.append("-2: Right-end reads file for paired-end reads.\n");
 	usage.append("-z: Insert size of the paired-end reads [Default: " + int2str(INSERT_SIZE) + "].\n");
+	usage.append("-x: Number of reads per pre-preprocessed reads file [Default: " + int2str(READS_PER_FILE) + "].\n");
 	usage.append("-r: Directory in which to store or from which to retrieve the pre-processed reads [Default: output directory/" + READS_DATA + "].\n");
-	usage.append("-o: SRAssembler output directory [Default: current directory].\n\n");
 
 	usage.append("-P: Run the read pre-processing step only, then terminate SRAssembler.\n");
-	usage.append("-x: Number of reads per pre-preprocessed reads file [Default: " + int2str(READS_PER_FILE) + "].\n");
+	usage.append("-s: Species model for spliced alignment; options (for GenomeThreader and GeneSeqer):\n");
+	usage.append("    'human', 'mouse', 'rat', 'chicken', 'drosophila', 'nematode', 'fission_yeast', 'aspergillus', 'arabidopsis',\n");
+	usage.append("    'maize', 'rice', 'medicago' [DEFAULT: " + DEFAULT_SPECIES + "].\n");
+
 	usage.append("-A: Assembler program choice; options: 0=>SOAPdenovo2, 1=>ABySS [Default: " + int2str(ASSEMBLER_PROGRAM) + "].\n");
 	usage.append("-k: Specifies the k-mer set to be used by the assembler; format: start_k:interval:end_k.\n");
 	usage.append("    Start_k and end_k must be odd integers, and interval must be an even integer, similar to the following example:\n");
 	usage.append("    '15:10:45' specifies that k-mer values 15, 25, 35, 45 will be tested.[Default: " + int2str(START_K) + ":" + int2str(STEP_K) + ":" + int2str(END_K) + "].\n");
 	usage.append("-S: Spliced alignment program; options: 0=>GeneSeqer, 1=>GenomeThreader,\n");
 	usage.append("    2=>Exonerate [Default: " + int2str(SPLICED_ALIGNMENT_PROGRAM) + "].\n");
-	usage.append("-s: Species model for spliced alignment; options (for GenomeThreader and GeneSeqer):\n");
-	usage.append("    'human', 'mouse', 'rat', 'chicken', 'drosophila', 'nematode', 'fission_yeast', 'aspergillus', 'arabidopsis',\n");
-	usage.append("    'maize', 'rice', 'medicago' [DEFAULT: " + DEFAULT_SPECIES + "].\n");
+
 	usage.append("-G: Ab initio gene finding program; options: 0=>None, 1=>Snap [Default: " + int2str(GENE_FINDING_PROGRAM) + "].\n\n");
 
 	usage.append("-i: Initial contig size for chromosome walking [Default: " + int2str(INI_CONTIG_SIZE) + "].\n");
@@ -104,8 +107,11 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 
 	usage.append("-n: Maximum number of rounds for chromosome walking [Default: " + int2str(NUM_ROUNDS) + "].\n");
 	usage.append("-a: The number of the round in which to start read assembly [Default: " + int2str(ASSEMBLY_ROUND) + "].\n");
-	usage.append("-b: The number of the round in which to periodically remove unrelated contigs and reads. For example,\n");
-	usage.append("    “-b 3” specifies that SRAssembler will remove unrelated contigs and reads after assembly rounds 3, 6, 9, ... [Default: " + int2str(CLEAN_ROUND) + "].\n");
+	usage.append("-b: The frequency with which to periodically remove unrelated contigs and reads. For example, '-b 3' \n");
+	usage.append("    specifies that SRAssembler will remove unrelated contigs and reads after two rounds of not doing so. [Default: " + int2str(CLEAN_ROUND) + "].\n");
+	usage.append("-d: The minimum number of assembled contigs to automatically trigger removal of unrelated contigs and reads.\n");
+	usage.append("    If set to '0', do not remove unrelated contigs and reads except as scheduled by '-b' option. [Default: " + int2str(CONTIG_LIMIT) + "].\n");
+
 	usage.append("-w: Forgo spliced alignment check after intermediate assembly rounds [SRAssembler will continue for the -n specified number of rounds].\n");
 	usage.append("-y: Disable SRAssembler resumption from previous checkpoint [will overwrite existing output].\n\n");
 
@@ -136,11 +142,14 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 			case 'c':
 				min_coverage = str2double(optarg);
 				break;
+			case 'd':
+				contig_limit = str2int(optarg);
+				if (contig_limit == 0) {
+					ignore_contig_explosion = true;
+				}
+				break;
 			case 'e':
 				min_score = str2double(optarg);
-				break;
-			case 'f':
-				ignore_contig_explosion = true;
 				break;
 			case 'G':
 				gene_finding_program = str2int(optarg);

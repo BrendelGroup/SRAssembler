@@ -49,6 +49,7 @@ static const int DIRECTION_RF=1;
 static const int LEFT_READ=0;
 static const int RIGHT_READ=1;
 static const int CLEAN_ROUND=3;
+static const int CONTIG_LIMIT=500;
 static const int SPLICED_ALIGNMENT_PROGRAM = 0;
 static const int ASSEMBLER_PROGRAM = 0;
 static const int GENE_FINDING_PROGRAM = 0;

@@ -94,6 +94,7 @@ protected:
 	int preprocessing_only;
 	int assembly_round;
 	int clean_round;
+	int contig_limit;
 	int over_write;
 	int check_gene_assembled;
 	int reads_per_file;

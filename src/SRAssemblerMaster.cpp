@@ -419,18 +419,19 @@ void SRAssemblerMaster::do_walking() {
 			summary_best += int2str(read_count) + "\n";
 			bool cleaned = false;
 
-			// This is a hack to avoid contig explosion slowdown.
+			// This is a hack to avoid slowdown due to the assembly of an unreasonable number of contigs.
+			// This typically only happens in the event of a repeat element in an intron.
 			if (! ignore_contig_explosion) {
 				string contig_line_count = run_shell_command_with_return("wc -l " + get_contig_file_name(round));
 				int contig_count = str2int(contig_line_count) / 2;
 				// If there are too many contigs, first try cleaning them of bad ones.
-				if (contig_count > 500) {
+				if (contig_count > contig_limit) {
 					logger->debug("Alarmingly high (" + int2str(contig_count) + ") number of contigs assembled, attempting clean.");
 					remove_no_hit_contigs(round);
 					contig_line_count = run_shell_command_with_return("wc -l " + get_contig_file_name(round));
 					contig_count = str2int(contig_line_count) / 2;
 					// If cleaning didn't work, bail on this run.
-					if (contig_count > 500) {
+					if (contig_count > contig_limit) {
 						logger->info("The walking is terminated: " + int2str(contig_count) + " contigs produced in round " + int2str(round) + ". This is too many to be a good run. Consider adjusting parameters such as Vmatch_protein_vs_contigs or increasing -i initial_contig_min. You can also rerun with the -f argument to ignore contig numbers.");
 						broadcast_code(ACTION_EXIT, 0, 0, 0);
 						if (round > 1) {
