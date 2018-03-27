@@ -45,20 +45,20 @@ public:
 	virtual void print_message(const std::string&)=0;
 	static SRAssembler* getInstance(int pid);
 	Logger* get_logger();
+	//void signalHandler(int signum);
 protected:
 	int do_alignment(int round, int lib_idx, int idx);
 	void do_spliced_alignment();
 	string_map do_spliced_alignment(int);
 	void do_gene_finding();
-	void do_assembly(int, int);
-	int do_assembly(int);
+	void do_assembly(int, int, int threads);
 	void create_index(int round);
 	std::string get_contigs_index_name(int round);
 	std::string get_query_fasta_file_name(int round);
 	void mask_contigs(int round);
 	std::string get_query_fasta_file_name_masked(int round);
 	std::string get_contig_file_name(int round);
-	std::string get_mapped_reads_file_name(int round);
+	std::string get_matched_reads_file_name(int round);
 	std::string get_vmatch_output_filename(int round, int lib_idx, int idx);
 	std::string get_type(int round);
 	int get_match_length(int round);
@@ -71,18 +71,20 @@ protected:
 	int count_preprocessed_reads(int lib_idx);
 	void merge_mapped_files(int round);
 	Assembly_stats get_assembly_stats(int round, int k);
-	void save_mapped_reads(int round);
-	void load_mapped_reads(int round);
+	void save_found_reads(int round);
+	void load_found_reads(int round);
+	void remove_unmapped_reads(unsigned int lib_idx, int round);
 	//void prepare_contig_file(int round, int k);
 	void keep_long_contigs(string in_file, string out_file, unsigned int min_length);
-	int get_total_read_count(int round);
+	long get_total_read_count(int round);
 	void send_code(const int& to, const int& action, const int& value1, const int& value2, const int& value3);
 	void broadcast_code(const int& action, const int& value1, const int& value2, const int& value3);
 	Aligner* get_aligner(int round);
 	Assembler* get_assembler();
 	SplicedAligner* get_spliced_aligner();
 	GeneFinder* get_gene_finder();
-	Params read_param_file(string program_name);
+	boost::unordered_map<std::string,Params> read_param_file();
+	Params get_parameters(string program_name);
 	std::string query_file, species, type, out_dir;
 	int init_match_length;
 	int recur_match_length;
@@ -92,6 +94,7 @@ protected:
 	int preprocessing_only;
 	int assembly_round;
 	int clean_round;
+	int contig_limit;
 	int over_write;
 	int check_gene_assembled;
 	int reads_per_file;
@@ -107,10 +110,13 @@ protected:
 	int assembler_program;
 	double min_score;
 	double min_coverage;
+	// A dictionary for tracking the best contigs found between rounds.
+	tuple_map best_hits;
 	unsigned int ini_contig_size;
 	unsigned int min_contig_lgth;
 	unsigned int max_contig_lgth;
 	bool preprocessed_exist;
+	bool ignore_contig_explosion;
 	std::string library_file;
 	std::string tmp_dir;
 	std::string mem_dir;
@@ -129,9 +135,10 @@ protected:
 	std::string final_long_contig_file;
 	std::string summary_file;
 	std::string mapped_readnumbers_file;
-	boost::unordered_set<std::string> mapped_reads;
+	boost::unordered_set<std::string> found_reads;
 	std::vector<Library> libraries;
 	Logger* logger;
+	boost::unordered_map<std::string,Params> parameters_dict;
 private:
 	static SRAssembler* _srassembler;
 	bool read_library_file();

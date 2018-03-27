@@ -24,7 +24,6 @@ string readfile(const string& fn) {
 	string line;
 	while(getline(inFile,line)) {
 		filestring.append(line + "\n");
-		//cout << line << endl;
 	}
 	inFile.close();
 	return filestring;
@@ -153,7 +152,6 @@ long get_file_size(const string& filename) {
 }
 
 long get_read_count(const string& filename, int format) {
-	//TODO would this be faster using bash wc?
 	ifstream inFile(filename.c_str());
 	string line;
 	long line_count = 0;
@@ -202,7 +200,7 @@ string string_format(const string fmt, ...) {
 	}
 }
 
-// Why isn't this set up for FASTA as well as FASTQ?
+// This function is not used.
 void remove_duplicate_reads(const string& filename, int read_format) {
 	if (read_format == FORMAT_FASTA) {
 		string tmp_file = filename + ".tmp";
@@ -214,7 +212,7 @@ void remove_duplicate_reads(const string& filename, int read_format) {
 	}
 	//TODO make this more efficient as above, or possibly remove.
 	else {
-		boost::unordered_set<string> mapped_reads;
+		boost::unordered_set<string> found_reads;
 		string tmp_file = filename + ".tmp";
 		ifstream src_stream(filename.c_str());
 		ofstream tmp_stream(tmp_file.c_str());
@@ -222,8 +220,8 @@ void remove_duplicate_reads(const string& filename, int read_format) {
 		string line;
 		while (getline(src_stream, line)){
 			if (line.substr(0,1) == lead_chr){
-				if (mapped_reads.find(line) == mapped_reads.end()) {
-					mapped_reads.insert(line);
+				if (found_reads.find(line) == found_reads.end()) {
+					found_reads.insert(line);
 					tmp_stream << line << '\n';
 					getline(src_stream, line);
 					tmp_stream << line << '\n';

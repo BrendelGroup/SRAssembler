@@ -38,7 +38,7 @@ void ExonerateAligner::do_spliced_alignment(const string& genomic_file, const st
 	run_shell_command(cmd);
 }
 
-string_map ExonerateAligner::get_aligned_contigs(const double& min_score, const double& min_coverage, const unsigned int& min_contig_lgth, const string& final_contigs_file, const string& hit_contig_file, const string& alignment_file){
+string_map ExonerateAligner::get_aligned_contigs(const double& min_score, const double& min_coverage, const unsigned int& min_contig_lgth, const string& final_contigs_file, const string& hit_contig_file, const string& alignment_file, const int round, tuple_map& best_hits){
 	ifstream old_contig_fs(final_contigs_file.c_str());
 	ifstream alignment_fs(alignment_file.c_str());
 	ofstream new_contig_fs(hit_contig_file.c_str());
@@ -87,7 +87,7 @@ string_map ExonerateAligner::get_aligned_contigs(const double& min_score, const 
 	return aligned_query_list;
 }
 
-void ExonerateAligner::get_hit_contigs(const double& min_score, const double& min_coverage, const unsigned int& min_contig_lgth, const string& final_contigs_file, const string& hit_contig_file, const string& alignment_file){
+void ExonerateAligner::get_hit_contigs(const double& min_score, const double& min_coverage, const unsigned int& min_contig_lgth, const string& final_contigs_file, const string& hit_contig_file, const string& alignment_file, tuple_map& best_hits){
 	ifstream old_contig_fs(final_contigs_file.c_str());
 	ifstream alignment_fs(alignment_file.c_str());
 	ofstream new_contig_fs(hit_contig_file.c_str());

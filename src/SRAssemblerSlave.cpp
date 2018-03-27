@@ -33,7 +33,7 @@ void SRAssemblerSlave::do_walking(){
 
 void SRAssemblerSlave::process_message(){
 	int action;
-	int code_value;
+	long long code_value;
 	int value1;
 	int value2;
 	int value3;
@@ -63,17 +63,28 @@ void SRAssemblerSlave::process_message(){
 			SRAssembler::preprocess_read_part(value1, value2);
 			send_code(from, ACTION_RETURN, 0, value2, 0);
 		}
-		if (action == ACTION_ASSEMBLY){  //do_assmebly
-			do_assembly(value1, value2);
+		if (action == ACTION_ASSEMBLY){  //do_assembly
+			do_assembly(value1, value2, value3);
 			send_code(from, ACTION_RETURN, 0, 0, 0);
 		}
 		if (action == ACTION_ALIGNMENT){  //do alignment
 			int found_new_reads = do_alignment(value1, value3, value2);
-			send_code(from, ACTION_RETURN, found_new_reads, value2, 0);
+			send_code(from, ACTION_RETURN, value2, found_new_reads, 0);
 		}
-		if (action == ACTION_LOAD_PREVIOUS){  //do alignment
-			load_mapped_reads(value1);
+		if (action == ACTION_LOAD_PREVIOUS){  //load previous reads
+			load_found_reads(value1);
 			send_code(from, ACTION_RETURN, 0, 0, 0);
+		}
+		if (action == ACTION_MEMDIR) {
+			this->mem_dir="/dev/shm/SRAssemblermem" + int2str(value2);
+		}
+		if (action == ACTION_SAVE){  //load previous reads
+			save_found_reads(value1);
+			send_code(from, ACTION_RETURN, 0, 0, 0);
+		}
+		if (action == ACTION_CLEAN){
+			SRAssembler::remove_unmapped_reads(value1, value2);
+			send_code(from, ACTION_RETURN, value1, 0, 0);
 		}
 	}
 }

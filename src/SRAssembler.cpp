@@ -26,13 +26,15 @@ SRAssembler::~SRAssembler() {
 }
 
 int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
-	//set the default values
+//cerr << "I am an instance and my PPID is " + int2str(getppid()) + ".\n";
+	// Set the default values.
 	init_match_length = INIT_MATCH_LENGTH_PROTEIN;
 	recur_match_length = RECUR_MATCH_LENGTH;
 	mismatch_allowed = MISMATCH_ALLOWED_PROTEIN;
 	num_rounds = NUM_ROUNDS;
 	verbose = VERBOSE;
 	assembly_round = ASSEMBLY_ROUND;
+	ignore_contig_explosion = false;
 	reads_per_file = READS_PER_FILE;
 	fastq_format = FASTQ_INTERLEAVED;
 	out_dir = OUT_DIR;
@@ -46,6 +48,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 	end_k = END_K;
 	step_k = STEP_K;
 	clean_round = CLEAN_ROUND;
+	contig_limit = CONTIG_LIMIT;
 	over_write = OVER_WRITE;
 	check_gene_assembled = CHECK_GENE_ASSEMBLED;
 	preprocessing_only = PREPROCESSING_ONLY;
@@ -60,7 +63,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 	unsigned int insert_size = INSERT_SIZE;
 	string left_read = "";
 	string right_read = "";
-	//parse command line options
+	// Parse command line options.
 	bool default_e = true;
 	bool default_i = true;
 	preprocessed_exist = false;
@@ -72,26 +75,28 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 	usage.append("-q: Required; FASTA-formatted query file.\n");
 	usage.append("-t: Query file type; options: 'protein', 'cdna' [Default: " + QUERY_TYPE + "].\n");
 	usage.append("-p: Required; SRAssembler parameter configuration file.\n\n");
+	usage.append("-o: SRAssembler output directory [Default: current directory].\n\n");
 
-	usage.append("-l: Required if the -1 option is not used; reads library file.\n");
+	usage.append("-l: Required if the -1 option is not used; sequencing reads library file.\n");
 	usage.append("-1: Required if the -l option is not used; use this option to specify the single-end reads file\n");
 	usage.append("    or the left-end reads file for paired-end reads.\n");
 	usage.append("-2: Right-end reads file for paired-end reads.\n");
 	usage.append("-z: Insert size of the paired-end reads [Default: " + int2str(INSERT_SIZE) + "].\n");
+	usage.append("-x: Number of reads per pre-preprocessed reads file [Default: " + int2str(READS_PER_FILE) + "].\n");
 	usage.append("-r: Directory in which to store or from which to retrieve the pre-processed reads [Default: output directory/" + READS_DATA + "].\n");
-	usage.append("-o: SRAssembler output directory [Default: current directory].\n\n");
 
 	usage.append("-P: Run the read pre-processing step only, then terminate SRAssembler.\n");
-	usage.append("-x: Number of reads per pre-preprocessed reads file [Default: " + int2str(READS_PER_FILE) + "].\n");
+	usage.append("-s: Species model for spliced alignment; options (for GenomeThreader and GeneSeqer):\n");
+	usage.append("    'human', 'mouse', 'rat', 'chicken', 'drosophila', 'nematode', 'fission_yeast', 'aspergillus', 'arabidopsis',\n");
+	usage.append("    'maize', 'rice', 'medicago' [DEFAULT: " + DEFAULT_SPECIES + "].\n");
+
 	usage.append("-A: Assembler program choice; options: 0=>SOAPdenovo2, 1=>ABySS [Default: " + int2str(ASSEMBLER_PROGRAM) + "].\n");
 	usage.append("-k: Specifies the k-mer set to be used by the assembler; format: start_k:interval:end_k.\n");
 	usage.append("    Start_k and end_k must be odd integers, and interval must be an even integer, similar to the following example:\n");
 	usage.append("    '15:10:45' specifies that k-mer values 15, 25, 35, 45 will be tested.[Default: " + int2str(START_K) + ":" + int2str(STEP_K) + ":" + int2str(END_K) + "].\n");
 	usage.append("-S: Spliced alignment program; options: 0=>GeneSeqer, 1=>GenomeThreader,\n");
 	usage.append("    2=>Exonerate [Default: " + int2str(SPLICED_ALIGNMENT_PROGRAM) + "].\n");
-	usage.append("-s: Species model for spliced alignment; options (for GenomeThreader and GeneSeqer):\n");
-	usage.append("    'human', 'mouse', 'rat', 'chicken', 'drosophila', 'nematode', 'fission_yeast', 'aspergillus', 'arabidopsis',\n");
-	usage.append("    'maize', 'rice', 'medicago' [DEFAULT: " + DEFAULT_SPECIES + "].\n");
+
 	usage.append("-G: Ab initio gene finding program; options: 0=>None, 1=>Snap [Default: " + int2str(GENE_FINDING_PROGRAM) + "].\n\n");
 
 	usage.append("-i: Initial contig size for chromosome walking [Default: " + int2str(INI_CONTIG_SIZE) + "].\n");
@@ -102,8 +107,11 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 
 	usage.append("-n: Maximum number of rounds for chromosome walking [Default: " + int2str(NUM_ROUNDS) + "].\n");
 	usage.append("-a: The number of the round in which to start read assembly [Default: " + int2str(ASSEMBLY_ROUND) + "].\n");
-	usage.append("-b: The number of the round in which to periodically remove unrelated contigs and reads. For example,\n");
-	usage.append("    “-b 3” specifies that SRAssembler will remove unrelated contigs and reads after assembly rounds 3, 6, 9, ... [Default: " + int2str(CLEAN_ROUND) + "].\n");
+	usage.append("-b: The frequency with which to periodically remove unrelated contigs and reads. For example, '-b 3' \n");
+	usage.append("    specifies that SRAssembler will remove unrelated contigs and reads after two rounds of not doing so. [Default: " + int2str(CLEAN_ROUND) + "].\n");
+	usage.append("-d: The minimum number of assembled contigs to automatically trigger removal of unrelated contigs and reads.\n");
+	usage.append("    If set to '0', do not remove unrelated contigs and reads except as scheduled by '-b' option. [Default: " + int2str(CONTIG_LIMIT) + "].\n");
+
 	usage.append("-w: Forgo spliced alignment check after intermediate assembly rounds [SRAssembler will continue for the -n specified number of rounds].\n");
 	usage.append("-y: Disable SRAssembler resumption from previous checkpoint [will overwrite existing output].\n\n");
 
@@ -112,132 +120,137 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 
 
 	char c;
-	while((c = getopt(argc, argv, "q:t:p:l:1:2:z:r:o:Px:A:k:S:s:G:i:m:M:e:c:n:a:b:wyvh")) != -1) {
-		 switch (c){
-			 case 'q':
-				 query_file = optarg;
-				 break;
-			 case 't':
-				 type = optarg;
-				 break;
-			 case 'p':
-			 	 param_file = optarg;
-			 	 break;
-			 case 'l':
-				 library_file = optarg;
-				 break;
-			 case '1':
-				 left_read = optarg;
-				 break;
-			 case '2':
-				 right_read = optarg;
-				 break;
-			 case 'z':
-				 insert_size = str2int(optarg);
-				 break;
-			 case 'r':
-			 	 data_dir = optarg;
-			 	 break;
-			 case 'o':
-				 out_dir = optarg;
-				 break;
-			 case 'P':
-			 	 preprocessing_only = 1;
-			 	 break;
-			 case 'x':
-				 reads_per_file = str2int(optarg);
-				 break;
-			 case 'A':
-			 	 assembler_program = str2int(optarg);
-			 	 break;
-			 case 'k': {
-				 vector<string> tokens;
-				 tokenize(optarg, tokens, ":");
-			 	 if (tokens.size() != 3)
-			 		k_format = false;
-			 	 start_k = str2int(tokens[0]);
-			 	 step_k = str2int(tokens[1]);
-			 	 end_k = str2int(tokens[2]);
-			 	 if (start_k <= 0 || start_k > 150 || start_k % 2 == 0) {
-			 		k_format = false;
-			 		break;
-			 	 }
-			 	 if (end_k <= 0 || end_k > 150 || end_k % 2 == 0 || end_k < start_k) {
-			 		k_format = false;
-			 		break;
-			 	 }
-			 	 if (step_k <= 0 || step_k > 150 || step_k % 2 == 1) {
-			 		k_format = false;
-			 		break;
-			 	 }
-			 	 int k_value = start_k;
-			 	 while (k_value < end_k)
-			 		k_value += step_k;
-			 	 if (k_value > step_k)
-			 		 end_k = k_value;
-			 	 break;
-			 }
-			 case 'S':
-				 spliced_alignment_program = str2int(optarg);
-				 break;
-			 case 's':
-				 species = optarg;
-				 break;
-			 case 'G':
-			 	 gene_finding_program = str2int(optarg);
-			 	 break;
-			 case 'i':
-				 ini_contig_size = str2int(optarg);
-				 break;
-			 case 'm':
-				 min_contig_lgth = str2int(optarg);
-				 break;
-			 case 'M':
-				 max_contig_lgth = str2int(optarg);
-				 break;
-			 case 'e':
-				 min_score = str2double(optarg);
-				 break;
-			 case 'c':
-				 min_coverage = str2double(optarg);
-				 break;
-			 case 'n':
-				 num_rounds = str2int(optarg);
-				 break;
-			 case 'a':
-				 assembly_round = str2int(optarg);
-				 if (assembly_round == 0)
-					 assembly_round = 9999;
-				 break;
-			 case 'b':
-				 clean_round = str2int(optarg);
-				 break;
-			 case 'w':
-				 check_gene_assembled = 0;
-				 break;
-			 case 'y':
-			 	 over_write = 1;
-			 	 break;
-			 case 'v':
-				 verbose = 1;
-				 break;
-			 case 'h':
-				 show_usage();
-				 return -1;
-			 	 break;
-			 case '?':
-				 string msg = "input error! unknown option : -";
-				 msg.append(1,optopt);
-				 print_message(msg);         //unknown options
-				 return -1;
-		  }
+	while((c = getopt(argc, argv, "q:t:p:l:1:2:z:r:o:Px:A:k:S:s:G:i:m:M:e:c:n:a:b:wyvh:f")) != -1) {
+		switch (c){
+			case '1':
+				left_read = optarg;
+				break;
+			case '2':
+				right_read = optarg;
+				break;
+			case 'a':
+				assembly_round = str2int(optarg);
+				if (assembly_round == 0)
+					assembly_round = 9999;
+				break;
+			case 'A':
+				assembler_program = str2int(optarg);
+				break;
+			case 'b':
+				clean_round = str2int(optarg);
+				break;
+			case 'c':
+				min_coverage = str2double(optarg);
+				break;
+			case 'd':
+				contig_limit = str2int(optarg);
+				if (contig_limit == 0) {
+					ignore_contig_explosion = true;
+				}
+				break;
+			case 'e':
+				min_score = str2double(optarg);
+				break;
+			case 'G':
+				gene_finding_program = str2int(optarg);
+				break;
+			case 'h':
+				show_usage();
+				return -1;
+				break;
+			case 'i':
+				ini_contig_size = str2int(optarg);
+				break;
+			case 'k': {
+				vector<string> tokens;
+				tokenize(optarg, tokens, ":");
+				if (tokens.size() != 3)
+					k_format = false;
+				start_k = str2int(tokens[0]);
+				step_k = str2int(tokens[1]);
+				end_k = str2int(tokens[2]);
+				if (start_k <= 0 || start_k > 150 || start_k % 2 == 0) {
+					k_format = false;
+					break;
+				}
+				if (end_k <= 0 || end_k > 150 || end_k % 2 == 0 || end_k < start_k) {
+					k_format = false;
+					break;
+				}
+				if (step_k <= 0 || step_k > 150 || step_k % 2 == 1) {
+					k_format = false;
+					break;
+				}
+				int k_value = start_k;
+				while (k_value < end_k)
+					k_value += step_k;
+				if (k_value > step_k)
+					end_k = k_value;
+				break;
+			}
+			case 'l':
+				library_file = optarg;
+				break;
+			case 'm':
+				min_contig_lgth = str2int(optarg);
+				break;
+			case 'M':
+				max_contig_lgth = str2int(optarg);
+				break;
+			case 'n':
+				num_rounds = str2int(optarg);
+				break;
+			case 'o':
+				out_dir = optarg;
+				break;
+			case 'p':
+				param_file = optarg;
+				break;
+			case 'P':
+				preprocessing_only = 1;
+				break;
+			case 'q':
+				query_file = optarg;
+				break;
+			case 'r':
+				data_dir = optarg;
+				break;
+			case 's':
+				species = optarg;
+				break;
+			case 'S':
+				spliced_alignment_program = str2int(optarg);
+				break;
+			case 't':
+				type = optarg;
+				break;
+			case 'v':
+				verbose = 1;
+				break;
+			case 'w':
+				check_gene_assembled = 0;
+				break;
+			case 'x':
+				reads_per_file = str2int(optarg);
+				break;
+			case 'y':
+				over_write = 1;
+				break;
+			case 'z':
+				insert_size = str2int(optarg);
+				break;
+			case '?':
+				string msg = "input error! unknown option : -";
+				msg.append(1,optopt);
+				print_message(msg);         //unknown options
+				return -1;
+		}
 	}
 	if (argc == 1){
 		show_usage();
 		return -1;
 	}
 	tmp_dir = out_dir + "/tmp";
-	mem_dir = "/dev/shm/SRAssembler" + int2str(getppid());
 	if (data_dir == "")
 		data_dir = out_dir + "/" + READS_DATA;
 	preprocessed_exist = file_exists(data_dir);
@@ -247,7 +260,6 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 	spliced_alignment_output_file = results_dir + "/output.aln";
 	gene_finding_output_file = results_dir + "/output.ano";
 	gene_finding_output_protein_file = results_dir + "/snap.predicted.prot";
-	//spliced_alignment_gsq_file = results_dir + "/output.gsq";
 	final_contigs_file = results_dir + "/all_contigs.fasta";
 	summary_file = results_dir + "/summary.html";
 	hit_contigs_file = results_dir + "/hit_contigs.fasta";
@@ -262,7 +274,12 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 		if (!file_exists(param_file)){
 			print_message("Parameter file : " + param_file + " does not exist!");
 			return -1;
+		} else {
+		parameters_dict = read_param_file();
 		}
+	} else {
+		print_message("Parameter file required!");
+		return -1;
 	}
 
 	if (library_file != ""){
@@ -292,7 +309,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 		this->libraries.push_back(lib);
 	}
 
-	//check missing options
+	// Check missing options.
 	if (num_rounds <= 0){
 		print_message("-n must be larger than 0");
 		return -1;
@@ -333,21 +350,27 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 	return 0;
 }
 
-//TODO this should read through one time and store all of the potential parameters so that we aren't always rereading the file
-Params SRAssembler::read_param_file(string program_name) {
+boost::unordered_map<std::string,Params> SRAssembler::read_param_file() {
 	ifstream param_file(this->param_file.c_str());
 	string line;
+	boost::unordered_map<std::string,Params> parameters_dict;
 	Params params;
+	string program_name;
 	bool found_program = false;
 	while (getline(param_file, line)){
 		line = trim(line);
 		if (line.length() == 0) continue;
-		if (line == ("[" + program_name + "]")) {
+		if (line.substr(0,1) == "[") {
+			if (found_program) {
+				parameters_dict.insert(make_pair(program_name, params));
+				params.clear();
+			}
+			// This should capture the string between the brackets
+			program_name = line.substr(1, line.length() - 2);
 			found_program = true;
 			continue;
 		}
 		if (line.substr(0,1) == "#") continue;
-		if (found_program && line.substr(0,1) == "[") break;
 		if (found_program){
 			vector<string> tokens;
 			tokenize(line, tokens, "=");
@@ -358,7 +381,11 @@ Params SRAssembler::read_param_file(string program_name) {
 			}
 		}
 	}
-	return params;
+	return parameters_dict;
+}
+
+Params SRAssembler::get_parameters(string program_name) {
+	return this->parameters_dict[program_name];
 }
 
 bool SRAssembler::read_library_file() {
@@ -435,14 +462,12 @@ bool SRAssembler::read_library_file() {
 
 int SRAssembler::get_file_count(string search_pattern){
 	string cmd = "ls -l " + search_pattern + " | wc -l";
-	logger->debug(cmd);
 	return str2int(run_shell_command_with_return(cmd));
 }
 
 int SRAssembler::count_preprocessed_reads(int lib_idx){
 	// This uses a system call to count the lines in all the fasta files in the split reads directory
 	string cmd = "wc -l " + data_dir + "/lib" + int2str(lib_idx+1) + "/*part*.fasta | tail -n 1 | cut -d' ' -f3";
-	logger->debug(cmd);
 	return str2int(run_shell_command_with_return(cmd)) / 2;
 }
 
@@ -454,7 +479,7 @@ void SRAssembler::preprocess_read_part(int lib_idx, int read_part){
 	string right_read_file;
 	if (lib.get_paired_end())
 		right_read_file = lib.get_split_read_prefix(lib.get_right_read()) + suffix;
-	// Create the Vmatch mkvtree indexes
+	// Create the Vmatch mkvtree indexes.
 	Aligner* aligner = get_aligner(0);  // Round 0 means DNA Aligner
 	// Creating both indices in one function is not maximally efficient when using a lot of processors, but it's not terrible.
 	aligner->create_index(lib.get_read_part_index_name(read_part, LEFT_READ), "dna", left_read_file);
@@ -478,18 +503,19 @@ void SRAssembler::broadcast_code(const int& action, const int& value1, const int
 	code.value3 = value3;
 	mpi_bcast(get_mpi_code_value(code));
 }
-//TODO This may become unnecessary
+
 string SRAssembler:: get_contigs_index_name(int round){
    return tmp_dir + "/round" + int2str(round);
 }
 
+
+string SRAssembler:: get_query_fasta_file_name(int round){
 /* It appears that this function is deceptively named.
  * It does not just return a string naming a fasta file that contains all of the matched reads.
  * This function is also responsible for assembling the contents of that file.
  */
  //TODO break into multiple functions, this is ridiculous
-string SRAssembler:: get_query_fasta_file_name(int round){
-	if (round > 1){
+ 	if (round > 1){
 		if (assembly_round < round)
 			return get_contig_file_name(round-1);
 		else {
@@ -556,14 +582,15 @@ string SRAssembler:: get_contig_file_name(int round){
 	return intermediate_dir + "/contigs_" + "r" + int2str(round) + ".fasta";
 }
 
-string SRAssembler:: get_mapped_reads_file_name(int round){
+string SRAssembler:: get_matched_reads_file_name(int round){
 	//return tmp_dir + "/matched_reads_" + "r" + int2str(round) + "_" + "rank" + int2str(this->rank) + ".list";
-	return tmp_dir + "/matched_reads_" + "r" + int2str(round) + "_" + "rank" + "0" + ".list";
+	//return tmp_dir + "/matched_reads_" + "r" + int2str(round) + "_" + "rank" + "0" + ".list";
+	return tmp_dir + "/found_reads_" + "r" + int2str(round) + ".list";
 }
 
 int SRAssembler::do_alignment(int round, int lib_idx, int read_part) {
 	Library lib = this->libraries[lib_idx];
-	logger->info("Aligning: round = " + int2str(round) + " Lib (" + int2str(lib_idx+1) + "/" + int2str(this->libraries.size()) + "), Reads (" + int2str(read_part) + "/" + int2str(lib.get_num_parts()) + ")");
+	logger->info("Aligning: Round " + int2str(round) + ", Lib " + int2str(lib_idx+1) + " of " + int2str(this->libraries.size()) + ", Reads part " + int2str(read_part) + " of " + int2str(lib.get_num_parts()));
 	Aligner* aligner = get_aligner(round);
 	string program_name = aligner->get_program_name();
 	if (round == 1) {
@@ -571,42 +598,42 @@ int SRAssembler::do_alignment(int round, int lib_idx, int read_part) {
 	} else {
 		program_name += "_extend_contig";
 	}
-	logger->debug("... using Vmatch criteria: " + program_name);
-	//TODO we read this parameter file A LOT. We should import the parameters for each program_name once.
-	Params params = this->read_param_file(program_name);
+	//logger->debug("... using Vmatch criteria: " + program_name);
+	Params params = this->get_parameters(program_name);
 	int new_read_count;
+
 	// Reads as queries are necessary when searching against a protein.
 	if (round == 1 && type == "protein") {
 		aligner->do_alignment(get_contigs_index_name(round), get_type(round), get_match_length(round), get_mismatch_allowed(round), lib.get_split_file_name(read_part, LEFT_READ), params, get_vmatch_output_filename(round, lib_idx, read_part));
 		if (lib.get_paired_end())
 			aligner->do_alignment(get_contigs_index_name(round), get_type(round), get_match_length(round), get_mismatch_allowed(round), lib.get_split_file_name(read_part, RIGHT_READ), params, get_vmatch_output_filename(round, lib_idx, read_part));
-		new_read_count = aligner->parse_output(get_vmatch_output_filename(round, lib_idx, read_part), mapped_reads, lib_idx, read_part, lib.get_read_part_index_name(read_part, LEFT_READ), lib.get_read_part_index_name(read_part, RIGHT_READ), lib.get_matched_left_reads_filename(round, read_part), lib.get_matched_right_reads_filename(round, read_part));
-		//save_mapped_reads(round);
+		new_read_count = aligner->parse_output(get_vmatch_output_filename(round, lib_idx, read_part), found_reads, lib_idx, read_part, lib.get_read_part_index_name(read_part, LEFT_READ), lib.get_read_part_index_name(read_part, RIGHT_READ), lib.get_matched_left_reads_filename(round, read_part), lib.get_matched_right_reads_filename(round, read_part));
 		return new_read_count;
+
 	// After round 1 we use the masked contig file as the query
 	} else {
 		aligner->do_alignment(lib.get_read_part_index_name(read_part, LEFT_READ), get_type(round), get_match_length(round), get_mismatch_allowed(round), get_query_fasta_file_name_masked(round), params, get_vmatch_output_filename(round, lib_idx, read_part));
 		if (lib.get_paired_end())
 			aligner->do_alignment(lib.get_read_part_index_name(read_part, RIGHT_READ), get_type(round), get_match_length(round), get_mismatch_allowed(round), get_query_fasta_file_name_masked(round), params, get_vmatch_output_filename(round, lib_idx, read_part));
-		new_read_count = aligner->parse_output(get_vmatch_output_filename(round, lib_idx, read_part), mapped_reads, lib_idx, read_part, lib.get_read_part_index_name(read_part, LEFT_READ), lib.get_read_part_index_name(read_part, RIGHT_READ), lib.get_matched_left_reads_filename(round, read_part), lib.get_matched_right_reads_filename(round, read_part));
-		//save_mapped_reads(round);
+		new_read_count = aligner->parse_output(get_vmatch_output_filename(round, lib_idx, read_part), found_reads, lib_idx, read_part, lib.get_read_part_index_name(read_part, LEFT_READ), lib.get_read_part_index_name(read_part, RIGHT_READ), lib.get_matched_left_reads_filename(round, read_part), lib.get_matched_right_reads_filename(round, read_part));
+		//save_found_reads(round);
 		return new_read_count;
 	}
 }
 
-void SRAssembler::do_assembly(int round, int k) {
+void SRAssembler::do_assembly(int round, int k, int threads) {
 	logger->info("Doing assembly: round = " + int2str(round) + ", k = " + int2str(k));
 	Assembler* assembler = get_assembler();
-	assembler->do_assembly(k, this->libraries, tmp_dir + "/assembly_" + "k" + int2str(k) + "_" + "r" + int2str(round));
+	assembler->do_assembly(k, this->libraries, tmp_dir + "/assembly_" + "k" + int2str(k) + "_" + "r" + int2str(round), threads);
 }
 
 void SRAssembler::do_spliced_alignment() {
 	logger->info("Doing the final spliced alignment ...");
 	SplicedAligner* spliced_aligner = get_spliced_aligner();
 	string program_name = spliced_aligner->get_program_name();
-	Params params = this->read_param_file(program_name);
+	Params params = this->get_parameters(program_name);
 	spliced_aligner->do_spliced_alignment(this->final_contigs_file, type, this->query_file, this->species, params, this->spliced_alignment_output_file);
-	spliced_aligner->get_hit_contigs(min_score, min_coverage, min_contig_lgth, this->final_contigs_file, this->hit_contigs_file, this->spliced_alignment_output_file);
+	spliced_aligner->get_hit_contigs(min_score, min_coverage, min_contig_lgth, this->final_contigs_file, this->hit_contigs_file, this->spliced_alignment_output_file, this->best_hits);
 	logger->info("Done.");
 }
 
@@ -614,12 +641,12 @@ string_map SRAssembler::do_spliced_alignment(int round) {
 	logger->info("Now running the spliced alignment program ...");
 	SplicedAligner* spliced_aligner = get_spliced_aligner();
 	string program_name = spliced_aligner->get_program_name();
-	Params params = this->read_param_file(program_name);
+	Params params = this->get_parameters(program_name);
 	string contig_file = get_contig_file_name(round);
 	string output_file = tmp_dir + "/query-vs-contig_" + "r" + int2str(round) + ".aln";
 	string hit_file = tmp_dir + "/hit_contigs_" + "r" + int2str(round) + ".fasta";
 	spliced_aligner->do_spliced_alignment(contig_file, type, this->query_file, this->species, params, output_file);
-	string_map query_map = spliced_aligner->get_aligned_contigs(min_score, min_coverage, min_contig_lgth, contig_file, hit_file, output_file);
+	string_map query_map = spliced_aligner->get_aligned_contigs(min_score, min_coverage, min_contig_lgth, contig_file, hit_file, output_file, round, best_hits);
 	//RM HERE
 	spliced_aligner->clean_files(contig_file);
 	logger->info("Done.");
@@ -634,7 +661,7 @@ void SRAssembler::do_gene_finding() {
 		return;
 	logger->info("Now running the ab initio gene finding program ...");
 	string program_name = gene_finder->get_program_name();
-	Params params = this->read_param_file(program_name);
+	Params params = this->get_parameters(program_name);
 	gene_finder->do_gene_finding(this->hit_contigs_file, this->species, params, this->gene_finding_output_file, this->gene_finding_output_protein_file);
 	logger->info("Done.");
 }
@@ -716,21 +743,19 @@ void SRAssembler::merge_mapped_files(int round){
 			logger->debug(cmd);
 			run_shell_command(cmd);
 		}
-		if (round > 1) {
-			run_shell_command("cp " + lib.get_matched_left_reads_filename() + " " + lib.get_matched_left_reads_filename(round));
-			if (lib.get_paired_end())
-				run_shell_command("cp " + lib.get_matched_right_reads_filename() + " " + lib.get_matched_right_reads_filename(round));
-		}
+		run_shell_command("cp " + lib.get_matched_left_reads_filename() + " " + lib.get_matched_left_reads_filename(round));
+		if (lib.get_paired_end())
+			run_shell_command("cp " + lib.get_matched_right_reads_filename() + " " + lib.get_matched_right_reads_filename(round));
 	}
 	//RM HERE
 	string cmd = "rm -f " + get_contigs_index_name(round) + ".*";;
 	logger->debug(cmd);
 	run_shell_command(cmd);
-	logger->debug("done.");
+	//logger->debug("done.");
 }
 
-int SRAssembler::get_total_read_count(int round){
-	int count = 0;
+long SRAssembler::get_total_read_count(int round){
+	long count = 0;
 	for (unsigned short int lib_idx=0; lib_idx< this->libraries.size();lib_idx++) {
 		Library lib = this->libraries[lib_idx];
 		count += get_read_count(lib.get_matched_left_reads_filename(), FORMAT_FASTA);
@@ -789,27 +814,29 @@ Assembly_stats SRAssembler::get_assembly_stats(int round, int k) {
 	return stats;
 }
 
-void SRAssembler::save_mapped_reads(int round){
-	logger->debug("save_mapped_reads INVOKED");
-	string mapped_file = get_mapped_reads_file_name(round);
-	ofstream mapped_file_stream(mapped_file.c_str());
-	for (unordered_set<string>::iterator it = mapped_reads.begin();it != mapped_reads.end(); ++it)
-		 mapped_file_stream << *it << '\n';
-	mapped_file_stream.close();
-	logger->debug("save_mapped_reads FINISHED");
+void SRAssembler::save_found_reads(int round){
+	string matched_file = get_matched_reads_file_name(round);
+	ofstream matched_file_stream;
+	// Open the file in append mode.
+	matched_file_stream.open(matched_file.c_str(), ios_base::app);
+	for (unordered_set<string>::iterator it = found_reads.begin();it != found_reads.end(); ++it) {
+		matched_file_stream << string(*it) + '\n';
+	}
+	matched_file_stream.close();
 }
 
-void SRAssembler::load_mapped_reads(int round){
-	string mapped_file = get_mapped_reads_file_name(round);
-	logger->info("Loading the mapped reads of round " + int2str(round) + " (" + int2str(rank) + "/" + int2str(mpiSize-1) + ")");
-	ifstream mapped_file_stream(mapped_file.c_str());
+void SRAssembler::load_found_reads(int round){
+	string matched_file = get_matched_reads_file_name(round);
+	logger->info("Loading the matched reads of round " + int2str(round) + " (" + int2str(rank) + "/" + int2str(mpiSize-1) + ")");
+	ifstream matched_file_stream(matched_file.c_str());
 	string seq_id;
-	while (getline(mapped_file_stream, seq_id)){
-		mapped_reads.insert(seq_id);
+	int read_count;
+	while (getline(matched_file_stream, seq_id)){
+		found_reads.insert(seq_id);
+		read_count++;
 	}
-	mapped_file_stream.close();
-	int read_count = get_total_read_count(round);
-	logger->info("Found matched reads from round " + int2str(round) + ": " + int2str(read_count));
+	matched_file_stream.close();
+	logger->info("Found matched read (pairs) from round " + int2str(round) + ": " + int2str(read_count));
 }
 
 SRAssembler* SRAssembler::getInstance(int pid){
@@ -823,13 +850,75 @@ SRAssembler* SRAssembler::getInstance(int pid){
 	return NULL;
 }
 
+/* Unlike other DNA vs DNA searches in SRAssembler, we are indexing the contig queries, not the reads.
+ * This is so that we can set vmatch to do a complete match, mapping the full read length to the contig.
+ */
+void SRAssembler::remove_unmapped_reads(unsigned int lib_idx, int round){
+	string cmd;
+	string contig_file = get_contig_file_name(round);
+	// Index for good contigs was created in remove_no_hit_contigs().
+	string contig_index = tmp_dir + "/cindex";
+	Aligner* aligner = get_aligner(round);
+	Library lib = this->libraries[lib_idx];
+
+	// Index current matched reads for extraction purposes.
+	string left_matched_reads = lib.get_matched_left_reads_filename();
+	string left_reads_index = tmp_dir + "/left_lib" + int2str(lib_idx + 1) + "_index";
+	aligner->create_index(left_reads_index, "dna", left_matched_reads);
+	string right_matched_reads;
+	string right_reads_index;
+	if (lib.get_paired_end()) {
+		right_matched_reads = lib.get_matched_right_reads_filename();
+		right_reads_index = tmp_dir + "/right_lib" + int2str(lib_idx + 1) + "_index";
+		aligner->create_index(right_reads_index, "dna", right_matched_reads);
+	}
+
+	// Use the found reads as queries against the contigs to identify matchy reads.
+	string program_name = aligner->get_program_name();
+	program_name += "_reads_vs_contigs";
+	Params params = get_parameters(program_name);
+	string vmatch_outfile = tmp_dir + "/reads_vs_contigs.lib" + int2str(lib_idx+1) + ".round" + int2str(round) + ".vmatch";
+	aligner->do_alignment(contig_index, "reads", 0, 2, left_matched_reads, params, vmatch_outfile);
+	if (lib.get_paired_end()) {
+		aligner->do_alignment(contig_index, "reads", 0, 2, right_matched_reads, params, vmatch_outfile);
+	}
+
+	// Use vseqselect to collect matchy reads.
+	logger->debug("Removing reads in library " + int2str(lib_idx + 1) + " without hits against contigs in round " + int2str(round));
+	cmd = "vseqselect -seqnum " + vmatch_outfile + " " + left_reads_index + " | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' > " + left_matched_reads;
+	logger->debug(cmd);
+	run_shell_command(cmd);
+	cmd = "cp " + left_matched_reads + " " + lib.get_matched_left_reads_filename(round);
+	//logger->debug(cmd);
+	run_shell_command(cmd);
+	if (lib.get_paired_end()) {
+		cmd = "vseqselect -seqnum " + vmatch_outfile + " " + right_reads_index + " | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' > " + right_matched_reads;
+		logger->debug(cmd);
+		run_shell_command(cmd);
+		cmd = "cp " + right_matched_reads + " " + lib.get_matched_right_reads_filename(round);
+		//logger->debug(cmd);
+		run_shell_command(cmd);
+	}
+	//RM here
+	cmd = "rm -f " + vmatch_outfile + " " + left_reads_index + "* " + right_reads_index + "*";
+	run_shell_command(cmd);
+}
+
 void finalized(){
 	mpi_finalize();
 }
 
+//void signalHandler(int signum) {
+	//cout << "Interrupt signal (" << signum << ") received.\n";
+	//finalized();
+	//run_shell_command("rm -rf " + mem_dir);
+	//exit(signum);
+//}
+
 int main(int argc, char * argv[] ) {
 	long int start_time = time(0);
 	int rank, mpiSize;
+	//signal(SIGINT, signalHandler);
 
 	SRAssembler* instance = NULL;
 	try {
@@ -855,9 +944,6 @@ int main(int argc, char * argv[] ) {
 	}
 	finalized();
 	if (rank == 0) {
-		string cmd = "rm -rf /dev/shm/SRAssembler" + int2str(getppid());
-		instance->get_logger()->debug(cmd);
-		run_shell_command(cmd);
 		string str = "Execution time: " + int2str(time(0) - start_time) + " seconds";
 		instance->get_logger()->info(str);
 	}

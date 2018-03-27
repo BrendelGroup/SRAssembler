@@ -24,6 +24,7 @@
 using namespace std;
 
 typedef boost::unordered_map<std::string, string> string_map;
+typedef boost::unordered_map<std::string, std::tuple<int, double>> tuple_map;
 
 string readfile(const string& fn);
 void tokenize(const string& str, vector<string>& tokens, const string& delimiters);

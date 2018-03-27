@@ -14,84 +14,53 @@ VmatchAligner::VmatchAligner(int log_level, string log_file):Aligner(log_level, 
 
 }
 
-//TODO I think this is a vestigial function. Confirm and delete it.
-unordered_set<string> VmatchAligner::get_hit_list(const string& output_file) {
-	logger->debug("get hit list from output file " + output_file);
-	ifstream report_file_stream(output_file.c_str());
-	boost::unordered_set<string> current_mapped_reads;
-	string line;
-	while (getline(report_file_stream, line)) {
-	//TODO this could probably be more efficient
-		if (line[0] != '#') {
-			vector<string> tokens;
-			tokenize(line, tokens, " ");
-			string seq_id = tokens[0];
-			current_mapped_reads.insert(seq_id);
-		}
-	}
-	report_file_stream.close();
-	return current_mapped_reads;
-}
 /*
  * Parse Vmatch output file.
  * This function needs to :
  * Add new found reads to the found_reads_list
  * Add sequences of found reads to out_left_read and out_right_read
  *
- * Then it reads through ALL of the reads for that library and pulls out the reads whose IDs were found
- * TODO change the read search into something using an index.
  * Parameters:
  * output_file: the Vmatch alignment report file
- * mapped_reads: the reads currently found in this node
- * source_read: the split reads file name for this part
+ * found_reads: the reads currently found in this node
+ * lib_idx: the integer number of the library for this part
+ * read_part: the integer count of the split reads file for this part
+ * left_read_index: the index name of the left reads of this library
+ * right_read_index: the index name of the right reads of this library
  * out_left_read: the matched left-end reads file name
  * out_right_read: the matched left-end reads file name
- * joined_read: the matched joined reads file name
- * fastq_format: interleaved or split
- * format: fastq or fasta
  *
  */
-int VmatchAligner::parse_output(const string& output_file, unordered_set<string>& mapped_reads, const int lib_idx, const int read_part, const string& left_read_index, const string& right_read_index, const string& out_left_read, const string& out_right_read) {
-	logger->debug("parsing output file " + output_file);
-	//logger->debug("mapped_reads size = " + int2str(mapped_reads.size()));
-	//logger->debug("mapped_reads bucket_count = " + int2str(mapped_reads.bucket_count()));
-	//logger->debug("mapped_reads load_factor = " + int2str(mapped_reads.load_factor()));
-	//logger->debug("mapped_reads max_load_factor = " + int2str(mapped_reads.max_load_factor()));
+int VmatchAligner::parse_output(const string& output_file, unordered_set<string>& found_reads, const int lib_idx, const int read_part, const string& left_read_index, const string& right_read_index, const string& out_left_read, const string& out_right_read) {
+	// Parse the output file and get the mapped reads that had not been found yet.
 	bool paired_end = (out_right_read != "");
 	ifstream report_file_stream(output_file.c_str());
-	int found_read = 0;
+	int read_found = 0;
 	int new_read_count = 0;
-	// parse the output file and get the mapped reads have not found yet
 	string line;
 	string cmd;
 	string part_string = int2str(read_part); //Calculate this once rather than over and over
 	string lib_string = int2str(lib_idx);
 	string tmpvseqselectfile = out_left_read + "-tmp";
+	//TODO put the temporary file in mem_dir
 	ofstream tmp_file_stream(tmpvseqselectfile.c_str());
-	//run_shell_command("touch " + tmpvseqselectfile);
 
 	while (getline(report_file_stream, line)) {
-		found_read++;
+		read_found++;
 		string seq_number = line;
-		//logger->debug("seq_number " + seq_number);
 		string seq_id = "lib" + lib_string + ",part" + part_string + ",read" + seq_number;
-		// boost::unordered_set.find() produces past-the-end pointer if a key isn't found
-		if (mapped_reads.find(seq_id) == mapped_reads.end()) {
-			//logger->debug(seq_number + " is new");
+		// boost::unordered_set.find() produces past-the-end pointer if a key isn't found.
+		if (found_reads.find(seq_id) == found_reads.end()) {
 			new_read_count += 1;
-			// We are catching two new reads if the library is paired end
-			if (paired_end) {
-				new_read_count += 1;
-			}
-			mapped_reads.insert(seq_id);
+			found_reads.insert(seq_id);
 			tmp_file_stream << seq_number << '\n';
 		}
 	}
-	logger->debug("Found " + int2str(found_read) + " reads in part " + part_string);
+	logger->debug("Matched " + int2str(read_found) + " reads and " + int2str(new_read_count / 2) + " new read (pairs) in library " + int2str(lib_idx + 1) + ", part " + part_string);
 	report_file_stream.close();
 	tmp_file_stream.close();
 
-	// Use awk to strip out linebreaks from within the sequence
+	// Use awk to strip out linebreaks from within the sequence.
 	cmd = "vseqselect -seqnum " + tmpvseqselectfile + " " + left_read_index + " | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' >> " + out_left_read;
 	logger->debug(cmd);
 	run_shell_command(cmd);
@@ -101,10 +70,14 @@ int VmatchAligner::parse_output(const string& output_file, unordered_set<string>
 		run_shell_command(cmd);
 	}
 	//TODO make this part of a cleanup function.
+	//RM here
 	cmd = "\\rm " + tmpvseqselectfile;
-	logger->debug(cmd);
 	run_shell_command(cmd);
 
+	// We are catching two new reads if the library is paired end
+	if (paired_end) {
+		new_read_count *= 2;
+	}
 	return new_read_count;
 }
 
@@ -120,12 +93,12 @@ void VmatchAligner::create_index(const string& index_name, const string& type, c
  * This is suitable input for vseqselect to pull those hits out of the mkvtree index.
  */
 void VmatchAligner::do_alignment(const string& index_name, const string& type, int match_length, int mismatch_allowed, const string& query_file, const Params& params, const string& output_file) {
-	// Is this a protein query (round 1 only)? If not, empty string.
-	string align_type = (type == "protein") ? "-dnavsprot 1": "";
 	// Are mismatches allowed? If not, empty string.
 	string e_option = "";
-	if (mismatch_allowed > 0)
+	string l_option;
+	if (mismatch_allowed > 0) {
 		e_option = " -e " + int2str(mismatch_allowed);
+	}
 	// Other parameters are set up here.
 	string param_list = "";
 	for ( Params::const_iterator it = params.begin(); it != params.end(); ++it ){
@@ -141,15 +114,24 @@ void VmatchAligner::do_alignment(const string& index_name, const string& type, i
 			else
 				param_list += " -" + it->first + " " + it->second;
 	}
+	// If match_length is 0, use "-complete" for a complete length match.
+	if (match_length > 0) {
+		l_option = " -l " + int2str(match_length);
+	} else {
+		l_option = " -complete";
+	}
 	string cmd;
 	string tmpvmfile = output_file + "-tmp";
 	/* Vmatch output is appended to the output file so that left and right read searches for one part go into the same output file.
-	 * AWK selects only the column containing the sequence number. It is different for proteins because the reads are used as queries.
+	 * In the DNA searches, the "-d -p" options search both strands.
+	 * AWK selects only the column containing the sequence number. It is different for proteins and reads because the reads are used as queries.
 	 */
 	if (type == "protein" ) {
-		cmd = "vmatch " + align_type + " -q " + query_file + " -d" + " -l " + int2str(match_length) + " " + e_option + " " + param_list + " -nodist -noevalue -noscore -noidentity " + index_name + " | awk '$0 !~ /^#.*/ {print $6}' >> " + output_file + "; sort -nu " + output_file + " > " + tmpvmfile + "; \\mv " + tmpvmfile + " " + output_file;
+		cmd = "vmatch -dnavsprot 1 -q " + query_file + " -d" + l_option + e_option + " " + param_list + " -nodist -noevalue -noscore -noidentity " + index_name + " | awk '$0 !~ /^#.*/ {print $6}' >> " + output_file + "; sort -nu " + output_file + " > " + tmpvmfile + "; \\mv " + tmpvmfile + " " + output_file;
 	} else if (type == "cdna" ) {
-		cmd = "vmatch " + align_type + " -q " + query_file + " -d -p" + " -l " + int2str(match_length) + " " + e_option + " " + param_list + " -nodist -noevalue -noscore -noidentity " + index_name + " | awk '$0 !~ /^#.*/ {print $2}' >> " + output_file + "; sort -nu " + output_file + " > " + tmpvmfile + "; \\mv " + tmpvmfile + " " + output_file;
+		cmd = "vmatch -q " + query_file + " -d -p" + l_option + e_option + " " + param_list + " -nodist -noevalue -noscore -noidentity " + index_name + " | awk '$0 !~ /^#.*/ {print $2}' >> " + output_file + "; sort -nu " + output_file + " > " + tmpvmfile + "; \\mv " + tmpvmfile + " " + output_file;
+	} else if (type == "reads") {
+		cmd = "vmatch -q " + query_file + " -d -p" + l_option + e_option + " " + param_list + " -nodist -noevalue -noscore -noidentity " + index_name + " | awk '$0 !~ /^#.*/ {print $6}' >> " + output_file + "; sort -nu " + output_file + " > " + tmpvmfile + "; \\mv " + tmpvmfile + " " + output_file;
 	}
 	logger->debug(cmd);
 	run_shell_command(cmd);
@@ -187,10 +169,10 @@ void VmatchAligner::align_long_contigs(const string& long_contig_candidate_file,
 	cmd = "vmatch -q " + long_contig_candidate_file + " -d -p" + " -l " + int2str(max_contig_size) + " -showdesc 0 -nodist -noevalue -noscore -noidentity " + indexname + " | awk '{print $1,$2,$3,$4,$5,$6}' | uniq -f5 > " + vmatch_out_file;
 	logger->debug(cmd);
 	run_shell_command(cmd);
-	ifstream out_file_stream(vmatch_out_file.c_str());
-	//parse the output file and remove the long contigs and associated reads.
+	ifstream vmatch_file_stream(vmatch_out_file.c_str());
+	// parse the output file and remove the long contigs and associated reads.
 	string line;
-	while (getline(out_file_stream, line)){
+	while (getline(vmatch_file_stream, line)){
 		if (line[0] != '#'){
 			vector<string> tokens;
 			tokenize(line, tokens, " ");
@@ -200,10 +182,10 @@ void VmatchAligner::align_long_contigs(const string& long_contig_candidate_file,
 			candidate_ids.insert(candidate_contig_id);
 		}
 	}
-	out_file_stream.close();
+	vmatch_file_stream.close();
 	//RM here
 	cmd = "rm " + vmatch_out_file + " " + indexname + "*";
-	logger->debug(cmd);
+	//logger->debug(cmd);
 	run_shell_command(cmd);
 }
 

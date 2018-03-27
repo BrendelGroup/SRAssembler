@@ -73,8 +73,8 @@ void Logger::print_message(const string &msg, const string &level, bool to_std_o
 
 	ofstream log_file_stream;
 	log_file_stream.open(log_file.c_str(), ios::out | ios::app );
-	log_file_stream << buffer << level << " " << msg << endl;
+	log_file_stream << buffer << level + " " + msg << endl;
 	log_file_stream.close();
 	if (to_std_out)
-		cout << buffer << level << " " << msg << endl;
+		cout << buffer << level + " " + msg << endl;
 }
