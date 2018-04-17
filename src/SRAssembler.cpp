@@ -57,6 +57,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 	ini_contig_size = INI_CONTIG_SIZE;
 	min_contig_lgth = MIN_CONTIG_LGTH;
 	max_contig_lgth = MAX_CONTIG_LGTH;
+	merge_factor = MERGE_FACTOR;
 	bool k_format = true;
 	this->rank = rank;
 	this->mpiSize = mpiSize;
@@ -96,6 +97,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 	usage.append("     'arabidopsis', 'maize', 'rice', 'medicago' [DEFAULT: " + DEFAULT_SPECIES + "].\n");
 	usage.append("-G: Ab initio gene finding program; options: 0=>None, 1=>Snap [Default: " + int2str(GENE_FINDING_PROGRAM) + "].\n\n");
 
+	usage.append("-j: Merge factor for contig assembly [Default: " + int2str(MERGE_FACTOR) + "].\n");
 	usage.append("-i: Initial contig size for chromosome walking [Default: " + int2str(INI_CONTIG_SIZE) + "].\n");
 	usage.append("-m: Minimum contig length to be reported [Default: " + int2str(MIN_CONTIG_LGTH) + "].\n");
 	usage.append("-M: Maximum contig length to be reported [Default: " + int2str(MAX_CONTIG_LGTH) + "].\n");
@@ -117,7 +119,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 
 
 	char c;
-	while((c = getopt(argc, argv, "q:t:p:l:1:2:z:r:o:Px:A:k:S:s:G:i:m:M:e:c:n:a:b:wyvh:f")) != -1) {
+	while((c = getopt(argc, argv, "q:t:p:l:1:2:z:r:o:Px:A:k:S:s:G:i:m:M:e:c:n:a:b:j:wyvh")) != -1) {
 		switch (c){
 			case '1':
 				left_read = optarg;
@@ -157,6 +159,9 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 				break;
 			case 'i':
 				ini_contig_size = str2int(optarg);
+				break;
+			case 'j':
+				merge_factor = str2int(optarg);
 				break;
 			case 'k': {
 				vector<string> tokens;
@@ -621,7 +626,7 @@ int SRAssembler::do_alignment(int round, int lib_idx, int read_part) {
 void SRAssembler::do_assembly(int round, int k, int threads) {
 	logger->info("Doing assembly: round = " + int2str(round) + ", k = " + int2str(k));
 	Assembler* assembler = get_assembler();
-	assembler->do_assembly(k, this->libraries, tmp_dir + "/assembly_" + "k" + int2str(k) + "_" + "r" + int2str(round), threads);
+	assembler->do_assembly(k, this->libraries, tmp_dir + "/assembly_" + "k" + int2str(k) + "_" + "r" + int2str(round), threads, merge_factor);
 }
 
 void SRAssembler::do_spliced_alignment() {

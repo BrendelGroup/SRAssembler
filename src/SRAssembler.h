@@ -108,6 +108,7 @@ protected:
 	int spliced_alignment_program;
 	int gene_finding_program;
 	int assembler_program;
+	int merge_factor;
 	double min_score;
 	double min_coverage;
 	// A dictionary for tracking the best contigs found between rounds.

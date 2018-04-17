@@ -29,7 +29,7 @@ bool SOAPDenovoAssembler::is_available(){
 	}
 	return true;
 }
-void SOAPDenovoAssembler::do_assembly(int kmer, const vector<Library>& libraries, const string& output_file, int threads)
+void SOAPDenovoAssembler::do_assembly(int kmer, const vector<Library>& libraries, const string& output_file, int threads, int merge_factor)
 {
 	string config_file = output_file + ".conf";
 	ofstream outFile(config_file.c_str());
@@ -66,7 +66,7 @@ void SOAPDenovoAssembler::do_assembly(int kmer, const vector<Library>& libraries
 	string cmd = program + " pregraph -s " + config_file + " -o " + output_file + " -p " + int2str(threads) + " -K " + int2str(kmer) + " >> " + logger->get_log_file() + " 2>&1";
 	logger->debug(cmd);
 	run_shell_command(cmd);
-	cmd = program + " contig -g " + output_file + " >> " + logger->get_log_file() + " 2>&1";
+	cmd = program + " contig -M " + int2str(merge_factor) + " -g " + output_file + " >> " + logger->get_log_file() + " 2>&1";
 	logger->debug(cmd);
 	run_shell_command(cmd);
 }

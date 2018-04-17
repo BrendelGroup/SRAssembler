@@ -18,7 +18,7 @@ class Assembler {
 public:
 	Assembler(int, string);
 	virtual ~Assembler();
-	virtual void do_assembly(int kmer, const vector<Library>& libraries, const string& output_file, int threads)=0;
+	virtual void do_assembly(int kmer, const vector<Library>& libraries, const string& output_file, int threads, int merge_factor)=0;
 	virtual bool is_available()=0;
 	virtual void clean_files(const string& dir)=0;
 	virtual string get_output_contig_file_name(string prefix)=0;
