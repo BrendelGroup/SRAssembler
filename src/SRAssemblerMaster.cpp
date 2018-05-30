@@ -267,7 +267,7 @@ int SRAssemblerMaster::get_start_round(){
 				broadcast_code(ACTION_MEMDIR, 0, procID, 0);
 				// Make sure there is a mem_dir.
 				this->mem_dir="/dev/shm/SRAssemblermem" + int2str(procID);
-				string cmd = "mkdir -p " + mem_dir;
+				string cmd = "\\rm -rf " + mem_dir + "; mkdir " + mem_dir;
 				logger->debug(cmd);
 				run_shell_command(cmd);
 				// Make sure that the existence of the mem_dir is obvious in case of disrupted run.
@@ -522,6 +522,23 @@ void SRAssemblerMaster::do_walking() {
 				}
 			}
 		} else {
+			// Collect found reads into a file to be used as query in next round.
+			string joined_file = tmp_dir + "/matched_reads_joined.fasta";
+			string cmd;
+			// For each library, append the matched reads to the matched_reads_joined.fasta
+			for (unsigned i=0;i<this->libraries.size();i++){
+				string left_file = tmp_dir + "/matched_reads_left_" + "lib" + int2str(i+1) + ".fasta";
+				string right_file = tmp_dir + "/matched_reads_right_" + "lib" + int2str(i+1) + ".fasta";
+				if (libraries[i].get_paired_end()){
+					cmd = "cat " + left_file + " " + right_file + " >> " + joined_file;
+					logger->debug(cmd);
+					run_shell_command(cmd);
+				} else {
+					cmd = "cat " + left_file + " >> " + joined_file;
+					logger->debug(cmd);
+					run_shell_command(cmd);
+				}
+			}
 			logger->info("Round " + int2str(round) + " is done.");
 			if (round == num_rounds) {
 				logger->info("The walking is terminated: The maximum round (" + int2str(num_rounds) + ") has been reached.");
@@ -1064,7 +1081,8 @@ void SRAssemblerMaster::create_folders(){
 	int procID=getpid();
 	broadcast_code(ACTION_MEMDIR, 0, procID, 0);
 	this->mem_dir="/dev/shm/SRAssemblermem" + int2str(procID);
-	cmd = "mkdir -p " + mem_dir;
+	// If a disrupted run left a conflicting file behind, it should be removed first.
+	cmd = "\\rm -rf " + mem_dir + "; mkdir " + mem_dir;
 	logger->debug(cmd);
 	run_shell_command(cmd);
 	// Make sure that the existence of the mem_dir is obvious in case of disrupted run.

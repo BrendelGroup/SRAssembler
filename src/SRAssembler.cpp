@@ -518,25 +518,12 @@ string SRAssembler:: get_query_fasta_file_name(int round){
  */
  //TODO break into multiple functions, this is ridiculous
  	if (round > 1){
+		// If we have passed the round to start assembling, use the assembled contig files as the query.
 		if (assembly_round < round)
 			return get_contig_file_name(round-1);
+		// If we are still waiting to assemble, use the collected reads as queries.
 		else {
 			string joined_file = tmp_dir + "/matched_reads_joined.fasta";
-			string cmd;
-			// For each library, append the matched reads to the matched_reads_joined.fasta
-			for (unsigned i=0;i<this->libraries.size();i++){
-				string left_file = tmp_dir + "/matched_reads_left_" + "lib" + int2str(i+1) + ".fasta";
-				string right_file = tmp_dir + "/matched_reads_right_" + "lib" + int2str(i+1) + ".fasta";
-				if (libraries[i].get_paired_end()){
-					cmd = "cat " + left_file + " " + right_file + " >> " + joined_file;
-					logger->debug(cmd);
-					run_shell_command(cmd);
-				} else {
-					cmd = "cat " + left_file + " >> " + joined_file;
-					logger->debug(cmd);
-					run_shell_command(cmd);
-				}
-			}
 			return joined_file;
 		}
 	}
@@ -549,31 +536,19 @@ void SRAssembler::mask_contigs(int round){
 	contig_file = get_contig_file_name(round);
 	string masked_file = contig_file + ".masked";
 	// Sed command replaces lowercase letters NOT in the header with capital Ns. AWK command converts FASTA to single-line.
-	cmd = "dustmasker -in " + contig_file + " -outfmt fasta -out - | sed '/^[^>]/s/[a-z]/N/g' | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' > " + masked_file;
+	cmd = "dustmasker -in " + contig_file + " -outfmt fasta -out - | sed '/^[^>]/s/[atcg]/N/g' | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' > " + masked_file;
 	run_shell_command(cmd);
 }
 
 string SRAssembler:: get_query_fasta_file_name_masked(int round){
 	if (round > 1){
+		// If we have passed the round to start assembling, use the assembled contig files as the query.
 		if (assembly_round < round) {
 			string masked_fasta = get_contig_file_name(round-1) + ".masked";
 			return masked_fasta;
+		// If we are still waiting to assemble, use the collected reads as queries.
 		} else {
 			string joined_file = tmp_dir + "/matched_reads_joined.fasta";
-			string cmd;
-			for (unsigned i=0;i<this->libraries.size();i++){
-				string left_file = tmp_dir + "/matched_reads_left_" + "lib" + int2str(i+1) + ".fasta";
-				string right_file = tmp_dir + "/matched_reads_right_" + "lib" + int2str(i+1) + ".fasta";
-				if (libraries[i].get_paired_end()){
-					cmd = "cat " + left_file + " " + right_file + " >> " + joined_file;
-					logger->debug(cmd);
-					run_shell_command(cmd);
-				} else {
-					cmd = "cat " + left_file + " >> " + joined_file;
-					logger->debug(cmd);
-					run_shell_command(cmd);
-				}
-			}
 			return joined_file;
 		}
 	}
