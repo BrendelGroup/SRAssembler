@@ -14,6 +14,7 @@ SRAssemblerMaster::SRAssemblerMaster() {
 
 int SRAssemblerMaster::init(int argc, char * argv[], int rank, int mpiSize) {
 	string command;
+	string cmd;
 	int ret = SRAssembler::init(argc, argv, rank, mpiSize);
 	if (ret == -1)
 		return ret;
@@ -26,11 +27,16 @@ int SRAssemblerMaster::init(int argc, char * argv[], int rank, int mpiSize) {
 	this->start_round = (over_write)?1:get_start_round();
 	if (this->start_round == 1)
 		create_folders();
+	// Start the msg.log with the command used to run SRAsssembler.
 	command = "Command: ";
 	for (int i=0; i<argc;i++){
 		command.append(argv[i]).append(" ");
 	}
 	logger->info(command);
+	// Add to the msg.log the Parameters file contents for reproducibility.
+	cmd = "cat " + param_file + " >> " + logger->get_log_file();
+	logger->debug(cmd);
+	run_shell_command(cmd);
 	output_header();
 	output_libraries();
 	get_query_list();
