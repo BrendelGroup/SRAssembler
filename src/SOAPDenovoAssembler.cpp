@@ -63,10 +63,10 @@ void SOAPDenovoAssembler::do_assembly(int kmer, const vector<Library>& libraries
 	string program = "SOAPdenovo-127mer";
 	if (kmer <= 63)
 		program = "SOAPdenovo-63mer";
-	string cmd = program + " pregraph -s " + config_file + " -o " + output_file + " -p " + int2str(threads) + " -K " + int2str(kmer) + " >> " + logger->get_log_file() + " 2>&1";
+	string cmd = program + " pregraph -s " + config_file + " -o " + output_file + " -p " + int2str(threads) + " -K " + int2str(kmer) + " -R >> " + logger->get_log_file() + " 2>&1";
 	logger->debug(cmd);
 	run_shell_command(cmd);
-	cmd = program + " contig -M " + int2str(merge_factor) + " -g " + output_file + " >> " + logger->get_log_file() + " 2>&1";
+	cmd = program + " contig -M " + int2str(merge_factor) + " -g " + output_file + " -R >> " + logger->get_log_file() + " 2>&1";
 	logger->debug(cmd);
 	run_shell_command(cmd);
 }
