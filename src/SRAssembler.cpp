@@ -58,6 +58,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 	min_contig_lgth = MIN_CONTIG_LGTH;
 	max_contig_lgth = MAX_CONTIG_LGTH;
 	merge_factor = MERGE_FACTOR;
+	edge_cov_cutoff = EDGE_COV_CUTOFF;
 	masking = MASKING;
 	bool k_format = true;
 	this->rank = rank;
@@ -113,14 +114,15 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 	usage.append("    If set to '0', do not remove unrelated contigs and reads except as scheduled by '-b' option. [Default: " + int2str(CONTIG_LIMIT) + "].\n\n");
 
 	usage.append("-w: Forgo spliced alignment check after intermediate assembly rounds [SRAssembler will continue for the -n specified number of rounds].\n");
-	usage.append("-y: Disable SRAssembler resumption from previous checkpoint [will overwrite existing output].\n\n");
+	usage.append("-y: Disable SRAssembler resumption from previous checkpoint [will overwrite existing output].\n");
+	usage.append("-Z: Disable masking of low-complexity regions of contigs before searching for reads.\n\n");
 
 	usage.append("-v: Verbose output.\n");
 	usage.append("-h: Print this usage synopsis.");
 
 
 	char c;
-	while((c = getopt(argc, argv, "q:t:p:l:1:2:z:r:o:Px:A:k:S:s:G:i:m:M:e:c:n:a:b:j:Z:wyvh")) != -1) {
+	while((c = getopt(argc, argv, "q:t:p:l:1:2:z:r:o:Px:A:k:S:s:G:i:m:M:e:c:n:a:b:j:Zwyvh")) != -1) {
 		switch (c){
 			case '1':
 				left_read = optarg;
@@ -243,7 +245,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 				insert_size = str2int(optarg);
 				break;
 			case 'Z':
-				masking = str2int(optarg);
+				masking = 0;
 				break;
 			case '?':
 				string msg = "input error! unknown option : -";
@@ -609,7 +611,7 @@ int SRAssembler::do_alignment(int round, int lib_idx, int read_part) {
 void SRAssembler::do_assembly(int round, int k, int threads) {
 	logger->info("Doing assembly: round = " + int2str(round) + ", k = " + int2str(k));
 	Assembler* assembler = get_assembler();
-	assembler->do_assembly(k, this->libraries, tmp_dir + "/assembly_" + "k" + int2str(k) + "_" + "r" + int2str(round), threads, merge_factor);
+	assembler->do_assembly(k, this->libraries, tmp_dir + "/assembly_" + "k" + int2str(k) + "_" + "r" + int2str(round), threads, merge_factor, edge_cov_cutoff);
 }
 
 void SRAssembler::do_spliced_alignment() {

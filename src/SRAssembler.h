@@ -109,6 +109,7 @@ protected:
 	int gene_finding_program;
 	int assembler_program;
 	int merge_factor;
+	int edge_cov_cutoff;
 	int masking;
 	double min_score;
 	double min_coverage;

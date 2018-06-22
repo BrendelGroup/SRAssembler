@@ -21,6 +21,7 @@ static const unsigned int INI_CONTIG_SIZE=200;
 static const unsigned int MIN_CONTIG_LGTH=200;
 static const unsigned int MAX_CONTIG_LGTH=10000;
 static const int MERGE_FACTOR=3;
+static const int EDGE_COV_CUTOFF=2;
 static const int MASKING=1;
 static const int NUM_ROUNDS=10;
 static const int INSERT_SIZE=300;

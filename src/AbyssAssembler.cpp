@@ -23,7 +23,7 @@ bool AbyssAssembler::is_available(){
 	return true;
 }
 
-void AbyssAssembler::do_assembly(int kmer, const vector<Library>& libraries, const string& output_file, int threads, int merge_factor)
+void AbyssAssembler::do_assembly(int kmer, const vector<Library>& libraries, const string& output_file, int threads, int merge_factor, int edge_cov_cutoff)
 {
 	string lib_list = "";
 	string paired_files = "";
