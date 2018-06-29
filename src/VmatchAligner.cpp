@@ -156,13 +156,13 @@ string VmatchAligner::get_program_name() {
 
 
 //TODO refactor
-void VmatchAligner::align_long_contigs(const string& long_contig_candidate_file, const string& tmp_dir, const string& contig_file, const int max_contig_size, unordered_set<string>& candidate_ids, unordered_set<string>& long_contig_ids) {
+void VmatchAligner::align_long_contigs(const string& long_contig_candidate_file, const string& aux_dir, const string& contig_file, const int max_contig_size, unordered_set<string>& candidate_ids, unordered_set<string>& long_contig_ids) {
 	if (!file_exists(long_contig_candidate_file)){
 		return;
 	}
 
-	string indexname = tmp_dir + "/contigs_index";
-	string vmatch_out_file = tmp_dir + "/long_contigs_candidates.vmatch";
+	string indexname = aux_dir + "/contigs_index";
+	string vmatch_out_file = aux_dir + "/long_contigs_candidates.vmatch";
 	string cmd = "mkvtree -dna -db " + contig_file + " -pl -indexname " + indexname + " -allout >> " + logger->get_log_file();
 	logger->debug(cmd);
 	run_shell_command(cmd);

@@ -121,8 +121,9 @@ protected:
 	bool preprocessed_exist;
 	bool ignore_contig_explosion;
 	std::string library_file;
-	std::string tmp_dir;
+	std::string aux_dir;
 	std::string mem_dir;
+	std::string mem_loc;
 	std::string intermediate_dir;
 	std::string data_dir;
 	std::string results_dir;

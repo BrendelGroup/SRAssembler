@@ -14,7 +14,7 @@
 class Library {
 
 public:
-	Library(unsigned int lib_idx, string data_dir, string tmp_dir, Logger* logger);
+	Library(unsigned int lib_idx, string data_dir, string aux_dir, Logger* logger);
 	virtual ~Library();
 	int get_insert_size();
 	int get_num_parts();
@@ -49,7 +49,7 @@ private:
 	int format;
 	bool paired_end;
 	string data_dir;
-	string tmp_dir;
+	string aux_dir;
 	string left_read;
 	string right_read;
 	string file_extension;

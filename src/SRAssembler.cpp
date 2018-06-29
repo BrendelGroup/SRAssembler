@@ -39,6 +39,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 	fastq_format = FASTQ_INTERLEAVED;
 	out_dir = OUT_DIR;
 	data_dir = "";
+	mem_loc = "/dev/shm";
 	type = QUERY_TYPE;
 	assembler_program = ASSEMBLER_PROGRAM;
 	gene_finding_program = GENE_FINDING_PROGRAM;
@@ -78,7 +79,8 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 	usage.append("-q: Required; FASTA-formatted query file.\n");
 	usage.append("-t: Query file type; options: 'protein', 'cdna' [Default: " + QUERY_TYPE + "].\n");
 	usage.append("-p: Required; SRAssembler parameter configuration file.\n");
-	usage.append("-o: SRAssembler output directory [Default: current directory].\n\n");
+	usage.append("-o: SRAssembler output directory [Default: current directory].\n");
+	usage.append("-T: directory for temporary file storage [Default: /dev/shm].\n\n");
 
 	usage.append("-l: Required if the -1 option is not used; sequencing reads library file.\n");
 	usage.append("-1: Required if the -l option is not used; use this option to specify the single-end reads file\n");
@@ -122,7 +124,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 
 
 	char c;
-	while((c = getopt(argc, argv, "q:t:p:l:1:2:z:r:o:Px:A:k:S:s:G:i:m:M:e:c:n:a:b:j:Zwyvh")) != -1) {
+	while((c = getopt(argc, argv, "q:t:p:l:1:2:T:z:r:o:Px:A:k:S:s:G:i:m:M:e:c:n:a:b:j:Zwyvh")) != -1) {
 		switch (c){
 			case '1':
 				left_read = optarg;
@@ -229,6 +231,9 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 			case 't':
 				type = optarg;
 				break;
+			case 'T':
+				mem_loc = optarg;
+				break;
 			case 'v':
 				verbose = 1;
 				break;
@@ -258,7 +263,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 		show_usage();
 		return -1;
 	}
-	tmp_dir = out_dir + "/tmp";
+	aux_dir = out_dir + "/aux";
 	if (data_dir == "")
 		data_dir = out_dir + "/" + READS_DATA;
 	preprocessed_exist = file_exists(data_dir);
@@ -302,7 +307,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 			print_message("-1 or -P or library file is required");
 			return -1;
 		}
-		Library lib(0, this->data_dir, this->tmp_dir,this->logger);
+		Library lib(0, this->data_dir, this->aux_dir,this->logger);
 		lib.set_format(FORMAT_FASTQ);
 		lib.set_left_read(left_read);
 		if (right_read != ""){
@@ -410,7 +415,7 @@ bool SRAssembler::read_library_file() {
 				}
 				this->libraries.push_back(*lib);
 			}
-			lib = new Library(this->libraries.size(), this->data_dir, this->tmp_dir, this->logger);
+			lib = new Library(this->libraries.size(), this->data_dir, this->aux_dir, this->logger);
 		} else {
 			vector<string> tokens;
 			tokenize(line, tokens, "=");
@@ -513,7 +518,7 @@ void SRAssembler::broadcast_code(const int& action, const int& value1, const int
 }
 
 string SRAssembler:: get_contigs_index_name(int round){
-   return tmp_dir + "/round" + int2str(round);
+   return aux_dir + "/round" + int2str(round);
 }
 
 
@@ -529,7 +534,7 @@ string SRAssembler:: get_query_fasta_file_name(int round){
 			return get_contig_file_name(round-1);
 		// If we are still waiting to assemble, use the collected reads as queries.
 		else {
-			string joined_file = tmp_dir + "/matched_reads_joined.fasta";
+			string joined_file = aux_dir + "/matched_reads_joined.fasta";
 			return joined_file;
 		}
 	}
@@ -558,7 +563,7 @@ string SRAssembler:: get_query_fasta_file_name_masked(int round){
 			}
 		// If we are still waiting to assemble, use the collected reads as queries.
 		} else {
-			string joined_file = tmp_dir + "/matched_reads_joined.fasta";
+			string joined_file = aux_dir + "/matched_reads_joined.fasta";
 			return joined_file;
 		}
 	}
@@ -570,9 +575,9 @@ string SRAssembler:: get_contig_file_name(int round){
 }
 
 string SRAssembler:: get_matched_reads_file_name(int round){
-	//return tmp_dir + "/matched_reads_" + "r" + int2str(round) + "_" + "rank" + int2str(this->rank) + ".list";
-	//return tmp_dir + "/matched_reads_" + "r" + int2str(round) + "_" + "rank" + "0" + ".list";
-	return tmp_dir + "/found_reads_" + "r" + int2str(round) + ".list";
+	//return aux_dir + "/matched_reads_" + "r" + int2str(round) + "_" + "rank" + int2str(this->rank) + ".list";
+	//return aux_dir + "/matched_reads_" + "r" + int2str(round) + "_" + "rank" + "0" + ".list";
+	return aux_dir + "/found_reads_" + "r" + int2str(round) + ".list";
 }
 
 int SRAssembler::do_alignment(int round, int lib_idx, int read_part) {
@@ -611,7 +616,7 @@ int SRAssembler::do_alignment(int round, int lib_idx, int read_part) {
 void SRAssembler::do_assembly(int round, int k, int threads) {
 	logger->info("Doing assembly: round = " + int2str(round) + ", k = " + int2str(k));
 	Assembler* assembler = get_assembler();
-	assembler->do_assembly(k, this->libraries, tmp_dir + "/assembly_" + "k" + int2str(k) + "_" + "r" + int2str(round), threads, merge_factor, edge_cov_cutoff);
+	assembler->do_assembly(k, this->libraries, aux_dir + "/assembly_" + "k" + int2str(k) + "_" + "r" + int2str(round), threads, merge_factor, edge_cov_cutoff);
 }
 
 void SRAssembler::do_spliced_alignment() {
@@ -630,8 +635,8 @@ string_map SRAssembler::do_spliced_alignment(int round) {
 	string program_name = spliced_aligner->get_program_name();
 	Params params = this->get_parameters(program_name);
 	string contig_file = get_contig_file_name(round);
-	string output_file = tmp_dir + "/query-vs-contig_" + "r" + int2str(round) + ".aln";
-	string hit_file = tmp_dir + "/hit_contigs_" + "r" + int2str(round) + ".fasta";
+	string output_file = aux_dir + "/query-vs-contig_" + "r" + int2str(round) + ".aln";
+	string hit_file = aux_dir + "/hit_contigs_" + "r" + int2str(round) + ".fasta";
 	spliced_aligner->do_spliced_alignment(contig_file, type, this->query_file, this->species, params, output_file);
 	string_map query_map = spliced_aligner->get_aligned_contigs(min_score, min_coverage, min_contig_lgth, contig_file, hit_file, output_file, round, best_hits);
 	//RM HERE
@@ -654,11 +659,11 @@ void SRAssembler::do_gene_finding() {
 }
 
 string SRAssembler::get_assembly_file_name(int round, int k){
-	return get_assembler()->get_output_contig_file_name(tmp_dir + "/assembly_" + "k" + int2str(k) + "_" + "r" + int2str(round));
+	return get_assembler()->get_output_contig_file_name(aux_dir + "/assembly_" + "k" + int2str(k) + "_" + "r" + int2str(round));
 }
 
 string SRAssembler::get_assembled_scaf_file_name(int round, int k){
-	return get_assembler()->get_output_scaffold_file_name(tmp_dir + "/assembly_" + "k" + int2str(k) + "_" + "r" + int2str(round));
+	return get_assembler()->get_output_scaffold_file_name(aux_dir + "/assembly_" + "k" + int2str(k) + "_" + "r" + int2str(round));
 }
 
 Aligner* SRAssembler::get_aligner(int round) {
@@ -688,7 +693,7 @@ Logger* SRAssembler::get_logger(){
 void SRAssembler::create_index(int round) {
 	Aligner* aligner = get_aligner(round);
 	aligner->create_index(get_contigs_index_name(round), get_type(round), get_query_fasta_file_name_masked(round));
-	aligner->create_index(tmp_dir + "/qindex", type, query_file);
+	aligner->create_index(aux_dir + "/qindex", type, query_file);
 }
 
 string SRAssembler:: get_type(int round){
@@ -711,7 +716,7 @@ void SRAssembler::merge_mapped_files(int round){
 	for (unsigned int lib_idx=0;lib_idx<this->libraries.size();lib_idx++){
 		Library lib = this->libraries[lib_idx];
 		logger->debug("Now merging component matching reads files ...");
-		string left_files = tmp_dir + "/matched_reads_left_" + "r" + int2str(round) + "_" + "lib" + int2str(lib_idx + 1) + "_part*";
+		string left_files = aux_dir + "/matched_reads_left_" + "r" + int2str(round) + "_" + "lib" + int2str(lib_idx + 1) + "_part*";
 		string cmd = "cat " + left_files + " >> " + lib.get_matched_left_reads_filename();
 		logger->debug(cmd);
 		run_shell_command(cmd);
@@ -721,7 +726,7 @@ void SRAssembler::merge_mapped_files(int round){
 		run_shell_command(cmd);
 
 		if (lib.get_paired_end()) {
-			string right_files = tmp_dir + "/matched_reads_right_" + "r" + int2str(round) + "_" + "lib" + int2str(lib_idx + 1) + "_part*";
+			string right_files = aux_dir + "/matched_reads_right_" + "r" + int2str(round) + "_" + "lib" + int2str(lib_idx + 1) + "_part*";
 			cmd = "cat " + right_files + " >> " + lib.get_matched_right_reads_filename();
 			logger->debug(cmd);
 			run_shell_command(cmd);
@@ -844,19 +849,19 @@ void SRAssembler::remove_unmapped_reads(unsigned int lib_idx, int round){
 	string cmd;
 	string contig_file = get_contig_file_name(round);
 	// Index for good contigs was created in remove_no_hit_contigs().
-	string contig_index = tmp_dir + "/cindex";
+	string contig_index = aux_dir + "/cindex";
 	Aligner* aligner = get_aligner(round);
 	Library lib = this->libraries[lib_idx];
 
 	// Index current matched reads for extraction purposes.
 	string left_matched_reads = lib.get_matched_left_reads_filename();
-	string left_reads_index = tmp_dir + "/left_lib" + int2str(lib_idx + 1) + "_index";
+	string left_reads_index = aux_dir + "/left_lib" + int2str(lib_idx + 1) + "_index";
 	aligner->create_index(left_reads_index, "dna", left_matched_reads);
 	string right_matched_reads;
 	string right_reads_index;
 	if (lib.get_paired_end()) {
 		right_matched_reads = lib.get_matched_right_reads_filename();
-		right_reads_index = tmp_dir + "/right_lib" + int2str(lib_idx + 1) + "_index";
+		right_reads_index = aux_dir + "/right_lib" + int2str(lib_idx + 1) + "_index";
 		aligner->create_index(right_reads_index, "dna", right_matched_reads);
 	}
 
@@ -864,7 +869,7 @@ void SRAssembler::remove_unmapped_reads(unsigned int lib_idx, int round){
 	string program_name = aligner->get_program_name();
 	program_name += "_reads_vs_contigs";
 	Params params = get_parameters(program_name);
-	string vmatch_outfile = tmp_dir + "/reads_vs_contigs.lib" + int2str(lib_idx+1) + ".round" + int2str(round) + ".vmatch";
+	string vmatch_outfile = aux_dir + "/reads_vs_contigs.lib" + int2str(lib_idx+1) + ".round" + int2str(round) + ".vmatch";
 	aligner->do_alignment(contig_index, "reads", 0, 2, left_matched_reads, params, vmatch_outfile);
 	if (lib.get_paired_end()) {
 		aligner->do_alignment(contig_index, "reads", 0, 2, right_matched_reads, params, vmatch_outfile);

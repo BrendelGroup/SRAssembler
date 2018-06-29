@@ -7,10 +7,10 @@
 
 #include "Library.h"
 
-Library::Library(unsigned int lib_idx, string data_dir, string tmp_dir, Logger* logger) {
+Library::Library(unsigned int lib_idx, string data_dir, string aux_dir, Logger* logger) {
 	this->lib_idx = lib_idx;
 	this->data_dir = data_dir;
-	this->tmp_dir = tmp_dir;
+	this->aux_dir = aux_dir;
 	this->reversed = DIRECTION_FR;
 	this->left_read = "";
 	this->right_read = "";
@@ -84,28 +84,28 @@ void Library::set_right_read(string right_read){
 }
 
 string Library::get_matched_left_reads_filename(){
-	return tmp_dir + "/matched_reads_left_" + "lib" + int2str(lib_idx+1) + ".fasta";
+	return aux_dir + "/matched_reads_left_" + "lib" + int2str(lib_idx+1) + ".fasta";
 }
 
 string Library::get_matched_left_reads_filename(int round){
-	return tmp_dir + "/matched_reads_left_" + "r" + int2str(round) + "_" + "lib" + int2str(lib_idx+1) + ".fasta";
+	return aux_dir + "/matched_reads_left_" + "r" + int2str(round) + "_" + "lib" + int2str(lib_idx+1) + ".fasta";
 }
 
 string Library::get_matched_left_reads_filename(int round, int part){
-	return tmp_dir + "/matched_reads_left_" + "r" + int2str(round) + "_" + "lib" + int2str(lib_idx+1) + "_" + "part" + int2str(part) + ".fasta";
+	return aux_dir + "/matched_reads_left_" + "r" + int2str(round) + "_" + "lib" + int2str(lib_idx+1) + "_" + "part" + int2str(part) + ".fasta";
 }
 
 string Library::get_matched_right_reads_filename(){
-	return tmp_dir + "/matched_reads_right_" + "lib" + int2str(lib_idx+1) + ".fasta";
+	return aux_dir + "/matched_reads_right_" + "lib" + int2str(lib_idx+1) + ".fasta";
 }
 
 string Library::get_matched_right_reads_filename(int round){
-	return tmp_dir + "/matched_reads_right_" + "r" + int2str(round) + "_" + "lib" + int2str(lib_idx+1) + ".fasta";
+	return aux_dir + "/matched_reads_right_" + "r" + int2str(round) + "_" + "lib" + int2str(lib_idx+1) + ".fasta";
 }
 
 string Library::get_matched_right_reads_filename(int round, int part){
 	if (paired_end)
-		return tmp_dir + "/matched_reads_right_" + "r" + int2str(round) + "_" + "lib" + int2str(lib_idx+1) + "_" + "part" + int2str(part) + ".fasta";
+		return aux_dir + "/matched_reads_right_" + "r" + int2str(round) + "_" + "lib" + int2str(lib_idx+1) + "_" + "part" + int2str(part) + ".fasta";
 	return "";
 }
 
