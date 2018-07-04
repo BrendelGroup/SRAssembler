@@ -50,6 +50,7 @@ protected:
 	int do_alignment(int round, int lib_idx, int idx);
 	void do_spliced_alignment();
 	string_map do_spliced_alignment(int);
+	int do_spliced_alignment(int round, int k);
 	void do_gene_finding();
 	void do_assembly(int, int, int threads);
 	void create_index(int round);

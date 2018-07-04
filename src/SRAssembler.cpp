@@ -124,7 +124,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 
 
 	char c;
-	while((c = getopt(argc, argv, "q:t:p:l:1:2:T:z:r:o:Px:A:k:S:s:G:i:m:M:e:c:n:a:b:j:Zwyvh")) != -1) {
+	while((c = getopt(argc, argv, "q:t:p:l:1:2:T:z:r:o:Px:A:k:S:s:G:i:m:M:e:c:n:a:b:j:J:Zwyvh")) != -1) {
 		switch (c){
 			case '1':
 				left_read = optarg;
@@ -167,6 +167,9 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 				break;
 			case 'j':
 				merge_factor = str2int(optarg);
+				break;
+			case 'J':
+				edge_cov_cutoff = str2int(optarg);
 				break;
 			case 'k': {
 				vector<string> tokens;
@@ -373,6 +376,7 @@ boost::unordered_map<std::string,Params> SRAssembler::read_param_file() {
 	while (getline(param_file, line)){
 		line = trim(line);
 		if (line.length() == 0) continue;
+		if (line.substr(0,1) == "#") continue;
 		if (line.substr(0,1) == "[") {
 			if (found_program) {
 				parameters_dict.insert(make_pair(program_name, params));
@@ -383,7 +387,6 @@ boost::unordered_map<std::string,Params> SRAssembler::read_param_file() {
 			found_program = true;
 			continue;
 		}
-		if (line.substr(0,1) == "#") continue;
 		if (found_program){
 			vector<string> tokens;
 			tokenize(line, tokens, "=");
@@ -546,7 +549,7 @@ void SRAssembler::mask_contigs(int round){
 	string contig_file;
 	contig_file = get_contig_file_name(round);
 	string masked_file = contig_file + ".masked";
-	// Sed command replaces lowercase letters NOT in the header with capital Ns. AWK command converts FASTA to single-line.
+	// Sed command replaces lowercase letters NOT in the header with capital Ns. AWini_contig_sizeK command converts FASTA to single-line.
 	cmd = "dustmasker -in " + contig_file + " -outfmt fasta -out - | sed '/^[^>]/s/[atcg]/N/g' | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' > " + masked_file;
 	run_shell_command(cmd);
 }
@@ -643,6 +646,23 @@ string_map SRAssembler::do_spliced_alignment(int round) {
 	spliced_aligner->clean_files(contig_file);
 	logger->info("Done.");
 	return query_map;
+}
+
+int SRAssembler::do_spliced_alignment(int round, int k) {
+	int best_spliced_length;
+	logger->debug("Now running the spliced alignment program for round " + int2str(round) + ", k-mer " + int2str(k) + " ...");
+	SplicedAligner* spliced_aligner = get_spliced_aligner();
+	string program_name = spliced_aligner->get_program_name();
+	Params params = this->get_parameters(program_name);
+	string contig_file = aux_dir + "/assembly_" + "k" + int2str(k) + "_" + "r" + int2str(round);
+	string output_file = aux_dir + "/query-vs-contig_" + "k" + int2str(k) + "_" + "r" + int2str(round) + ".aln";
+	string hit_file = aux_dir + "/hit_contigs_" + "k" + int2str(k) + "_" + "r" + int2str(round) + ".fasta";
+	spliced_aligner->do_spliced_alignment(contig_file, type, this->query_file, this->species, params, output_file);
+	best_spliced_length = spliced_aligner->get_longest_match(min_score, ini_contig_size, output_file);
+	//RM HERE
+	spliced_aligner->clean_files(contig_file);
+	logger->debug("Done with spliced alignment for round " + int2str(round) + ", k-mer " + int2str(k) + ".");
+	return best_spliced_length;
 }
 
 void SRAssembler::do_gene_finding() {

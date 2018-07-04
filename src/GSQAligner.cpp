@@ -208,6 +208,40 @@ void GSQAligner::get_hit_contigs(const double& min_score, const double& min_cove
 	new_contig_fs.close();
 }
 
+int GSQAligner::get_longest_match(const double& min_score, const unsigned int& ini_contig_size, const string& alignment_file){
+	int best_length = 0;
+	ifstream alignment_fs(alignment_file.c_str());
+	string line;
+	unsigned int contig_length;
+	vector<string> contig_list;
+	while (getline(alignment_fs, line)) {
+		// Get the length of the contig being checked.
+		if (line.substr(0,8) == "Sequence"){
+			sscanf(line.c_str(),"Sequence %*d: %*80[^,], from %*d to %d,%*s",&contig_length);
+			continue;
+		}
+		// Parse the MATCH line
+		if (line.substr(0,5) == "MATCH"){
+			vector<string> tokens;
+			tokenize(line, tokens, "\t");
+			string contig_id = tokens[1].substr(0, tokens[1].length()-1);
+			string strand = tokens[1].substr(tokens[1].length()-1,1);
+			string query = tokens[2];
+			string score = tokens[3];
+			string length = tokens[4];
+			string cov = tokens[5];
+			string type = tokens[6];
+
+			// If this has a longer alignment length than seen before, update best_length.
+			if (str2double(score) > min_score && contig_length >= ini_contig_size && str2int(length) > best_length) {
+				best_length = str2int(length);
+			}
+		}
+	}
+	alignment_fs.close();
+	return best_length;
+}
+
 string GSQAligner::get_program_name(){
 	return "GeneSeqer";
 }

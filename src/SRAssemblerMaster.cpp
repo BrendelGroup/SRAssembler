@@ -420,6 +420,7 @@ void SRAssemblerMaster::do_walking() {
 		long read_count = get_total_read_count(round);
 		logger->info("Found new reads: " + int2str(new_reads_count) + " \tTotal matched reads: " + int2str(read_count));
 
+		// Assemble the reads.
 		if (assembly_round <= round){
 			unsigned int longest_contig = do_assembly(round);
 			assembled = true;
@@ -684,6 +685,9 @@ int SRAssemblerMaster::do_assembly(int round) {
 	logger->info("Doing assembly, round: " + int2str(round));
 	int best_k = 0;
 	unsigned int max_longest_contig = 0;
+	unsigned int best_longest_contig = 0;
+	int spliced_align_length = 0;
+	int max_spliced_align = 0;
 	int total_k = (end_k-start_k)/step_k + 1;
 	int from;
 	int i = 0;
@@ -726,10 +730,20 @@ int SRAssemblerMaster::do_assembly(int round) {
 	for (int k=start_k;k<=end_k;k+=step_k) {
 		Assembly_stats kstats = get_assembly_stats(round, k);
 		if (kstats.longest_contig > max_longest_contig){
-			best_k = k;
 			max_longest_contig = kstats.longest_contig;
 		}
 		stats.push_back(kstats);
+		// Use the spliced alignment length to determine best k.
+		spliced_align_length = do_spliced_alignment(round, k);
+		if (spliced_align_length > max_spliced_align) {
+			best_k = k;
+			max_spliced_align = spliced_align_length;
+			best_longest_contig = kstats.longest_contig;
+		// Use the longest contig as a tie-breaker if necessary.
+		} else if (spliced_align_length == max_spliced_align && kstats.longest_contig > best_longest_contig) {
+			best_k = k;
+			best_longest_contig = kstats.longest_contig;
+		}
 	}
 	i = 0;
 	for (int k=start_k;k<=end_k;k+=step_k) {
@@ -757,7 +771,7 @@ int SRAssemblerMaster::do_assembly(int round) {
 	summary_max += "\n";
 	summary_total += "\n";
 	if (best_k > 0) {
-		logger->debug("The best k-value (corresponding to the longest assembled contig) in round\t" + int2str(round) + " is k =\t" + int2str(best_k));
+		logger->info("The best k-value (corresponding to the longest spliced alignment to the query) in round\t" + int2str(round) + " is k =\t" + int2str(best_k));
 	}
 	else {
 		logger->info("No contig of the specified minimum length has been assembled by round\t" + int2str(round));
@@ -1104,7 +1118,7 @@ void SRAssemblerMaster::remove_no_hit_contigs(int round){
 	string contig_file = get_contig_file_name(round);
 	string contig_index = aux_dir + "/cindex";
 	run_shell_command("rm -f " + contig_index + "*");
-run_shell_command("cp " + contig_file + " " + contig_file + ".original");
+run_shell_command("cp " + contig_file + " " + contig_file + ".beforeclean");
 	Aligner* aligner = get_aligner(round);
 	// Index contigs for easy extraction of hit contigs
 	aligner->create_index(contig_index, "dna", contig_file);

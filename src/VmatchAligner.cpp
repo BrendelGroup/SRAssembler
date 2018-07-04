@@ -93,7 +93,7 @@ void VmatchAligner::create_index(const string& index_name, const string& type, c
  * This is suitable input for vseqselect to pull those hits out of the mkvtree index.
  */
 void VmatchAligner::do_alignment(const string& index_name, const string& type, int match_length, int mismatch_allowed, const string& query_file, const Params& params, const string& output_file) {
-	// Are mismatches allowed? If not, empty string.
+	// Are mismatches allowed by default? If not, empty string.
 	string e_option = "";
 	string l_option;
 	if (mismatch_allowed > 0) {
