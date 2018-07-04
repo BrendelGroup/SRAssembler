@@ -654,7 +654,7 @@ int SRAssembler::do_spliced_alignment(int round, int k) {
 	SplicedAligner* spliced_aligner = get_spliced_aligner();
 	string program_name = spliced_aligner->get_program_name();
 	Params params = this->get_parameters(program_name);
-	string contig_file = aux_dir + "/assembly_" + "k" + int2str(k) + "_" + "r" + int2str(round);
+	string contig_file = this->get_assembly_file_name(round, k);
 	string output_file = aux_dir + "/query-vs-contig_" + "k" + int2str(k) + "_" + "r" + int2str(round) + ".aln";
 	string hit_file = aux_dir + "/hit_contigs_" + "k" + int2str(k) + "_" + "r" + int2str(round) + ".fasta";
 	spliced_aligner->do_spliced_alignment(contig_file, type, this->query_file, this->species, params, output_file);
