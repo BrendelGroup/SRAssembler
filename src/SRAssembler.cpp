@@ -655,10 +655,10 @@ int SRAssembler::do_spliced_alignment(int round, int k) {
 	string program_name = spliced_aligner->get_program_name();
 	Params params = this->get_parameters(program_name);
 	string contig_file = this->get_assembly_file_name(round, k);
-	string output_file = aux_dir + "/query-vs-contig_" + "k" + int2str(k) + "_" + "r" + int2str(round) + ".aln";
-	string hit_file = aux_dir + "/hit_contigs_" + "k" + int2str(k) + "_" + "r" + int2str(round) + ".fasta";
+	string output_file = this->get_spliced_alignment_file_name(round, k);
+	//aux_dir + "/query-vs-contig_" + "k" + int2str(k) + "_" + "r" + int2str(round) + ".aln";
 	spliced_aligner->do_spliced_alignment(contig_file, type, this->query_file, this->species, params, output_file);
-	best_spliced_length = spliced_aligner->get_longest_match(min_score, ini_contig_size, output_file);
+	best_spliced_length = spliced_aligner->get_longest_match(round, k, min_score, ini_contig_size, output_file, best_hits);
 	//RM HERE
 	spliced_aligner->clean_files(contig_file);
 	logger->debug("Done with spliced alignment for round " + int2str(round) + ", k-mer " + int2str(k) + ".");
@@ -684,6 +684,10 @@ string SRAssembler::get_assembly_file_name(int round, int k){
 
 string SRAssembler::get_assembled_scaf_file_name(int round, int k){
 	return get_assembler()->get_output_scaffold_file_name(aux_dir + "/assembly_" + "k" + int2str(k) + "_" + "r" + int2str(round));
+}
+
+string SRAssembler::get_spliced_alignment_file_name(int round, int k){
+	return aux_dir + "/query-vs-contig_" + "k" + int2str(k) + "_" + "r" + int2str(round) + ".aln";
 }
 
 Aligner* SRAssembler::get_aligner(int round) {

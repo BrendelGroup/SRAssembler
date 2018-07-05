@@ -86,7 +86,7 @@ string_map GSQAligner::get_aligned_contigs(const double& min_score, const double
 			output_string += string_format("%-15s %-8s %-30s %-10s %-15s %-15s %-15s",contig.c_str(),strand.c_str(),query.c_str(),score.c_str(),length.c_str(),cov.c_str(),type.c_str()) + "\n";
 			num_matches++;
 			output_string += "\n";
-			logger->info("   ... MATCH found with coverage:\t" + cov + " " + type + "\tscore:\t" + score + "\tlength:\t" + int2str(contig_length));
+			logger->info("   ... MATCH found with coverage:\t" + cov + " " + type + "\tscore:\t" + score + "\tcontig length:\t" + int2str(contig_length));
 			if (type == "P" || type == "C"){
 				if (str2double(score) > min_score && str2double(cov) > best_coverage) {
 					get<0>(best_hits["coverage"]) = round;
@@ -182,7 +182,7 @@ void GSQAligner::get_hit_contigs(const double& min_score, const double& min_cove
 				output_string += string_format("%-15s %-8s %-30s %-10s %-15s %-15s %-15s",contig_id.c_str(),strand.c_str(),query.c_str(),score.c_str(),length.c_str(),cov.c_str(),type.c_str()) + "\n";
 				num_matches++;
 				output_string += "\n";
-				logger->info("   ... HIT found with coverage:\t" + cov + " " + type + "\tscore:\t" + score + "\tlength:\t" + int2str(contig_length));
+				logger->info("   ... HIT found with coverage:\t" + cov + " " + type + "\tscore:\t" + score + "\tcontig length:\t" + int2str(contig_length));
 				contig_list.push_back(contig_id);
 			}
 		}
@@ -211,7 +211,8 @@ void GSQAligner::get_hit_contigs(const double& min_score, const double& min_cove
 	new_contig_fs.close();
 }
 
-int GSQAligner::get_longest_match(const double& min_score, const unsigned int& ini_contig_size, const string& alignment_file){
+int GSQAligner::get_longest_match(int round, int k, const double& min_score, const unsigned int& ini_contig_size, const string& alignment_file, tuple_map& best_hits){
+	double best_coverage = std::get<1>(best_hits["coverage"]);
 	int best_length = 0;
 	ifstream alignment_fs(alignment_file.c_str());
 	string line;
@@ -234,7 +235,15 @@ int GSQAligner::get_longest_match(const double& min_score, const unsigned int& i
 			string length = tokens[4];
 			string cov = tokens[5];
 			string type = tokens[6];
-			logger->debug("   ... kmer check MATCH found with coverage:\t" + cov + " " + type + "\tscore:\t" + score + "\tlength:\t" + int2str(contig_length));
+			logger->debug("   ... kmer check MATCH found with coverage:\t" + cov + " " + type + "\tscore:\t" + score + "\tlength:\t" + length);
+			// Keep track of better coverage if it is seen. This should correspond to the aligned length.
+			if (type == "P" || type == "C"){
+				if (str2double(score) > min_score && str2double(cov) > best_coverage) {
+					get<0>(best_hits["coverage"]) = round;
+					get<1>(best_hits["coverage"]) = str2double(cov);
+					best_coverage = str2double(cov);
+				}
+			}
 			// If this has a longer alignment length than seen before, update best_length.
 			if (str2double(score) > min_score && contig_length >= ini_contig_size && str2int(length) > best_length) {
 				best_length = str2int(length);

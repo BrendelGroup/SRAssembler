@@ -19,7 +19,7 @@ public:
 	string_map get_aligned_contigs(const double& min_score, const double& min_coverage, const unsigned int& min_contig_lgth, const string& all_contig_file, const string& hit_contig_file, const string& alignment_file, const int round, tuple_map& best_hits);
 	string get_program_name();
 	void get_hit_contigs(const double& min_score, const double& min_coverage, const unsigned int& min_contig_lgth, const string& final_contigs_file, const string& hit_contig_file, const string& alignment_file, tuple_map& best_hits);
-	int get_longest_match(const double& min_score, const unsigned int& ini_contig_size, const string& alignment_file);
+	int get_longest_match(int round, int k, const double& min_score, const unsigned int& ini_contig_size, const string& alignment_file, tuple_map& best_hits);
 	void clean_files(const string&);
 };
 
