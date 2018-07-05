@@ -52,6 +52,8 @@ void GSQAligner::do_spliced_alignment(const string& genomic_file, const string& 
 }
 
 string_map GSQAligner::get_aligned_contigs(const double& min_score, const double& min_coverage, const unsigned int& min_contig_lgth, const string& all_contig_file, const string& hit_contig_file, const string& alignment_file, const int round, tuple_map& best_hits){
+// This is for each round, to see if the ending criteria have been met.
+//TODO this can probably be combined with the spliced alignment of each k-mer size, rather than being done again after the best kmer is chosen.
 	double best_coverage = std::get<1>(best_hits["coverage"]);
 	ifstream old_contig_fs(all_contig_file.c_str());
 	ifstream alignment_fs(alignment_file.c_str());
@@ -84,7 +86,7 @@ string_map GSQAligner::get_aligned_contigs(const double& min_score, const double
 			output_string += string_format("%-15s %-8s %-30s %-10s %-15s %-15s %-15s",contig.c_str(),strand.c_str(),query.c_str(),score.c_str(),length.c_str(),cov.c_str(),type.c_str()) + "\n";
 			num_matches++;
 			output_string += "\n";
-			logger->debug("   ... MATCH found with coverage:\t" + cov + " " + type + "\tscore:\t" + score + "\tlength:\t" + int2str(contig_length));
+			logger->info("   ... MATCH found with coverage:\t" + cov + " " + type + "\tscore:\t" + score + "\tlength:\t" + int2str(contig_length));
 			if (type == "P" || type == "C"){
 				if (str2double(score) > min_score && str2double(cov) > best_coverage) {
 					get<0>(best_hits["coverage"]) = round;
@@ -117,6 +119,7 @@ string_map GSQAligner::get_aligned_contigs(const double& min_score, const double
 }
 
 void GSQAligner::get_hit_contigs(const double& min_score, const double& min_coverage, const unsigned int& min_contig_lgth, const string& final_contigs_file, const string& hit_contig_file, const string& alignment_file, tuple_map& best_hits){
+// This is for the final round. The hit contigs are identified and put in the final hit_contigs.fasta file.
 	double best_coverage = std::get<1>(best_hits["coverage"]);
 	double final_high_coverage = 0.0;
 	ifstream old_contig_fs(final_contigs_file.c_str());
@@ -231,7 +234,7 @@ int GSQAligner::get_longest_match(const double& min_score, const unsigned int& i
 			string length = tokens[4];
 			string cov = tokens[5];
 			string type = tokens[6];
-
+			logger->debug("   ... kmer check MATCH found with coverage:\t" + cov + " " + type + "\tscore:\t" + score + "\tlength:\t" + int2str(contig_length));
 			// If this has a longer alignment length than seen before, update best_length.
 			if (str2double(score) > min_score && contig_length >= ini_contig_size && str2int(length) > best_length) {
 				best_length = str2int(length);
