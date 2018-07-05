@@ -235,7 +235,7 @@ int GSQAligner::get_longest_match(int round, int k, const double& min_score, con
 			string length = tokens[4];
 			string cov = tokens[5];
 			string type = tokens[6];
-			logger->debug("   ... kmer check MATCH found with coverage:\t" + cov + " " + type + "\tscore:\t" + score + "\tlength:\t" + length);
+			logger->debug("   ... " + int2str(k) + "-mer check MATCH found with coverage:\t" + cov + " " + type + "\tscore:\t" + score + "\tlength:\t" + length);
 			// Keep track of better coverage if it is seen. This should correspond to the aligned length.
 			if (type == "P" || type == "C"){
 				if (str2double(score) > min_score && str2double(cov) > best_coverage) {
