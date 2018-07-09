@@ -1073,6 +1073,8 @@ void SRAssemblerMaster::prepare_final_contigs_file(int round){
 
 void SRAssemblerMaster::create_folders(){
 	string cmd;
+	cmd = "mkdir -p " + out_dir;
+	run_shell_command(cmd);
 	if (file_exists(aux_dir)){
 		cmd = "rm -rf " + aux_dir;
 		run_shell_command(cmd);
@@ -1128,7 +1130,8 @@ run_shell_command("cp " + contig_file + " " + contig_file + ".beforeclean");
 	program_name += "_" + get_type(1) + "_vs_contigs";
 	Params params = get_parameters(program_name);
 	string out_file = aux_dir + "/query_vs_contig.round" + int2str(round) + ".vmatch";
-	aligner->do_alignment(aux_dir + "/qindex", type, get_match_length(1), get_mismatch_allowed(1), contig_file, params, out_file);
+	// The "reads" type alignment ensures that we keep the hit from the query file, not the index.
+	aligner->do_alignment(aux_dir + "/qindex", "reads", get_match_length(1), get_mismatch_allowed(1), contig_file, params, out_file);
 	logger->debug("Remove contigs without hits against query sequences in round " + int2str(round));
 	cmd = "vseqselect -seqnum " + out_file + " " + contig_index + " | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' > " + contig_file;
 	logger->debug(cmd);

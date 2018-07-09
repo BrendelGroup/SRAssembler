@@ -216,6 +216,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 			case 'p':
 				param_file = optarg;
 				break;
+//TODO if just preprocessing we shouldn't require a query.
 			case 'P':
 				preprocessing_only = 1;
 				break;
