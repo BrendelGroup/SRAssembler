@@ -35,7 +35,7 @@ bool GSQAligner::is_available(){
 	return true;
 }
 
-void GSQAligner::do_spliced_alignment(const string& genomic_file, const string& type, const string& query_file, const string& species, const Params& params, const string& output_file){
+void GSQAligner::do_spliced_alignment(const string& genomic_file, const string& type, const string& probe_file, const string& species, const Params& params, const string& output_file){
 	string param_list = "";
 	for ( Params::const_iterator it = params.begin(); it != params.end(); ++it ){
 		param_list += " -" + it->first + " " + it->second;
@@ -46,7 +46,7 @@ void GSQAligner::do_spliced_alignment(const string& genomic_file, const string& 
 		species_str = "generic";
 	if (type == "protein")
 		type_str = "Q";
-	string cmd = "GeneSeqer -L " + genomic_file + " -" + type_str + " " + query_file + " -species " + species_str + " " + param_list + " -o " + output_file + " >> /dev/null 2>> " + logger->get_log_file();
+	string cmd = "GeneSeqer -L " + genomic_file + " -" + type_str + " " + probe_file + " -species " + species_str + " " + param_list + " -o " + output_file + " >> /dev/null 2>> " + logger->get_log_file();
 	logger->debug(cmd);
 	run_shell_command(cmd);
 }

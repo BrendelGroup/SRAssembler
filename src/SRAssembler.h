@@ -87,13 +87,13 @@ protected:
 	GeneFinder* get_gene_finder();
 	boost::unordered_map<std::string,Params> read_param_file();
 	Params get_parameters(string program_name);
-	std::string query_file, species, type, out_dir;
+	std::string probe_file, species, type, out_dir;
 	int init_match_length;
 	int recur_match_length;
 	int mismatch_allowed;
 	int num_rounds;
-	int verbose;
-	int preprocessing_only;
+	bool verbose;
+	bool preprocessing_only;
 	int assembly_round;
 	int clean_round;
 	int contig_limit;
@@ -112,7 +112,7 @@ protected:
 	int assembler_program;
 	int merge_factor;
 	int edge_cov_cutoff;
-	int masking;
+	bool masking;
 	double min_score;
 	double min_coverage;
 	// A dictionary for tracking the best contigs found between rounds.

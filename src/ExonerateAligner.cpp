@@ -22,7 +22,7 @@ bool ExonerateAligner::is_available(){
 	return true;
 }
 
-void ExonerateAligner::do_spliced_alignment(const string& genomic_file, const string& type, const string& query_file, const string& species, const Params& params, const string& output_file){
+void ExonerateAligner::do_spliced_alignment(const string& genomic_file, const string& type, const string& probe_file, const string& species, const Params& params, const string& output_file){
 	string param_list = "";
 	for ( Params::const_iterator it = params.begin(); it != params.end(); ++it ){
 		string param = it->first;
@@ -33,7 +33,7 @@ void ExonerateAligner::do_spliced_alignment(const string& genomic_file, const st
 	string type_str = "est2genome";
 	if (type == "protein")
 		type_str = "protein2genome";
-	string cmd = "exonerate --model " + type_str + param_list + " " + query_file + " " + genomic_file + " > " + output_file;
+	string cmd = "exonerate --model " + type_str + param_list + " " + probe_file + " " + genomic_file + " > " + output_file;
 	logger->debug(cmd);
 	run_shell_command(cmd);
 }

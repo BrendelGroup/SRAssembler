@@ -74,14 +74,14 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 	usage = "Usage:\n";
 	usage.append("\n");
 	usage.append("    SRAssembler [options] -q query_file -p parameter_file\n");
-	usage.append("                [-l library_file or -1 reads_file1 -2 reads_file2]\n");
+	usage.append("                [-l library_file OR -1 reads_file1 -2 reads_file2]\n");
 	usage.append("\n");
 	usage.append("-q: Required; FASTA-formatted query file.\n");
 	usage.append("-t: Query file type; options: 'protein', 'cdna' [Default: " + QUERY_TYPE + "].\n");
 	usage.append("-p: Required; SRAssembler parameter configuration file.\n");
 	usage.append("-o: SRAssembler output directory [Default: current directory].\n");
-	usage.append("-T: directory for temporary file storage [Default: /dev/shm].\n\n");
-
+	usage.append("-T: directory for temporary file storage [Default: /dev/shm].\n");
+	usage.append("\n");
 	usage.append("-l: Required if the -1 option is not used; sequencing reads library file.\n");
 	usage.append("-1: Required if the -l option is not used; use this option to specify the single-end reads file\n");
 	usage.append("    or the left-end reads file for paired-end reads.\n");
@@ -89,42 +89,42 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 	usage.append("-z: Insert size of the paired-end reads [Default: " + int2str(INSERT_SIZE) + "].\n");
 	usage.append("-x: Number of reads per pre-preprocessed reads file [Default: " + int2str(READS_PER_FILE) + "].\n");
 	usage.append("-r: Directory in which to store or from which to retrieve the pre-processed reads [Default: output directory/" + READS_DATA + "].\n");
-	usage.append("-P: Run the read pre-processing step only, then terminate SRAssembler.\n\n");
-
+	usage.append("-P: Run the read pre-processing step only, then terminate SRAssembler.\n");
+	usage.append("\n");
 	usage.append("-A: Assembler program choice; options: 0=>SOAPdenovo2, 1=>ABySS [Default: " + int2str(ASSEMBLER_PROGRAM) + "].\n");
 	usage.append("-k: Specifies the k-mer set to be used by the assembler; format: start_k:interval:end_k.\n");
 	usage.append("    Start_k and end_k must be odd integers, and interval must be an even integer, similar to the following example:\n");
 	usage.append("    '15:10:45' specifies that k-mer values 15, 25, 35, 45 will be tested.[Default: " + int2str(START_K) + ":" + int2str(STEP_K) + ":" + int2str(END_K) + "].\n");
-	usage.append("-S: Spliced alignment program; options: 0=>GeneSeqer, 1=>GenomeThreader, 2=>Exonerate [Default: " + int2str(SPLICED_ALIGNMENT_PROGRAM) + "].\n");
+	usage.append("-S: Spliced alignment program; options: 0=>GeneSeqer, 1=>GenomeThreader [Default: " + int2str(SPLICED_ALIGNMENT_PROGRAM) + "].\n");
 	usage.append("-s: Species model for spliced alignment; options (for GenomeThreader and GeneSeqer):\n");
 	usage.append("    'human', 'mouse', 'rat', 'chicken', 'drosophila', 'nematode', 'fission_yeast', 'aspergillus',\n");
 	usage.append("     'arabidopsis', 'maize', 'rice', 'medicago' [DEFAULT: " + DEFAULT_SPECIES + "].\n");
-	usage.append("-G: Ab initio gene finding program; options: 0=>None, 1=>Snap [Default: " + int2str(GENE_FINDING_PROGRAM) + "].\n\n");
-
+	usage.append("-G: Ab initio gene finding program; options: 0=>None, 1=>Snap [Default: " + int2str(GENE_FINDING_PROGRAM) + "].\n");
+	usage.append("\n");
 	usage.append("-j: Merge factor for contig assembly [Default: " + int2str(MERGE_FACTOR) + "].\n");
 	usage.append("-i: Initial contig size for chromosome walking [Default: " + int2str(INI_CONTIG_SIZE) + "].\n");
 	usage.append("-m: Minimum contig length to be reported [Default: " + int2str(MIN_CONTIG_LGTH) + "].\n");
 	usage.append("-M: Maximum contig length to be reported [Default: " + int2str(MAX_CONTIG_LGTH) + "].\n");
 	usage.append("-e: Minimum spliced alignment score for hits [Default: " + double2str(MIN_SCORE) + "].\n");
-	usage.append("-c: Minimum spliced alignment coverage score for hits [Default: " + double2str(MIN_COVERAGE) + "].\n\n");
-
+	usage.append("-c: Minimum spliced alignment coverage score for hits [Default: " + double2str(MIN_COVERAGE) + "].\n");
+	usage.append("\n");
 	usage.append("-n: Maximum number of rounds for chromosome walking [Default: " + int2str(NUM_ROUNDS) + "].\n");
 	usage.append("-a: The number of the round in which to start read assembly [Default: " + int2str(ASSEMBLY_ROUND) + "].\n");
 	usage.append("-b: The frequency with which to periodically remove unrelated contigs and reads. For example, '-b 3' \n");
 	usage.append("    specifies that SRAssembler will remove unrelated contigs and reads after two rounds of not doing so. [Default: " + int2str(CLEAN_ROUND) + "].\n");
 	usage.append("-d: The minimum number of assembled contigs to automatically trigger removal of unrelated contigs and reads.\n");
-	usage.append("    If set to '0', do not remove unrelated contigs and reads except as scheduled by '-b' option. [Default: " + int2str(CONTIG_LIMIT) + "].\n\n");
-
+	usage.append("    If set to '0', do not remove unrelated contigs and reads except as scheduled by '-b' option. [Default: " + int2str(CONTIG_LIMIT) + "].\n");
+	usage.append("\n");
 	usage.append("-w: Forgo spliced alignment check after intermediate assembly rounds [SRAssembler will continue for the -n specified number of rounds].\n");
 	usage.append("-y: Disable SRAssembler resumption from previous checkpoint [will overwrite existing output].\n");
-	usage.append("-Z: Disable masking of low-complexity regions of contigs before searching for reads.\n\n");
-
+	usage.append("-Z: Disable dustmasker masking of low-complexity regions of contigs before searching for reads.\n");
+	usage.append("\n");
 	usage.append("-v: Verbose output.\n");
 	usage.append("-h: Print this usage synopsis.");
 
 
 	char c;
-	while((c = getopt(argc, argv, "q:t:p:l:1:2:T:z:r:o:Px:A:k:S:s:G:i:m:M:e:c:n:a:b:j:J:Zwyvh")) != -1) {
+	while((c = getopt(argc, argv, "1:2:a:A:b:c:d:e:G:hi:j:J:k:l:m:M:n:o:p:Pq:r:s:S:t:T:vwx:yz:Z")) != -1) {
 		switch (c){
 			case '1':
 				left_read = optarg;
@@ -218,10 +218,10 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 				break;
 //TODO if just preprocessing we shouldn't require a query.
 			case 'P':
-				preprocessing_only = 1;
+				preprocessing_only = true;
 				break;
 			case 'q':
-				query_file = optarg;
+				probe_file = optarg;
 				break;
 			case 'r':
 				data_dir = optarg;
@@ -239,7 +239,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 				mem_loc = optarg;
 				break;
 			case 'v':
-				verbose = 1;
+				verbose = true;
 				break;
 			case 'w':
 				check_gene_assembled = 0;
@@ -254,7 +254,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 				insert_size = str2int(optarg);
 				break;
 			case 'Z':
-				masking = 0;
+				masking = false;
 				break;
 			case '?':
 				string msg = "input error! unknown option : -";
@@ -308,7 +308,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 			return -1;
 	} else {
 		if (left_read == "" && !preprocessed_exist){
-			print_message("-1 or -P or library file is required");
+			print_message("-1 or library file is required");
 			return -1;
 		}
 		Library lib(0, this->data_dir, this->aux_dir,this->logger);
@@ -346,21 +346,22 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 			init_match_length = INIT_MATCH_LENGTH_CDNA;
 	}
 	if (species != "human" && species != "mouse" && species != "rat" && species != "chicken" && species != "drosophila" && species != "nematode" && species != "fission_yeast" && species != "aspergillus" && species != "arabidopsis" && species != "maize" && species != "rice" && species != "medicago"){
-		print_message("-s is required");
+		print_message("-s valid species is required");
 		return -1;
 	}
 	if (!k_format){
-		print_message("-k format error. The format is : start_k:interval:end_k. The start_k and end_k must be odd value, and The interval must be even value.");
+		print_message("-k format error. The format is : start_k:interval:end_k. The start_k and end_k must be odd values, and the interval must be an even value.");
 		return -1;
 	}
-	//check the existence of read files
-	if (!file_exists(query_file)){
-		print_message("file: " + query_file + " does not exist!");
+	// Confirm the existence of query file.
+	if (!preprocessing_only && !file_exists(probe_file)){
+		print_message("query file: " + probe_file + " does not exist!");
 		return -1;
 	}
 
+	run_shell_command("mkdir -p " + out_dir);
 	if (!file_exists(out_dir)){
-		print_message("output directory: " + out_dir + " does not exist!");
+		print_message("output directory: " + out_dir + " cannot be created!");
 		return -1;
 	}
 
@@ -542,7 +543,7 @@ string SRAssembler:: get_query_fasta_file_name(int round){
 			return joined_file;
 		}
 	}
-	return query_file;
+	return probe_file;
 }
 
 void SRAssembler::mask_contigs(int round){
@@ -550,7 +551,7 @@ void SRAssembler::mask_contigs(int round){
 	string contig_file;
 	contig_file = get_contig_file_name(round);
 	string masked_file = contig_file + ".masked";
-	// Sed command replaces lowercase letters NOT in the header with capital Ns. AWini_contig_sizeK command converts FASTA to single-line.
+	// Sed command replaces lowercase atcg NOT in the header with capital Ns. AWK command converts FASTA to single-line.
 	cmd = "dustmasker -in " + contig_file + " -outfmt fasta -out - | sed '/^[^>]/s/[atcg]/N/g' | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' > " + masked_file;
 	run_shell_command(cmd);
 }
@@ -559,7 +560,7 @@ string SRAssembler:: get_query_fasta_file_name_masked(int round){
 	if (round > 1){
 		// If we have passed the round to start assembling, use the assembled contig files as the query.
 		if (assembly_round < round) {
-			if (masking == 1) {
+			if (masking) {
 				string masked_fasta = get_contig_file_name(round-1) + ".masked";
 				return masked_fasta;
 			} else {
@@ -571,7 +572,7 @@ string SRAssembler:: get_query_fasta_file_name_masked(int round){
 			return joined_file;
 		}
 	}
-	return query_file;
+	return probe_file;
 }
 
 string SRAssembler:: get_contig_file_name(int round){
@@ -628,7 +629,7 @@ void SRAssembler::do_spliced_alignment() {
 	SplicedAligner* spliced_aligner = get_spliced_aligner();
 	string program_name = spliced_aligner->get_program_name();
 	Params params = this->get_parameters(program_name);
-	spliced_aligner->do_spliced_alignment(this->final_contigs_file, type, this->query_file, this->species, params, this->spliced_alignment_output_file);
+	spliced_aligner->do_spliced_alignment(this->final_contigs_file, type, this->probe_file, this->species, params, this->spliced_alignment_output_file);
 	spliced_aligner->get_hit_contigs(min_score, min_coverage, min_contig_lgth, this->final_contigs_file, this->hit_contigs_file, this->spliced_alignment_output_file, this->best_hits);
 	logger->info("Done.");
 }
@@ -641,7 +642,7 @@ string_map SRAssembler::do_spliced_alignment(int round) {
 	string contig_file = get_contig_file_name(round);
 	string output_file = aux_dir + "/query-vs-contig_" + "r" + int2str(round) + ".aln";
 	string hit_file = aux_dir + "/hit_contigs_" + "r" + int2str(round) + ".fasta";
-	spliced_aligner->do_spliced_alignment(contig_file, type, this->query_file, this->species, params, output_file);
+	spliced_aligner->do_spliced_alignment(contig_file, type, this->probe_file, this->species, params, output_file);
 	string_map query_map = spliced_aligner->get_aligned_contigs(min_score, min_coverage, min_contig_lgth, contig_file, hit_file, output_file, round, best_hits);
 	//RM HERE
 	spliced_aligner->clean_files(contig_file);
@@ -658,7 +659,7 @@ int SRAssembler::do_spliced_alignment(int round, int k) {
 	string contig_file = this->get_assembly_file_name(round, k);
 	string output_file = this->get_spliced_alignment_file_name(round, k);
 	//aux_dir + "/query-vs-contig_" + "k" + int2str(k) + "_" + "r" + int2str(round) + ".aln";
-	spliced_aligner->do_spliced_alignment(contig_file, type, this->query_file, this->species, params, output_file);
+	spliced_aligner->do_spliced_alignment(contig_file, type, this->probe_file, this->species, params, output_file);
 	best_spliced_length = spliced_aligner->get_longest_match(round, k, min_score, ini_contig_size, output_file, best_hits);
 	//RM HERE
 	spliced_aligner->clean_files(contig_file);
@@ -716,9 +717,11 @@ Logger* SRAssembler::get_logger(){
 }
 
 void SRAssembler::create_index(int round) {
+//TODO This function is somewhat vestigial from when SRAssembler was indexing the contigs every round to be searched using the reads as queries.
 	Aligner* aligner = get_aligner(round);
 	aligner->create_index(get_contigs_index_name(round), get_type(round), get_query_fasta_file_name_masked(round));
-	aligner->create_index(aux_dir + "/qindex", type, query_file);
+	// This index is used during cleaning rounds, to find contigs that match the probe_file.
+	aligner->create_index(aux_dir + "/qindex", type, probe_file);
 }
 
 string SRAssembler:: get_type(int round){

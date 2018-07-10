@@ -33,12 +33,12 @@ bool GTHAligner::is_available(){
 	return true;
 }
 
-void GTHAligner::do_spliced_alignment(const string& genomic_file, const string& type, const string& query_file, const string& species, const Params& params, const string& output_file){
+void GTHAligner::do_spliced_alignment(const string& genomic_file, const string& type, const string& probe_file, const string& species, const Params& params, const string& output_file){
 	string param_list = "";
 	for ( Params::const_iterator it = params.begin(); it != params.end(); ++it ){
 		param_list += " -" + it->first + " " + it->second;
 	}
-	string cmd = "gth -genomic " + genomic_file + " -" + type + " " + query_file + " -species " + species + param_list + " > " + output_file;
+	string cmd = "gth -genomic " + genomic_file + " -" + type + " " + probe_file + " -species " + species + param_list + " > " + output_file;
 	logger->debug(cmd);
 	run_shell_command(cmd);
 }

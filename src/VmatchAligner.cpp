@@ -124,7 +124,8 @@ void VmatchAligner::do_alignment(const string& index_name, const string& type, i
 	string tmpvmfile = output_file + "-tmp";
 	/* Vmatch output is appended to the output file so that left and right read searches for one part go into the same output file.
 	 * In the DNA searches, the "-d -p" options search both strands.
-	 * AWK selects only the column containing the sequence number. It is different for proteins and reads because the reads are used as queries.
+	 * AWK selects only the column containing the sequence number. It is column 2 for "proteins" and "reads" because in those cases reads are being used as queries, not subjects.
+	 * The results are sorted and each unique hit reported only once. This is not piped because the output_file may already have left reads in it.
 	 */
 	if (type == "protein" ) {
 		cmd = "vmatch -dnavsprot 1 -q " + query_file + " -d" + l_option + e_option + " " + param_list + " -nodist -noevalue -noscore -noidentity " + index_name + " | awk '$0 !~ /^#.*/ {print $6}' >> " + output_file + "; sort -nu " + output_file + " > " + tmpvmfile + "; \\mv " + tmpvmfile + " " + output_file;

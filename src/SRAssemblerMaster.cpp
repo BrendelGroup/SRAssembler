@@ -48,16 +48,16 @@ void SRAssemblerMaster::get_query_list(){
 	if (start_round > 1)
 		load_query_list();
 	else {
-		ifstream query_file(this->query_file.c_str());
+		ifstream probe_file(this->probe_file.c_str());
 		string line;
-		while (getline(query_file, line)){
+		while (getline(probe_file, line)){
 			if (line.substr(0,1) == ">"){
 				vector<string> tokens;
 				tokenize(line.substr(1), tokens, " ");
 				query_list.push_back(tokens[0]);
 			}
 		}
-		query_file.close();
+		probe_file.close();
 	}
 }
 
@@ -359,7 +359,7 @@ void SRAssemblerMaster::do_walking() {
 			}
 		}
 
-		// For each library
+		// For each library, align the reads to the queries (the query file in round 1, previously found reads if the assembly round has not yet been reached, or the assembled contigs from the previous round).
 		for (unsigned lib_idx=0;lib_idx<this->libraries.size();lib_idx++){
 			int completed = 0;
 			Library lib = this->libraries[lib_idx];
@@ -400,7 +400,7 @@ void SRAssemblerMaster::do_walking() {
 				}
 			}
 		}
-		// At the end of the round, save found reads in case you want to restart the run.
+		// At the end of the round, save the found reads in case you want to restart the run.
 		if (mpiSize == 1){
 			save_found_reads(round);
 		} else {
@@ -440,7 +440,7 @@ void SRAssemblerMaster::do_walking() {
 					contig_count = str2int(contig_line_count) / 2;
 					// If cleaning didn't work, bail on this run.
 					if (contig_count > contig_limit) {
-						logger->info("The walking is terminated: " + int2str(contig_count) + " contigs produced in round " + int2str(round) + ". This is too many to be a good run. Consider adjusting parameters such as Vmatch_protein_vs_contigs or increasing -i initial_contig_min. You can also rerun with the -f argument to ignore contig numbers.");
+						logger->info("The walking is terminated: " + int2str(contig_count) + " contigs produced in round " + int2str(round) + ". This is too many to be a good run. Consider adjusting parameters such as Vmatch_protein_vs_contigs or increasing -i initial_contig_min. You can also rerun with the -d 0 argument to ignore contig numbers.");
 						broadcast_code(ACTION_EXIT, 0, 0, 0);
 						if (round > 1) {
 							//RM HERE
@@ -600,7 +600,7 @@ void SRAssemblerMaster::do_walking() {
 	outFile.close();
 	//RM HERE
 	// Now that we're done, clean up unneccessary temporary files and the link to the mem_dir
-	string cmd = "rm -rf " + query_file + ".* " + aux_dir + "/qindex.* " + aux_dir + "/cindex.* " + out_dir + "/" + get_file_name(mem_dir) + " " + mem_dir;
+	string cmd = "rm -rf " + probe_file + ".* " + aux_dir + "/qindex.* " + aux_dir + "/cindex.* " + out_dir + "/" + get_file_name(mem_dir) + " " + mem_dir;
 	logger->debug(cmd);
 	run_shell_command(cmd);
 }
@@ -1073,8 +1073,6 @@ void SRAssemblerMaster::prepare_final_contigs_file(int round){
 
 void SRAssemblerMaster::create_folders(){
 	string cmd;
-	cmd = "mkdir -p " + out_dir;
-	run_shell_command(cmd);
 	if (file_exists(aux_dir)){
 		cmd = "rm -rf " + aux_dir;
 		run_shell_command(cmd);
@@ -1124,15 +1122,14 @@ run_shell_command("cp " + contig_file + " " + contig_file + ".beforeclean");
 	Aligner* aligner = get_aligner(round);
 	// Index contigs for easy extraction of hit contigs
 	aligner->create_index(contig_index, "dna", contig_file);
-	// No need to remake this index every time?
-	//aligner->create_index(aux_dir + "/qindex", type, query_file);
 	string program_name = aligner->get_program_name();
 	program_name += "_" + get_type(1) + "_vs_contigs";
 	Params params = get_parameters(program_name);
 	string out_file = aux_dir + "/query_vs_contig.round" + int2str(round) + ".vmatch";
+	// Use the index of the probe_file (qindex) created in the first round.
 	// The "reads" type alignment ensures that we keep the hit from the query file, not the index.
 	aligner->do_alignment(aux_dir + "/qindex", "reads", get_match_length(1), get_mismatch_allowed(1), contig_file, params, out_file);
-	logger->debug("Remove contigs without hits against query sequences in round " + int2str(round));
+	logger->debug("Removing contigs without hits against query sequences in round " + int2str(round));
 	cmd = "vseqselect -seqnum " + out_file + " " + contig_index + " | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' > " + contig_file;
 	logger->debug(cmd);
 	run_shell_command(cmd);
