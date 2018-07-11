@@ -33,7 +33,7 @@ void SOAPDenovoAssembler::do_assembly(int kmer, const vector<Library>& libraries
 {
 	string config_file = output_file + ".conf";
 	ofstream outFile(config_file.c_str());
-
+	outFile << "max_rd_len=5000" << '\n';
 	for (unsigned int i=0; i<libraries.size();i++){
 		Library lib = libraries[i];
 		if (get_file_size(lib.get_matched_left_reads_filename()) == 0) continue;
