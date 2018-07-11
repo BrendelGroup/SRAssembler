@@ -920,8 +920,12 @@ void SRAssembler::remove_unmapped_reads(unsigned int lib_idx, int round){
 		run_shell_command(cmd);
 	}
 	//RM here
-	cmd = "rm -f " + vmatch_outfile + " " + left_reads_index + "* " + right_reads_index + "*";
+	cmd = "rm -f " + vmatch_outfile + " " + left_reads_index + "*";
 	run_shell_command(cmd);
+	if (lib.get_paired_end()) {
+		cmd = "rm -f " + right_reads_index + "*";
+		run_shell_command(cmd);
+	}
 }
 
 void finalized(){
