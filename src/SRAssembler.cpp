@@ -53,6 +53,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 	over_write = OVER_WRITE;
 	check_gene_assembled = CHECK_GENE_ASSEMBLED;
 	preprocessing_only = PREPROCESSING_ONLY;
+	tidy = TIDY;
 	min_score = MIN_SCORE;
 	min_coverage = MIN_COVERAGE;
 	ini_contig_size = INI_CONTIG_SIZE;
@@ -124,7 +125,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 
 
 	char c;
-	while((c = getopt(argc, argv, "1:2:a:A:b:c:d:e:G:hi:j:J:k:l:m:M:n:o:p:Pq:r:s:S:t:T:vwx:yz:Z")) != -1) {
+	while((c = getopt(argc, argv, "1:2:a:A:b:c:d:e:G:hi:j:J:k:l:m:M:n:No:p:Pq:r:s:S:t:T:vwx:yz:Z")) != -1) {
 		switch (c){
 			case '1':
 				left_read = optarg;
@@ -210,13 +211,15 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 			case 'n':
 				num_rounds = str2int(optarg);
 				break;
+			case 'N':
+				tidy = false;
+				break;
 			case 'o':
 				out_dir = optarg;
 				break;
 			case 'p':
 				param_file = optarg;
 				break;
-//TODO if just preprocessing we shouldn't require a query.
 			case 'P':
 				preprocessing_only = true;
 				break;

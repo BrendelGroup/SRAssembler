@@ -600,6 +600,7 @@ void SRAssemblerMaster::do_walking() {
 
 void SRAssemblerMaster::clean_tmp_files(int round){
 	if (round == 0) return;
+	if (!tidy) return;
 	//else: remove data of previous round
 	string cmd;
 	// We don't need to remove vmatch files, they are now kept in mem_dir
@@ -774,7 +775,9 @@ int SRAssemblerMaster::do_assembly(int round) {
 		process_long_contigs(round, best_k);
 	}
 	//RM HERE
-	get_assembler()->clean_files(aux_dir);
+	if (tidy) {
+		get_assembler()->clean_files(aux_dir);
+	}
 	return max_longest_contig;
 }
 
@@ -979,7 +982,7 @@ void SRAssemblerMaster::process_long_contigs(int round, int k) {
 void SRAssemblerMaster::remove_hit_contigs(vector<string> &contig_list, int round){
 	logger->debug("Remove hit contigs of round " + int2str(round));
 	string contig_file = get_contig_file_name(round);
-	string tmp_file = aux_dir + "/contig_tmp_" + "r" + int2str(round) + ".fasta";
+	string tmp_file = aux_dir + "/nonhit_contigs_" + "r" + int2str(round) + ".fasta";
 	string saved_contig_file_name = get_saved_contig_file_name();
 	string line;
 	string header = "";
@@ -1018,8 +1021,10 @@ void SRAssemblerMaster::remove_hit_contigs(vector<string> &contig_list, int roun
 	string cmd = "cp " + tmp_file + " " + contig_file;
 	run_shell_command(cmd);
 	//RM HERE
-	cmd = "rm " + tmp_file;
-	run_shell_command(cmd);
+	if (tidy) {
+		cmd = "rm " + tmp_file;
+		run_shell_command(cmd);
+	}
 }
 
 void SRAssemblerMaster::prepare_final_contigs_file(int round){

@@ -94,6 +94,7 @@ protected:
 	int num_rounds;
 	bool verbose;
 	bool preprocessing_only;
+	bool tidy;
 	int assembly_round;
 	int clean_round;
 	int contig_limit;

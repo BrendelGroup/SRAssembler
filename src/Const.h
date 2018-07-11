@@ -27,6 +27,7 @@ static const int NUM_ROUNDS=10;
 static const int INSERT_SIZE=300;
 static const bool VERBOSE=false;
 static const bool PREPROCESSING_ONLY=false;
+static const bool TIDY=true;
 static const int ASSEMBLY_ROUND=1;
 static const int READS_PER_FILE=500000;
 static const int ACTION_EXIT=1;
