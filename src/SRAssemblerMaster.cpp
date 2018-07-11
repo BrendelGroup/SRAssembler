@@ -442,10 +442,8 @@ void SRAssemblerMaster::do_walking() {
 					if (contig_count > contig_limit) {
 						logger->info("The walking is terminated: " + int2str(contig_count) + " contigs produced in round " + int2str(round) + ". This is too many to be a good run. Consider adjusting parameters such as Vmatch_protein_vs_contigs or increasing -i initial_contig_min. You can also rerun with the -d 0 argument to ignore contig numbers.");
 						broadcast_code(ACTION_EXIT, 0, 0, 0);
-						if (round > 1) {
-							//RM HERE
-							clean_tmp_files(round-1);
-						}
+						//RM HERE
+						clean_tmp_files(round-1);
 						return;
 					}
 					// If cleaning no_hit_contigs did work, finish cleaning by removing the reads that don't match the contigs that were kept.
@@ -553,18 +551,13 @@ void SRAssemblerMaster::do_walking() {
 				break;
 			}
 		}
-		if (round > 1) {
-			//RM HERE
-			clean_tmp_files(round-1);
-		}
+		//RM HERE
+		clean_tmp_files(round-1);
 		round++;
 	}
 	// Walking ends.
-
-	if (round > 1) {
-		//RM HERE
-		clean_tmp_files(round-1);
-	}
+	//RM HERE
+	clean_tmp_files(round-1);
 	// If this round has not been assembled yet, do assembling.
 	if ( ! assembled && assembly_round > round){
 		do_assembly(round);
