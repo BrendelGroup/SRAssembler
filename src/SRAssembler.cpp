@@ -493,7 +493,7 @@ int SRAssembler::count_preprocessed_reads(int lib_idx){
 
 void SRAssembler::preprocess_read_part(int lib_idx, int read_part){
 	Library lib = this->libraries[lib_idx];
-	logger->info("preprocessing lib " + int2str(lib_idx + 1) + ", reads file (" + int2str(read_part) + "/" + int2str(lib.get_num_parts()) + ")");
+	logger->running("preprocessing lib " + int2str(lib_idx + 1) + ", reads file (" + int2str(read_part) + "/" + int2str(lib.get_num_parts()) + ")");
 	string suffix = int2str(read_part) + ".fasta";
 	string left_read_file = lib.get_split_read_prefix(lib.get_left_read()) + suffix;
 	string right_read_file;
@@ -549,6 +549,7 @@ string SRAssembler:: get_query_fasta_file_name(int round){
 }
 
 void SRAssembler::mask_contigs(int round){
+	//TODO Add a sed command to mask the middle of assembled contigs so we only look for reads that extend the ends.
 	string cmd;
 	string contig_file;
 	contig_file = get_contig_file_name(round);
@@ -589,7 +590,7 @@ string SRAssembler:: get_matched_reads_file_name(int round){
 
 int SRAssembler::do_alignment(int round, int lib_idx, int read_part) {
 	Library lib = this->libraries[lib_idx];
-	logger->info("Aligning: Round " + int2str(round) + ", Lib " + int2str(lib_idx+1) + " of " + int2str(this->libraries.size()) + ", Reads part " + int2str(read_part) + " of " + int2str(lib.get_num_parts()));
+	logger->running("Aligning: Round " + int2str(round) + ", Lib " + int2str(lib_idx+1) + " of " + int2str(this->libraries.size()) + ", Reads part " + int2str(read_part) + " of " + int2str(lib.get_num_parts()));
 	Aligner* aligner = get_aligner(round);
 	string program_name = aligner->get_program_name();
 	if (round == 1) {
@@ -621,7 +622,7 @@ int SRAssembler::do_alignment(int round, int lib_idx, int read_part) {
 }
 
 void SRAssembler::do_assembly(int round, int k, int threads) {
-	logger->info("Doing assembly: round = " + int2str(round) + ", k = " + int2str(k));
+	logger->running("Doing assembly: round = " + int2str(round) + ", k = " + int2str(k));
 	Assembler* assembler = get_assembler();
 	assembler->do_assembly(k, this->libraries, aux_dir + "/assembly_" + "k" + int2str(k) + "_" + "r" + int2str(round), threads, parameters_dict);
 }

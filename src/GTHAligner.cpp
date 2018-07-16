@@ -180,7 +180,7 @@ void GTHAligner::get_hit_contigs(const double& min_score, const double& min_cove
 				output_string += string_format("%-15s %-8s %-30s %-10s %-15s %-15s %-15s",contig_id.c_str(),strand.c_str(),query.c_str(),score.c_str(),length.c_str(),cov.c_str(),type.c_str()) + "\n";
 				num_matches++;
 				output_string += "\n";
-				logger->info("   ... HIT found with coverage:\t" + cov + " " + type + "\tscore:\t" + score + "\t contig length:\t" + int2str(contig_length));
+				logger->info("   ... HIT MATCH found with coverage:\t" + cov + " " + type + "\tscore:\t" + score + "\t contig length:\t" + int2str(contig_length));
 				contig_list.push_back(contig_id);
 			}
 		}

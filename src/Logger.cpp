@@ -38,6 +38,11 @@ void Logger::info(const string& msg)
 	print_message(msg, " [INFO]", (log_level <= Logger::LEVEL_INFO));
 }
 
+void Logger::running(const string& msg)
+{
+	print_message(msg, " [RUN]", (log_level <= Logger::LEVEL_INFO));
+}
+
 void Logger::warn(const string& msg)
 {
 	print_message(msg, " [WARN] ", (log_level <= Logger::LEVEL_WARN));
