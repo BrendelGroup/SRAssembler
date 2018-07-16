@@ -13,7 +13,7 @@
 class AbyssAssembler: public Assembler {
 public:
 	AbyssAssembler(int, string);
-	void do_assembly(int kmer, const vector<Library>& libraries, const string& output_file, int threads, int merge_factor, int edge_cov_cutoff);
+	void do_assembly(int kmer, const vector<Library>& libraries, const string& output_file, int threads, boost::unordered_map<std::string,Params> parameters_dict);
 	bool is_available();
 	void clean_files(const string& dir);
 	string get_output_contig_file_name(string prefix);

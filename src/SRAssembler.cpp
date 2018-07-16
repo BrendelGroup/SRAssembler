@@ -102,7 +102,6 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 	usage.append("     'arabidopsis', 'maize', 'rice', 'medicago' [DEFAULT: " + DEFAULT_SPECIES + "].\n");
 	usage.append("-G: Ab initio gene finding program; options: 0=>None, 1=>Snap [Default: " + int2str(GENE_FINDING_PROGRAM) + "].\n");
 	usage.append("\n");
-	usage.append("-j: Merge factor for contig assembly [Default: " + int2str(MERGE_FACTOR) + "].\n");
 	usage.append("-i: Initial contig size for chromosome walking [Default: " + int2str(INI_CONTIG_SIZE) + "].\n");
 	usage.append("-m: Minimum contig length to be reported [Default: " + int2str(MIN_CONTIG_LGTH) + "].\n");
 	usage.append("-M: Maximum contig length to be reported [Default: " + int2str(MAX_CONTIG_LGTH) + "].\n");
@@ -165,12 +164,6 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 				break;
 			case 'i':
 				ini_contig_size = str2int(optarg);
-				break;
-			case 'j':
-				merge_factor = str2int(optarg);
-				break;
-			case 'J':
-				edge_cov_cutoff = str2int(optarg);
 				break;
 			case 'k': {
 				vector<string> tokens;
@@ -400,6 +393,12 @@ boost::unordered_map<std::string,Params> SRAssembler::read_param_file() {
 				string value = trim(tokens[1]);
 				params.insert(Params::value_type(param, value));
 			}
+			// On/off flag parameters are allowed.
+			else if (tokens.size() == 1){
+				string param = trim(tokens[0]);
+				string value = "";
+				params.insert(Params::value_type(param, value));
+			}
 		}
 	}
 	return parameters_dict;
@@ -624,7 +623,7 @@ int SRAssembler::do_alignment(int round, int lib_idx, int read_part) {
 void SRAssembler::do_assembly(int round, int k, int threads) {
 	logger->info("Doing assembly: round = " + int2str(round) + ", k = " + int2str(k));
 	Assembler* assembler = get_assembler();
-	assembler->do_assembly(k, this->libraries, aux_dir + "/assembly_" + "k" + int2str(k) + "_" + "r" + int2str(round), threads, merge_factor, edge_cov_cutoff);
+	assembler->do_assembly(k, this->libraries, aux_dir + "/assembly_" + "k" + int2str(k) + "_" + "r" + int2str(round), threads, parameters_dict);
 }
 
 void SRAssembler::do_spliced_alignment() {

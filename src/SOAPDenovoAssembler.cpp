@@ -29,10 +29,14 @@ bool SOAPDenovoAssembler::is_available(){
 	}
 	return true;
 }
-void SOAPDenovoAssembler::do_assembly(int kmer, const vector<Library>& libraries, const string& output_file, int threads, int merge_factor, int edge_cov_cutoff)
-{
+void SOAPDenovoAssembler::do_assembly(int kmer, const vector<Library>& libraries, const string& output_file, int threads, boost::unordered_map<std::string,Params> parameters_dict){
+	Params pregraph_params;
+	Params contig_params;
+	string pregraph_param_list = "";
+	string contig_param_list = "";
 	string config_file = output_file + ".conf";
 	ofstream outFile(config_file.c_str());
+	// Prepare the SOAPdenovo configuration file specific for this run.
 	outFile << "max_rd_len=5000" << '\n';
 	for (unsigned int i=0; i<libraries.size();i++){
 		Library lib = libraries[i];
@@ -60,13 +64,23 @@ void SOAPDenovoAssembler::do_assembly(int kmer, const vector<Library>& libraries
 		}
 	}
 	outFile.close();
+	// Import the parameters for the SOAPdenovo pregraph command.
+	pregraph_params = parameters_dict["SOAPdenovo_pregraph"];
+	for ( Params::const_iterator it = pregraph_params.begin(); it != pregraph_params.end(); ++it ){
+		pregraph_param_list += " -" + it->first + " " + it->second;
+	}
+	// Import the parameters for the SOAPdenovo contig command.
+	contig_params = parameters_dict["SOAPdenovo_contig"];
+	for ( Params::const_iterator it = contig_params.begin(); it != contig_params.end(); ++it ){
+		contig_param_list += " -" + it->first + " " + it->second;
+	}
 	string program = "SOAPdenovo-127mer";
 	if (kmer <= 63)
 		program = "SOAPdenovo-63mer";
-	string cmd = program + " pregraph -s " + config_file + " -o " + output_file + " -p " + int2str(threads) + " -K " + int2str(kmer) + " -R >> " + logger->get_log_file() + " 2>&1";
+	string cmd = program + " pregraph -s " + config_file + " -o " + output_file + " -p " + int2str(threads) + " -K " + int2str(kmer) + pregraph_param_list + " >> " + logger->get_log_file() + " 2>&1";
 	logger->debug(cmd);
 	run_shell_command(cmd);
-	cmd = program + " contig -M " + int2str(merge_factor) + " -g " + output_file + " -D " + int2str(edge_cov_cutoff) + " -R >> " + logger->get_log_file() + " 2>&1";
+	cmd = program + " contig -g " + output_file + contig_param_list + " >> " + logger->get_log_file() + " 2>&1";
 	logger->debug(cmd);
 	run_shell_command(cmd);
 }
