@@ -59,9 +59,8 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 	ini_contig_size = INI_CONTIG_SIZE;
 	min_contig_lgth = MIN_CONTIG_LGTH;
 	max_contig_lgth = MAX_CONTIG_LGTH;
-	merge_factor = MERGE_FACTOR;
-	edge_cov_cutoff = EDGE_COV_CUTOFF;
 	masking = MASKING;
+	end_search_length = END_SEARCH_LENGTH;
 	bool k_format = true;
 	this->rank = rank;
 	this->mpiSize = mpiSize;
@@ -116,6 +115,8 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 	usage.append("    If set to '0', do not remove unrelated contigs and reads except as scheduled by '-b' option. [Default: " + int2str(CONTIG_LIMIT) + "].\n");
 	usage.append("\n");
 	usage.append("-w: Forgo spliced alignment check after intermediate assembly rounds [SRAssembler will continue for the -n specified number of rounds].\n");
+	usage.append("-X: Length of contig ends to use as queries to find new reads.\n");
+	usage.append("    If set to '0', do not mask center of query contigs. [Default: " + int2str(END_SEARCH_LENGTH) + "].\n");
 	usage.append("-y: Disable SRAssembler resumption from previous checkpoint [will overwrite existing output].\n");
 	usage.append("-Z: Disable dustmasker masking of low-complexity regions of contigs before searching for reads.\n");
 	usage.append("\n");
@@ -124,7 +125,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 
 
 	char c;
-	while((c = getopt(argc, argv, "1:2:a:A:b:c:d:e:G:hi:j:J:k:l:m:M:n:No:p:Pq:r:s:S:t:T:vwx:yz:Z")) != -1) {
+	while((c = getopt(argc, argv, "1:2:a:A:b:c:d:e:G:hi:k:l:m:M:n:No:p:Pq:r:s:S:t:T:vwx:X:yz:Z")) != -1) {
 		switch (c){
 			case '1':
 				left_read = optarg;
@@ -242,6 +243,9 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 				break;
 			case 'x':
 				reads_per_file = str2int(optarg);
+				break;
+			case 'X':
+				end_search_length = str2int(optarg);
 				break;
 			case 'y':
 				over_write = 1;
@@ -554,8 +558,25 @@ void SRAssembler::mask_contigs(int round){
 	string contig_file;
 	contig_file = get_contig_file_name(round);
 	string masked_file = contig_file + ".masked";
-	// Sed command replaces lowercase atcg NOT in the header with capital Ns. AWK command converts FASTA to single-line.
-	cmd = "dustmasker -in " + contig_file + " -outfmt fasta -out - | sed '/^[^>]/s/[atcg]/N/g' | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' > " + masked_file;
+	cmd = "cat " + contig_file;
+	if (masking) {
+		// NCBI's dustmasker identifies regions of low complexity.
+		cmd += "| dustmasker -outfmt fasta ";
+		// Sed command replaces lowercase atcg NOT in the header with capital Ns.
+		cmd += "| sed --line-length=0 -e '/^[^>]/s/[atcg]/N/g' ";
+		// AWK command converts FASTA to single-line.
+		cmd += "| awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }'";
+	}
+	if (end_search_length > 0) {
+		// A more complex AWK command will mask any base farther than end_search_length away from the ends of the contigs.
+		cmd += "| awk -v keeplength=" + int2str(end_search_length);
+		// Set the field separator to an empty string so that AWK can act on every character.
+		cmd += " 'BEGIN{FS=OFS=\"\"} ";
+		// If the line isn't a header line, change the middle characters into 'n's, then print the current (modified) line.
+		cmd += "!/^>/{for (i = keeplength + 1; i <= NF - keeplength; i++) $i=\"n\"} {print $0}' ";
+	}
+	cmd += "> " + masked_file;
+	logger->debug(cmd);
 	run_shell_command(cmd);
 }
 
@@ -563,12 +584,9 @@ string SRAssembler:: get_query_fasta_file_name_masked(int round){
 	if (round > 1){
 		// If we have passed the round to start assembling, use the assembled contig files as the query.
 		if (assembly_round < round) {
-			if (masking) {
-				string masked_fasta = get_contig_file_name(round-1) + ".masked";
-				return masked_fasta;
-			} else {
-				return  get_contig_file_name(round-1);
-			}
+			// Depending on masking options, this file may not actually be masked in any way.
+			string masked_fasta = get_contig_file_name(round-1) + ".masked";
+			return masked_fasta;
 		// If we are still waiting to assemble, use the collected reads as queries.
 		} else {
 			string joined_file = aux_dir + "/matched_reads_joined.fasta";
