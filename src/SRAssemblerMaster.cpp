@@ -477,6 +477,15 @@ void SRAssemblerMaster::do_walking() {
 				logger->info("The walking is terminated: The maximum round (" + int2str(num_rounds) + ") has been reached.");
 				break;
 			}
+			if (round > 1 && !cleaned) {
+				if (rounds_since_cleaning == clean_round) {
+					// Assembled contigs that don't have some degree of hit to the probe are removed.
+					remove_no_hit_contigs(round);
+					remove_unmapped_reads(round);
+					cleaned = true;
+					rounds_since_cleaning = 0;
+				}
+			}
 			// If we haven't yet found a contig that meets the required length, we try the next round.
 			if (longest_contig < min_contig_lgth) {
 				//RM HERE
@@ -485,7 +494,7 @@ void SRAssemblerMaster::do_walking() {
 				continue;
 			}
 
-			// do spliced alignment and remove the query sequences already assembled
+			// do spliced alignment and remove the probe sequences already assembled
 			if (round > 1 && check_gene_assembled){
 				string_map query_map = do_spliced_alignment(round);
 				//string_map query_map = this->get_spliced_aligner()->get_aligned_query_list();
@@ -511,22 +520,14 @@ void SRAssemblerMaster::do_walking() {
 						logger->info("The walking is terminated: All contigs have enough coverage and score.");
 						break;
 					}
-					// Assembled contigs that don't have some degree of hit to the query are removed.
+					// Assembled contigs that don't have some degree of hit to the remaining probes are removed.
 					remove_no_hit_contigs(round);
 					remove_unmapped_reads(round);
 					cleaned = true;
 					rounds_since_cleaning = 0;
 				}
 			}
-			if (round > 1 && !cleaned) {
-				if (rounds_since_cleaning == clean_round) {
-					// Assembled contigs that don't have some degree of hit to the query are removed.
-					remove_no_hit_contigs(round);
-					remove_unmapped_reads(round);
-					cleaned = true;
-					rounds_since_cleaning = 0;
-				}
-			}
+		// If not assembly round yet.
 		} else {
 			// Collect found reads into a file to be used as query in next round.
 			string joined_file = aux_dir + "/matched_reads_joined.fasta";
