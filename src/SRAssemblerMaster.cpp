@@ -18,7 +18,6 @@ int SRAssemblerMaster::init(int argc, char * argv[], int rank, int mpiSize) {
 	int ret = SRAssembler::init(argc, argv, rank, mpiSize);
 	if (ret == -1)
 		return ret;
-	best_hits.insert(make_pair("score", std::make_tuple(0, 0.0))); // <round, alignment score>
 	best_hits.insert(make_pair("coverage", std::make_tuple(0, 0.0))); // <round, coverage>
 	if (!get_aligner(Aligner::PROTEIN_ALIGNER)->is_available()) return -1;
 	if (!get_aligner(Aligner::DNA_ALIGNER)->is_available()) return -1;
@@ -53,7 +52,7 @@ void SRAssemblerMaster::get_query_list(){
 		while (getline(probe_file, line)){
 			if (line.substr(0,1) == ">"){
 				vector<string> tokens;
-				tokenize(line.substr(1), tokens, " ");
+				tokenize(line.substr(1), tokens, " 	");
 				query_list.push_back(tokens[0]);
 			}
 		}
@@ -477,6 +476,8 @@ void SRAssemblerMaster::do_walking() {
 				logger->info("The walking is terminated: The maximum round (" + int2str(num_rounds) + ") has been reached.");
 				break;
 			}
+			// If it is time to clean out useless contigs and reads, do so.
+			// This happens on a schedule based on the -b option, but can be disrupted by assembling too many contigs, or by restarting a previous round.
 			if (round > 1 && !cleaned) {
 				if (rounds_since_cleaning == clean_round) {
 					// Assembled contigs that don't have some degree of hit to the probe are removed.
@@ -498,7 +499,6 @@ void SRAssemblerMaster::do_walking() {
 			if (round > 1 && check_gene_assembled){
 				string_map query_map = do_spliced_alignment(round);
 				//string_map query_map = this->get_spliced_aligner()->get_aligned_query_list();
-				logger->debug("Best score so far is in round " + int2str(std::get<0>(best_hits["score"])) + " with score " + double2str(std::get<1>(best_hits["score"])) + ".");
 				logger->debug("Best coverage so far is in round " + int2str(std::get<0>(best_hits["coverage"])) + " with coverage " + double2str(std::get<1>(best_hits["coverage"])) + ".");
 				vector<string> contig_list;
 				BOOST_FOREACH(string_map::value_type item, query_map) {
@@ -857,7 +857,7 @@ void SRAssemblerMaster::process_long_contigs(int round, int k) {
 					out_long_contig << header << '\n' << seq << '\n';
 				else {
 					// If a contig meets the length minimum for searching it goes into this round's list of assembled contigs and is a query in the next round's search
-					if (seq.length() > this->ini_contig_size) {
+					if (seq.length() > this->query_contig_min) {
 						out_contig << header << '\n' << seq << '\n';
 					}
 					// If a contig exceed the maximum contig length, a substring is stored in the candidate file to check and see if it is assembled again next round.
@@ -879,7 +879,7 @@ void SRAssemblerMaster::process_long_contigs(int round, int k) {
 	if (long_contig_ids.find(tokens[0]) != long_contig_ids.end())
 		out_long_contig << header << '\n' << seq << '\n';
 	else {
-		if (seq.length() > this->ini_contig_size)
+		if (seq.length() > this->query_contig_min)
 			out_contig << header << '\n' << seq << '\n';
 		if (seq.length() > this->max_contig_lgth) {
 			out_candidate_contig << header << '\n' << seq.substr((seq.length() - max_contig_lgth) / 2,max_contig_lgth) << '\n';
@@ -1114,7 +1114,7 @@ void SRAssemblerMaster::create_folders(){
 void SRAssemblerMaster::remove_no_hit_contigs(int round){
 	logger->info("Removing contigs without hits ...");
 	string cmd;
-	string aligntype;
+	string alignment_type;
 	string contig_file = get_contig_file_name(round);
 	string contig_index = aux_dir + "/cindex";
 	run_shell_command("rm -f " + contig_index + "*");
@@ -1126,14 +1126,14 @@ run_shell_command("cp " + contig_file + " " + contig_file + ".beforeclean");
 	program_name += "_" + get_type(1) + "_vs_contigs";
 	Params params = get_parameters(program_name);
 	string out_file = aux_dir + "/query_vs_contig.round" + int2str(round) + ".vmatch";
-	if (this->type == "cdna") {
+	if (this->probe_type == "cdna") {
 		// The "reads" type alignment ensures that we keep the hit from the query (in this case, the contigs), not the index (the dna probe).
-		aligntype = "reads";
+		alignment_type = "reads";
 	} else {
-		aligntype = "protein";
+		alignment_type = "protein";
 	}
 	// Use the index of the probe_file (qindex) created in the first round.
-	aligner->do_alignment(aux_dir + "/qindex", aligntype, get_match_length(1), get_mismatch_allowed(1), contig_file, params, out_file);
+	aligner->do_alignment(aux_dir + "/qindex", alignment_type, get_match_length(1), get_mismatch_allowed(1), contig_file, params, out_file);
 	logger->debug("Removing contigs without hits against query sequences in round " + int2str(round));
 	cmd = "vseqselect -seqnum " + out_file + " " + contig_index + " | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' > " + contig_file;
 	logger->debug(cmd);
@@ -1147,7 +1147,6 @@ run_shell_command("cp " + contig_file + " " + contig_file + ".beforeclean");
 	aligner->create_index(contig_index, "dna", contig_file);
 }
 
-//TODO It may be better to apply this to MASKED contigs
 void SRAssemblerMaster::remove_unmapped_reads(int round){
 	logger->info("Removing found reads without matched contigs ...");
 	int from;

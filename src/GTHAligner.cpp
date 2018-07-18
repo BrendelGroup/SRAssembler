@@ -33,12 +33,15 @@ bool GTHAligner::is_available(){
 	return true;
 }
 
-void GTHAligner::do_spliced_alignment(const string& genomic_file, const string& type, const string& probe_file, const string& species, const Params& params, const string& output_file){
+void GTHAligner::do_spliced_alignment(const string& genomic_file, const string& query_type, const string& query_file, const string& species, const Params& params, const string& output_file){
 	string param_list = "";
 	for ( Params::const_iterator it = params.begin(); it != params.end(); ++it ){
 		param_list += " -" + it->first + " " + it->second;
 	}
-	string cmd = "gth -genomic " + genomic_file + " -" + type + " " + probe_file + " -species " + species + param_list + " > " + output_file;
+	string type_str = "cdna";
+	if (query_type == "protein")
+		type_str = "protein";
+	string cmd = "gth -genomic " + genomic_file + " -" + type_str + " " + query_file + " -species " + species + param_list + " > " + output_file;
 	logger->debug(cmd);
 	run_shell_command(cmd);
 }
@@ -208,7 +211,7 @@ void GTHAligner::get_hit_contigs(const double& min_score, const double& min_cove
 	new_contig_fs.close();
 }
 
-int GTHAligner::get_longest_match(int round, int k, const double& min_score, const unsigned int& ini_contig_size, const string& alignment_file, tuple_map& best_hits){
+int GTHAligner::get_longest_match(int round, int k, const double& min_score, const unsigned int& query_contig_min, const string& alignment_file, tuple_map& best_hits){
 	double best_coverage = std::get<1>(best_hits["coverage"]);
 	int best_length = 0;
 	ifstream alignment_fs(alignment_file.c_str());
@@ -243,7 +246,7 @@ int GTHAligner::get_longest_match(int round, int k, const double& min_score, con
 				}
 			}
 			// If this has a longer alignment length than seen before, update best_length.
-			if (str2double(score) > min_score && contig_length >= ini_contig_size && str2int(length) > best_length) {
+			if (str2double(score) > min_score && contig_length >= query_contig_min && str2int(length) > best_length) {
 				best_length = str2int(length);
 			}
 		}

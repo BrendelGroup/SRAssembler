@@ -21,13 +21,13 @@ Assembler::~Assembler() {
 
 
 // singleton implementation
-Assembler* Assembler::getInstance(int type, int log_level, string log_file){
-	if (type == ABYSS_ASSEMBLER){
+Assembler* Assembler::getInstance(int assembler_type, int log_level, string log_file){
+	if (assembler_type == ABYSS_ASSEMBLER){
 		if (assembler == NULL)
 			assembler = new AbyssAssembler(log_level, log_file);
 		return assembler;
 	}
-	if (type == SOAPDENOVO_ASSEMBLER){
+	if (assembler_type == SOAPDENOVO_ASSEMBLER){
 		if (assembler == NULL)
 			assembler = new SOAPDenovoAssembler(log_level, log_file);
 		return assembler;

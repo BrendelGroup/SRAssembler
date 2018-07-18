@@ -87,7 +87,7 @@ protected:
 	GeneFinder* get_gene_finder();
 	boost::unordered_map<std::string,Params> read_param_file();
 	Params get_parameters(string program_name);
-	std::string probe_file, species, type, out_dir;
+	std::string probe_file, species, probe_type, out_dir;
 	int init_match_length;
 	int recur_match_length;
 	int mismatch_allowed;
@@ -117,7 +117,7 @@ protected:
 	double min_coverage;
 	// A dictionary for tracking the best contigs found between rounds.
 	tuple_map best_hits;
-	unsigned int ini_contig_size;
+	unsigned int query_contig_min;
 	unsigned int min_contig_lgth;
 	unsigned int max_contig_lgth;
 	bool preprocessed_exist;

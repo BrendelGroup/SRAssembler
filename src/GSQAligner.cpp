@@ -35,7 +35,7 @@ bool GSQAligner::is_available(){
 	return true;
 }
 
-void GSQAligner::do_spliced_alignment(const string& genomic_file, const string& type, const string& probe_file, const string& species, const Params& params, const string& output_file){
+void GSQAligner::do_spliced_alignment(const string& genomic_file, const string& query_type, const string& query_file, const string& species, const Params& params, const string& output_file){
 	string param_list = "";
 	for ( Params::const_iterator it = params.begin(); it != params.end(); ++it ){
 		param_list += " -" + it->first + " " + it->second;
@@ -44,9 +44,9 @@ void GSQAligner::do_spliced_alignment(const string& genomic_file, const string& 
 	string species_str = species_names[species];
 	if (species_str == "")
 		species_str = "generic";
-	if (type == "protein")
+	if (query_type == "protein")
 		type_str = "Q";
-	string cmd = "GeneSeqer -L " + genomic_file + " -" + type_str + " " + probe_file + " -species " + species_str + " " + param_list + " -o " + output_file + " >> /dev/null 2>> " + logger->get_log_file();
+	string cmd = "GeneSeqer -L " + genomic_file + " -" + type_str + " " + query_file + " -species " + species_str + " " + param_list + " -o " + output_file + " >> /dev/null 2>> " + logger->get_log_file();
 	logger->debug(cmd);
 	run_shell_command(cmd);
 }
@@ -211,7 +211,7 @@ void GSQAligner::get_hit_contigs(const double& min_score, const double& min_cove
 	new_contig_fs.close();
 }
 
-int GSQAligner::get_longest_match(int round, int k, const double& min_score, const unsigned int& ini_contig_size, const string& alignment_file, tuple_map& best_hits){
+int GSQAligner::get_longest_match(int round, int k, const double& min_score, const unsigned int& query_contig_min, const string& alignment_file, tuple_map& best_hits){
 	double best_coverage = std::get<1>(best_hits["coverage"]);
 	int best_length = 0;
 	ifstream alignment_fs(alignment_file.c_str());
@@ -245,7 +245,7 @@ int GSQAligner::get_longest_match(int round, int k, const double& min_score, con
 				}
 			}
 			// If this has a longer alignment length than seen before, update best_length.
-			if (str2double(score) > min_score && contig_length >= ini_contig_size && str2int(length) > best_length) {
+			if (str2double(score) > min_score && contig_length >= query_contig_min && str2int(length) > best_length) {
 				best_length = str2int(length);
 			}
 		}

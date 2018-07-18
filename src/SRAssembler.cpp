@@ -40,7 +40,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 	out_dir = OUT_DIR;
 	data_dir = "";
 	mem_loc = "/dev/shm";
-	type = QUERY_TYPE;
+	probe_type = QUERY_TYPE;
 	assembler_program = ASSEMBLER_PROGRAM;
 	gene_finding_program = GENE_FINDING_PROGRAM;
 	spliced_alignment_program = SPLICED_ALIGNMENT_PROGRAM;
@@ -56,7 +56,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 	tidy = TIDY;
 	min_score = MIN_SCORE;
 	min_coverage = MIN_COVERAGE;
-	ini_contig_size = INI_CONTIG_SIZE;
+	query_contig_min = QUERY_CONTIG_MIN;
 	min_contig_lgth = MIN_CONTIG_LGTH;
 	max_contig_lgth = MAX_CONTIG_LGTH;
 	masking = MASKING;
@@ -101,7 +101,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 	usage.append("     'arabidopsis', 'maize', 'rice', 'medicago' [DEFAULT: " + DEFAULT_SPECIES + "].\n");
 	usage.append("-G: Ab initio gene finding program; options: 0=>None, 1=>Snap [Default: " + int2str(GENE_FINDING_PROGRAM) + "].\n");
 	usage.append("\n");
-	usage.append("-i: Initial contig size for chromosome walking [Default: " + int2str(INI_CONTIG_SIZE) + "].\n");
+	usage.append("-i: Initial and subsequent minimum contig size for chromosome walking [Default: " + int2str(QUERY_CONTIG_MIN) + "].\n");
 	usage.append("-m: Minimum contig length to be reported [Default: " + int2str(MIN_CONTIG_LGTH) + "].\n");
 	usage.append("-M: Maximum contig length to be reported [Default: " + int2str(MAX_CONTIG_LGTH) + "].\n");
 	usage.append("-e: Minimum spliced alignment score for hits [Default: " + double2str(MIN_SCORE) + "].\n");
@@ -164,7 +164,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 				return -1;
 				break;
 			case 'i':
-				ini_contig_size = str2int(optarg);
+				query_contig_min = str2int(optarg);
 				break;
 			case 'k': {
 				vector<string> tokens;
@@ -230,7 +230,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 				spliced_alignment_program = str2int(optarg);
 				break;
 			case 't':
-				type = optarg;
+				probe_type = optarg;
 				break;
 			case 'T':
 				mem_loc = optarg;
@@ -336,13 +336,13 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 		return -1;
 	}
 
-	if (type != TYPE_PROTEIN && type != TYPE_CDNA){
+	if (probe_type != TYPE_PROTEIN && probe_type != TYPE_CDNA){
 		print_message("-t must be 'protein' or 'cdna'");
 		return -1;
 	} else {
-		if (default_e && type == TYPE_CDNA)
+		if (default_e && probe_type == TYPE_CDNA)
 			mismatch_allowed = MISMATCH_ALLOWED_CDNA;
-		if (default_i && type == TYPE_CDNA)
+		if (default_i && probe_type == TYPE_CDNA)
 			init_match_length = INIT_MATCH_LENGTH_CDNA;
 	}
 	if (species != "human" && species != "mouse" && species != "rat" && species != "chicken" && species != "drosophila" && species != "nematode" && species != "fission_yeast" && species != "aspergillus" && species != "arabidopsis" && species != "maize" && species != "rice" && species != "medicago"){
@@ -621,7 +621,7 @@ int SRAssembler::do_alignment(int round, int lib_idx, int read_part) {
 	int new_read_count;
 
 	// Reads as queries are necessary when searching against a protein.
-	if (round == 1 && type == "protein") {
+	if (round == 1 && probe_type == "protein") {
 		aligner->do_alignment(get_contigs_index_name(round), get_type(round), get_match_length(round), get_mismatch_allowed(round), lib.get_split_file_name(read_part, LEFT_READ), params, get_vmatch_output_filename(round, lib_idx, read_part));
 		if (lib.get_paired_end())
 			aligner->do_alignment(get_contigs_index_name(round), get_type(round), get_match_length(round), get_mismatch_allowed(round), lib.get_split_file_name(read_part, RIGHT_READ), params, get_vmatch_output_filename(round, lib_idx, read_part));
@@ -650,7 +650,7 @@ void SRAssembler::do_spliced_alignment() {
 	SplicedAligner* spliced_aligner = get_spliced_aligner();
 	string program_name = spliced_aligner->get_program_name();
 	Params params = this->get_parameters(program_name);
-	spliced_aligner->do_spliced_alignment(this->final_contigs_file, type, this->probe_file, this->species, params, this->spliced_alignment_output_file);
+	spliced_aligner->do_spliced_alignment(this->final_contigs_file, this->probe_type, this->probe_file, this->species, params, this->spliced_alignment_output_file);
 	spliced_aligner->get_hit_contigs(min_score, min_coverage, min_contig_lgth, this->final_contigs_file, this->hit_contigs_file, this->spliced_alignment_output_file, this->best_hits);
 	logger->info("Done.");
 }
@@ -663,7 +663,7 @@ string_map SRAssembler::do_spliced_alignment(int round) {
 	string contig_file = get_contig_file_name(round);
 	string output_file = aux_dir + "/query-vs-contig_" + "r" + int2str(round) + ".aln";
 	string hit_file = aux_dir + "/hit_contigs_" + "r" + int2str(round) + ".fasta";
-	spliced_aligner->do_spliced_alignment(contig_file, type, this->probe_file, this->species, params, output_file);
+	spliced_aligner->do_spliced_alignment(contig_file, this->probe_type, this->probe_file, this->species, params, output_file);
 	string_map query_map = spliced_aligner->get_aligned_contigs(min_score, min_coverage, min_contig_lgth, contig_file, hit_file, output_file, round, best_hits);
 	//RM HERE
 	spliced_aligner->clean_files(contig_file);
@@ -680,8 +680,8 @@ int SRAssembler::do_spliced_alignment(int round, int k) {
 	string contig_file = this->get_assembly_file_name(round, k);
 	string output_file = this->get_spliced_alignment_file_name(round, k);
 	//aux_dir + "/query-vs-contig_" + "k" + int2str(k) + "_" + "r" + int2str(round) + ".aln";
-	spliced_aligner->do_spliced_alignment(contig_file, type, this->probe_file, this->species, params, output_file);
-	best_spliced_length = spliced_aligner->get_longest_match(round, k, min_score, ini_contig_size, output_file, best_hits);
+	spliced_aligner->do_spliced_alignment(contig_file, this->probe_type, this->probe_file, this->species, params, output_file);
+	best_spliced_length = spliced_aligner->get_longest_match(round, k, min_score, query_contig_min, output_file, best_hits);
 	//RM HERE
 	spliced_aligner->clean_files(contig_file);
 	logger->debug("Done with spliced alignment for round " + int2str(round) + ", k-mer " + int2str(k) + ".");
@@ -715,7 +715,7 @@ string SRAssembler::get_spliced_alignment_file_name(int round, int k){
 
 Aligner* SRAssembler::get_aligner(int round) {
 	int aligner_type = Aligner::DNA_ALIGNER;
-	if (round == 1 && type == "protein")
+	if (round == 1 && probe_type == "protein")
 		aligner_type = Aligner::PROTEIN_ALIGNER;
 	Aligner* aligner = Aligner::getInstance(aligner_type, logger->get_log_level(), logger->get_log_file());
 	return aligner;
@@ -742,11 +742,11 @@ void SRAssembler::create_index(int round) {
 	Aligner* aligner = get_aligner(round);
 	aligner->create_index(get_contigs_index_name(round), get_type(round), get_query_fasta_file_name_masked(round));
 	// This index is used during cleaning rounds, to find contigs that match the probe_file.
-	aligner->create_index(aux_dir + "/qindex", type, probe_file);
+	aligner->create_index(aux_dir + "/qindex", probe_type, probe_file);
 }
 
 string SRAssembler:: get_type(int round){
-   return (round == 1)? type: TYPE_CDNA;
+   return (round == 1)? probe_type: TYPE_CDNA;
 }
 
 int SRAssembler::get_match_length(int round){
@@ -822,7 +822,7 @@ Assembly_stats SRAssembler::get_assembly_stats(int round, int k) {
 	unsigned int contig_length = 0;
 	while (getline(contig_file, line)) {
 		if (line.substr(0,1) == ">") {
-			if (contig_length > ini_contig_size) {
+			if (contig_length > query_contig_min) {
 				lens.push_back(contig_length);
 				total_length += contig_length;
 				stats.total_contig++;
@@ -833,7 +833,7 @@ Assembly_stats SRAssembler::get_assembly_stats(int round, int k) {
 		} else
 			contig_length += line.length();
 	}
-	if (contig_length > ini_contig_size) {
+	if (contig_length > query_contig_min) {
 		total_length += contig_length;
 		stats.total_contig++;
 		lens.push_back(contig_length);

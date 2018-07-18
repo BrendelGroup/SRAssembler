@@ -92,7 +92,7 @@ void VmatchAligner::create_index(const string& index_name, const string& type, c
 /* This function APPENDS the sequence numbers of hits (usually reads) to the output_file.
  * This is suitable input for vseqselect to pull those hits out of the mkvtree index.
  */
-void VmatchAligner::do_alignment(const string& index_name, const string& type, int match_length, int mismatch_allowed, const string& query_file, const Params& params, const string& output_file) {
+void VmatchAligner::do_alignment(const string& index_name, const string& alignment_type, int match_length, int mismatch_allowed, const string& query_file, const Params& params, const string& output_file) {
 	// Are mismatches allowed by default? If not, empty string.
 	string e_option = "";
 	string l_option;
@@ -127,11 +127,11 @@ void VmatchAligner::do_alignment(const string& index_name, const string& type, i
 	 * AWK selects only the column containing the sequence number. It is column 2 for "proteins" and "reads" because in those cases reads are being used as queries, not subjects.
 	 * The results are sorted and each unique hit reported only once. This is not piped because the output_file may already have left reads in it.
 	 */
-	if (type == "protein" ) {
+	if (alignment_type == "protein" ) {
 		cmd = "vmatch -dnavsprot 1 -q " + query_file + " -d" + l_option + e_option + " " + param_list + " -nodist -noevalue -noscore -noidentity " + index_name + " | awk '$0 !~ /^#.*/ {print $6}' >> " + output_file + "; sort -nu " + output_file + " > " + tmpvmfile + "; \\mv " + tmpvmfile + " " + output_file;
-	} else if (type == "cdna" ) {
+	} else if (alignment_type == "cdna" ) {
 		cmd = "vmatch -q " + query_file + " -d -p" + l_option + e_option + " " + param_list + " -nodist -noevalue -noscore -noidentity " + index_name + " | awk '$0 !~ /^#.*/ {print $2}' >> " + output_file + "; sort -nu " + output_file + " > " + tmpvmfile + "; \\mv " + tmpvmfile + " " + output_file;
-	} else if (type == "reads") {
+	} else if (alignment_type == "reads") {
 		cmd = "vmatch -q " + query_file + " -d -p" + l_option + e_option + " " + param_list + " -nodist -noevalue -noscore -noidentity " + index_name + " | awk '$0 !~ /^#.*/ {print $6}' >> " + output_file + "; sort -nu " + output_file + " > " + tmpvmfile + "; \\mv " + tmpvmfile + " " + output_file;
 	}
 	logger->debug(cmd);
