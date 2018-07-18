@@ -8,7 +8,7 @@
 #include "SplicedAligner.h"
 #include "GTHAligner.h"
 #include "GSQAligner.h"
-#include "ExonerateAligner.h"
+//#include "ExonerateAligner.h"
 
 SplicedAligner* SplicedAligner::spliced_aligner = NULL;
 
