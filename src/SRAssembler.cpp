@@ -37,7 +37,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 	fastq_format = FASTQ_INTERLEAVED;
 	out_dir = OUT_DIR;
 	data_dir = "";
-	mem_loc = "/dev/shm";
+	tmp_loc = TMP_LOC;
 	probe_type = QUERY_TYPE;
 	assembler_program = ASSEMBLER_PROGRAM;
 	gene_finding_program = GENE_FINDING_PROGRAM;
@@ -76,9 +76,9 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 	usage.append("\n");
 	usage.append("-q: Required; FASTA-formatted query file.\n");
 	usage.append("-t: Query file type; options: 'protein', 'dna' [Default: " + QUERY_TYPE + "].\n");
-	usage.append("-p: Required; SRAssembler parameter configuration file.\n");
-	usage.append("-o: SRAssembler output directory [Default: current directory].\n");
-	usage.append("-T: directory for temporary file storage [Default: /dev/shm].\n");
+	usage.append("-p: Required unless pre-processing only; SRAssembler parameter configuration file.\n");
+	usage.append("-o: SRAssembler output directory [Default: " + OUT_DIR + "].\n");
+	usage.append("-T: directory for temporary file storage [Default: " + TMP_LOC + "].\n");
 	usage.append("\n");
 	usage.append("-l: Required if the -1 option is not used; sequencing reads library file.\n");
 	usage.append("-1: Required if the -l option is not used; use this option to specify the single-end reads file\n");
@@ -86,7 +86,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 	usage.append("-2: Right-end reads file for paired-end reads.\n");
 	usage.append("-z: Insert size of the paired-end reads [Default: " + int2str(INSERT_SIZE) + "].\n");
 	usage.append("-x: Number of reads per pre-preprocessed reads file [Default: " + int2str(READS_PER_FILE) + "].\n");
-	usage.append("-r: Directory in which to store or from which to retrieve the pre-processed reads [Default: output directory/" + READS_DATA + "].\n");
+	usage.append("-r: Directory in which to store or from which to retrieve the pre-processed reads [Default: output_directory/" + READS_DATA + "].\n");
 	usage.append("-P: Run the read pre-processing step only, then terminate SRAssembler.\n");
 	usage.append("\n");
 	usage.append("-A: Assembler program choice; options: 0=>SOAPdenovo2, 1=>ABySS [Default: " + int2str(ASSEMBLER_PROGRAM) + "].\n");
@@ -231,7 +231,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 				probe_type = optarg;
 				break;
 			case 'T':
-				mem_loc = optarg;
+				tmp_loc = optarg;
 				break;
 			case 'v':
 				verbose = true;
@@ -269,9 +269,13 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 	if (data_dir == "")
 		data_dir = out_dir + "/" + READS_DATA;
 	preprocessed_exist = file_exists(data_dir);
-	results_dir = out_dir + "/output";
+	results_dir = out_dir + "/results";
 	intermediate_dir = results_dir + "/intermediates";
-	log_file = results_dir + "/msg.log";
+	if (preprocessing_only){
+		log_file = data_dir + "/msg.log";
+	} else {
+		log_file = results_dir + "/msg.log";
+	}
 	spliced_alignment_output_file = results_dir + "/output.aln";
 	gene_finding_output_file = results_dir + "/output.ano";
 	gene_finding_output_protein_file = results_dir + "/snap.predicted.prot";
@@ -284,16 +288,17 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 		level = Logger::LEVEL_DEBUG;
 	logger = Logger::getInstance(level, log_file);
 
+	// Check for missing or illegal options.
 
-	if (param_file != ""){
-		if (!file_exists(param_file)){
-			print_message("Parameter file : " + param_file + " does not exist!");
-			return -1;
-		} else {
-		parameters_dict = read_param_file();
-		}
-	} else {
-		print_message("Parameter file required!");
+	// Create/confirm the existence of the output directory.
+	run_shell_command("mkdir -p " + out_dir);
+	if (!file_exists(out_dir)){
+		print_message("output directory: " + out_dir + " cannot be created!");
+		return -1;
+	}
+
+	if (reads_per_file <= 1000){
+		print_message("-x value is not valid or too small");
 		return -1;
 	}
 
@@ -324,13 +329,31 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 		this->libraries.push_back(lib);
 	}
 
-	// Check missing options.
-	if (num_rounds <= 0){
-		print_message("-n must be larger than 0");
+	// If we're only preprocessing, we don't need the rest of the checks.
+	if (preprocessing_only){
+		return 0;
+	}
+
+	// Confirm the existence of the probe file.
+	if (!file_exists(probe_file)){
+		print_message("query file: " + probe_file + " does not exist!");
 		return -1;
 	}
-	if (reads_per_file <= 1000){
-		print_message("-x value is not valid or too small");
+
+	if (param_file != ""){
+		if (!file_exists(param_file)){
+			print_message("Parameter file : " + param_file + " does not exist!");
+			return -1;
+		} else {
+		parameters_dict = read_param_file();
+		}
+	} else {
+		print_message("Parameter file required!");
+		return -1;
+	}
+
+	if (num_rounds <= 0){
+		print_message("-n must be larger than 0");
 		return -1;
 	}
 
@@ -349,17 +372,6 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 	}
 	if (!k_format){
 		print_message("-k format error. The format is : start_k:interval:end_k. The start_k and end_k must be odd values, and the interval must be an even value.");
-		return -1;
-	}
-	// Confirm the existence of query file.
-	if (!preprocessing_only && !file_exists(probe_file)){
-		print_message("query file: " + probe_file + " does not exist!");
-		return -1;
-	}
-
-	run_shell_command("mkdir -p " + out_dir);
-	if (!file_exists(out_dir)){
-		print_message("output directory: " + out_dir + " cannot be created!");
 		return -1;
 	}
 
@@ -503,7 +515,6 @@ void SRAssembler::preprocess_read_part(int lib_idx, int read_part){
 		right_read_file = lib.get_split_read_prefix(lib.get_right_read()) + suffix;
 	// Create the Vmatch mkvtree indexes.
 	Aligner* aligner = get_aligner(0);  // Round 0 means DNA Aligner
-	// Creating both indices in one function is not maximally efficient when using a lot of processors, but it's not terrible.
 	aligner->create_index(lib.get_read_part_index_name(read_part, LEFT_READ), "dna", left_read_file);
 	if (lib.get_paired_end())
 		aligner->create_index(lib.get_read_part_index_name(read_part, RIGHT_READ), "dna", right_read_file);
@@ -551,7 +562,6 @@ string SRAssembler:: get_query_fasta_file_name(int round){
 }
 
 void SRAssembler::mask_contigs(int round){
-	// TODO Add a sed command to mask the middle of assembled contigs so we only look for reads that extend the ends.
 	string cmd;
 	string contig_file;
 	contig_file = get_contig_file_name(round);
@@ -759,7 +769,7 @@ int SRAssembler::get_mismatch_allowed(int round) {
 }
 
 string SRAssembler::get_vmatch_output_filename(int round, int lib_idx, int read_part){
-	return mem_dir + "/vmatch_" + "r" + int2str(round) + "_" + "lib" + int2str(lib_idx+1) + "_" + "part" + int2str(read_part);
+	return tmp_dir + "/vmatch_" + "r" + int2str(round) + "_" + "lib" + int2str(lib_idx+1) + "_" + "part" + int2str(read_part);
 }
 
 void SRAssembler::merge_mapped_files(int round){

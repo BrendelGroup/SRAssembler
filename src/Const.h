@@ -60,10 +60,11 @@ static const int OVER_WRITE = 0;
 static const int CHECK_GENE_ASSEMBLED = 1;
 static const std::string TYPE_PROTEIN = "protein";
 static const std::string TYPE_DNA = "dna";
-static const std::string READS_DATA = "reads_data";
+static const std::string READS_DATA = "processed_reads";
 static const std::string QUERY_TYPE = TYPE_PROTEIN;
 static const std::string DEFAULT_SPECIES = "arabidopsis";
-static const std::string OUT_DIR = ".";
+static const std::string OUT_DIR = "./output";
+static const std::string TMP_LOC = "/dev/shm";
 typedef boost::unordered_map<std::string,std::string> Params;
 
 

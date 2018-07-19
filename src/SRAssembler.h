@@ -122,8 +122,8 @@ protected:
 	bool ignore_contig_explosion;
 	std::string library_file;
 	std::string aux_dir;
-	std::string mem_dir;
-	std::string mem_loc;
+	std::string tmp_dir;
+	std::string tmp_loc;
 	std::string intermediate_dir;
 	std::string data_dir;
 	std::string results_dir;

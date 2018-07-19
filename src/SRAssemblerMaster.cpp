@@ -31,10 +31,13 @@ int SRAssemblerMaster::init(int argc, char * argv[], int rank, int mpiSize) {
 		command.append(argv[i]).append(" ");
 	}
 	logger->info(command);
-	// Add to the msg.log the Parameters file contents for reproducibility.
-	cmd = "cat " + param_file + " >> " + logger->get_log_file();
-	logger->debug(cmd);
-	run_shell_command(cmd);
+	if (!preprocessing_only){
+		// Add to the msg.log the Parameters file contents for reproducibility.
+		logger->debug("Parameter file contents:");
+		cmd = "cat " + param_file + " >> " + logger->get_log_file();
+		logger->debug(cmd);
+		run_shell_command(cmd);
+	}
 	output_header();
 	output_libraries();
 	get_query_list();
@@ -71,7 +74,7 @@ void SRAssemblerMaster::output_libraries(){
 	output_content += "<B>Library\t\tInsert size\tPaired\treads</B>\n";
 	output_content += "------------------------------------------------------------------------------\n";
 	output_content += "<table border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"22\">";
-	logger->info("We got " + int2str(libraries.size()) + " libraries");
+	logger->info("We have " + int2str(libraries.size()) + " libraries");
 	for (unsigned int i=0;i<this->libraries.size();i++){
 		logger->info("library " + int2str(i+1) + " :");
 		logger->info("insert size: " + int2str(libraries[i].get_insert_size()));
@@ -263,13 +266,13 @@ int SRAssemblerMaster::get_start_round(){
 			if (found_previous) {
 				int procID=getpid();
 				broadcast_code(ACTION_MEMDIR, 0, procID, 0);
-				// Make sure there is a mem_dir.
-				this->mem_dir = this->mem_loc + "/SRAssemblermem" + int2str(procID);
-				string cmd = "\\rm -rf " + mem_dir + "; mkdir " + mem_dir;
+				// Make sure there is a tmp_dir.
+				this->tmp_dir = this->tmp_loc + "/SRAssemblermem" + int2str(procID);
+				string cmd = "\\rm -rf " + tmp_dir + "; mkdir " + tmp_dir;
 				logger->debug(cmd);
 				run_shell_command(cmd);
-				// Make sure that the existence of the mem_dir is obvious in case of disrupted run.
-				cmd = "ln --symbolic --target-directory=" + out_dir + " " + mem_dir;
+				// Make sure that the existence of the tmp_dir is obvious in case of disrupted run.
+				cmd = "ln --symbolic --target-directory=" + out_dir + " " + tmp_dir;
 				logger->debug(cmd);
 				run_shell_command(cmd);
 				// Make sure the query is indexed for cleaning rounds.
@@ -312,9 +315,6 @@ void SRAssemblerMaster::do_walking() {
 	if (preprocessing_only) {
 		logger->info("Do pre-processing of reads only. The chromosome walking is skipped.");
 		broadcast_code(ACTION_EXIT, 0, 0, 0);
-		// RM here
-		// Remove the unnecessary mem_dir and symlink reminder.
-		run_shell_command("rm -rf " + out_dir + "/" + get_file_name(mem_dir) + " " + mem_dir);
 		return;
 	}
 
@@ -585,8 +585,8 @@ void SRAssemblerMaster::do_walking() {
 	outFile << output_content << endl;
 	outFile.close();
 	// RM HERE
-	// Now that we're done, clean up unneccessary temporary files and the link to the mem_dir
-	string cmd = "rm -rf " + probe_file + ".* " + aux_dir + "/qindex.* " + aux_dir + "/cindex.* " + out_dir + "/" + get_file_name(mem_dir) + " " + mem_dir;
+	// Now that we're done, clean up unneccessary temporary files and the link to the tmp_dir
+	string cmd = "rm -rf " + probe_file + ".* " + aux_dir + "/qindex.* " + aux_dir + "/cindex.* " + out_dir + "/" + get_file_name(tmp_dir) + " " + tmp_dir;
 	logger->debug(cmd);
 	run_shell_command(cmd);
 }
@@ -1072,24 +1072,25 @@ void SRAssemblerMaster::create_folders(){
 		cmd = "mkdir -p " + dir;
 		run_shell_command(cmd);
 	}
-	cmd = "mkdir " + results_dir;
-	run_shell_command(cmd);
-	cmd = "mkdir " + intermediate_dir;
-	run_shell_command(cmd);
-	cmd = "mkdir " + aux_dir;
+	// If pre-processing only, don't bother making useless directories.
+	if (preprocessing_only){
+		return;
+	}
+
+	cmd = "mkdir " + results_dir + " " + intermediate_dir + " " + aux_dir;
 	run_shell_command(cmd);
 
 	// Set unique directory for temporary files, ideally stored in RAM (/dev/shm).
 	// If the run is disrupted, these files will remain until a computer reboot, potentially slowing down the computer.
 	int procID=getpid();
 	broadcast_code(ACTION_MEMDIR, 0, procID, 0);
-	this->mem_dir = this->mem_loc + "/SRAssemblermem" + int2str(procID);
+	this->tmp_dir = this->tmp_loc + "/SRAssemblermem" + int2str(procID);
 	// If a disrupted run left a conflicting file behind, it should be removed first.
-	cmd = "\\rm -rf " + mem_dir + "; mkdir " + mem_dir;
+	cmd = "\\rm -rf " + tmp_dir + "; mkdir " + tmp_dir;
 	logger->debug(cmd);
 	run_shell_command(cmd);
-	// Make sure that the existence of the mem_dir is obvious in case of disrupted run.
-	cmd = "ln --symbolic --target-directory=" + out_dir + " " + mem_dir;
+	// Make sure that the existence of the tmp_dir is obvious in case of disrupted run.
+	cmd = "ln --symbolic --target-directory=" + out_dir + " " + tmp_dir;
 	logger->debug(cmd);
 	run_shell_command(cmd);
 }

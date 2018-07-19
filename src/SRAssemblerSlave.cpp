@@ -84,7 +84,7 @@ void SRAssemblerSlave::process_message(){
 		}
 		if (action == ACTION_MEMDIR){
 			// Slaves need to know where the shared directory for storing temporary files is.
-			this->mem_dir = this->mem_loc + "/SRAssemblermem" + int2str(value2);
+			this->tmp_dir = this->tmp_loc + "/SRAssemblermem" + int2str(value2);
 		}
 		if (action == ACTION_SAVE){
 			// Save any reads found by this Slave in case this SRAssembler run is started again.

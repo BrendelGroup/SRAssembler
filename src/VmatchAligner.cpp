@@ -42,7 +42,7 @@ int VmatchAligner::parse_output(const string& output_file, unordered_set<string>
 	string part_string = int2str(read_part);
 	string lib_string = int2str(lib_idx);
 	string tmpvseqselectfile = out_left_read + "-tmp";
-	// TODO put the temporary file in mem_dir
+	// TODO put the temporary file in tmp_dir
 	ofstream tmp_file_stream(tmpvseqselectfile.c_str());
 
 	while (getline(report_file_stream, line)) {
