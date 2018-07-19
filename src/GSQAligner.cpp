@@ -53,7 +53,7 @@ void GSQAligner::do_spliced_alignment(const string& genomic_file, const string& 
 
 string_map GSQAligner::get_aligned_contigs(const double& min_score, const double& min_coverage, const unsigned int& min_contig_lgth, const string& all_contig_file, const string& hit_contig_file, const string& alignment_file, const int round, tuple_map& best_hits){
 // This is for each round, to see if the ending criteria have been met.
-//TODO this can probably be combined with the spliced alignment of each k-mer size, rather than being done again after the best kmer is chosen.
+// TODO this can probably be combined with the spliced alignment of each k-mer size, rather than being done again after the best kmer is chosen.
 	double best_coverage = std::get<1>(best_hits["coverage"]);
 	ifstream old_contig_fs(all_contig_file.c_str());
 	ifstream alignment_fs(alignment_file.c_str());
@@ -190,7 +190,7 @@ void GSQAligner::get_hit_contigs(const double& min_score, const double& min_cove
 
 	if (best_coverage > final_high_coverage) {
 		logger->warn("Contig with better coverage found in round " + int2str(std::get<0>(best_hits["coverage"])));
-		//TODO Maybe run spliced aligner on contigs from this round?
+		// TODO Maybe run spliced aligner on contigs from this round?
 	}
 	output_string += "\nLength: cumulative length of scored exons\nCov G/P/C: coverage of contig (G) or cDNA (C) or protein (P), whichever is highest";
 	alignment_fs.close();

@@ -52,7 +52,6 @@ private:
 	string summary_max;
 	string summary_total;
 	string summary_best;
-	//vector<string> long_contigs;
 	vector<string> query_list;
 };
 

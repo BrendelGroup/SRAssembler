@@ -8,7 +8,6 @@
 #include "SplicedAligner.h"
 #include "GTHAligner.h"
 #include "GSQAligner.h"
-//#include "ExonerateAligner.h"
 
 SplicedAligner* SplicedAligner::spliced_aligner = NULL;
 
@@ -42,10 +41,5 @@ SplicedAligner* SplicedAligner::getInstance(int type, int log_level, string log_
 			spliced_aligner = new GSQAligner(log_level, log_file);
 		return spliced_aligner;
 	}
-//	if (type == SplicedAligner::EXONERATE){
-//		if (spliced_aligner == NULL)
-//			spliced_aligner = new ExonerateAligner(log_level, log_file);
-//		return spliced_aligner;
-//	}
 	return NULL;
 }

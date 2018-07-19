@@ -14,7 +14,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
-#include <sys/stat.h> //stat, stat()
+#include <sys/stat.h> // stat, stat()
 
 using namespace std;
 
@@ -132,8 +132,7 @@ int randgen(int XMin, int XMax){
 bool file_exists(const char* filename) {
 	struct stat info;
 	int ret = -1;
-
-	//get the file attributes
+	// Get the file attributes.
 	ret = stat(filename, &info);
 	return (ret == 0);
 }
@@ -143,7 +142,7 @@ bool file_exists(const string& filename) {
 
 long get_file_size(const char* filename) {
 	struct stat info;
-	//get the file attributes
+	// Get the file attributes.
 	stat(filename, &info);
 	return info.st_size;
 }
@@ -204,13 +203,13 @@ string string_format(const string fmt, ...) {
 void remove_duplicate_reads(const string& filename, int read_format) {
 	if (read_format == FORMAT_FASTA) {
 		string tmp_file = filename + ".tmp";
-		//TODO this does not return them in order
+		// TODO this does not return them in order
 		string cmd = "awk '$0 ~ /^>/ && !seen[$0] {getline seq; seen[$0]=seq;} END {for (read in seen) {print read; print seen[read];}}' " + filename + " > " + tmp_file;
 		run_shell_command(cmd);
 		run_shell_command("cp " + tmp_file + " " + filename);
 		run_shell_command("rm " + tmp_file);
 	}
-	//TODO make this more efficient as above, or possibly remove.
+	// TODO make this more efficient as above, or possibly remove.
 	else {
 		boost::unordered_set<string> found_reads;
 		string tmp_file = filename + ".tmp";

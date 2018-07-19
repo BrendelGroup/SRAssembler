@@ -31,7 +31,6 @@ public:
 	int get_match_num();
 	static const int GENESEQER = 0;
 	static const int GENOMETHREADER = 1;
-	//static const int EXONERATE = 2;
 	static SplicedAligner* getInstance(int, int, string);
 	void set_log_file(std::string log_file);
 protected:

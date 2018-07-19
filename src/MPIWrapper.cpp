@@ -48,33 +48,35 @@ void mpi_receive( char* msg, int& from ) {
 	msg[len] = '\0';
 #endif
 }
+
 void mpi_send( const long long& code_value, const int& to ) {
 #ifdef MPIMODE
 	MPI::COMM_WORLD.Send( &code_value, 1,   MPI::LONG_LONG_INT,  to, ( int )1 );
 #endif
 }
+
 void mpi_bcast(const long long& code_value) {
 	int mpiSize = mpi_get_size();
 	int rank = mpi_get_rank();
 	for (int i=0;i<mpiSize;i++)
 		if (rank != i)
 			mpi_send(code_value, i);
-	//MPI::COMM_WORLD.Bcast( &code, 1,   MPI::INT, 0);
 }
+
 void mpi_receive( long long& code_value, int& from ) {
-//std::cerr << "Receiving MPI code_value: " << code_value << " at rank " << mpi_get_rank() << "\n";
 #ifdef MPIMODE
 	MPI::Status status;
-
 	MPI::COMM_WORLD.Recv( &code_value, 1, MPI::LONG_LONG_INT, MPI::ANY_SOURCE,MPI::ANY_TAG,  status );
 	from = ( ( int )status.Get_source(  ) );
 #endif
 }
+
 void mpi_init(int argc, char * argv[] ) {
 #ifdef MPIMODE
 	MPI::Init(argc,argv);
 #endif
 }
+
 int mpi_get_rank(){
 #ifdef MPIMODE
 	return MPI::COMM_WORLD.Get_rank();
@@ -82,6 +84,7 @@ int mpi_get_rank(){
 	return 0;
 #endif
 }
+
 int mpi_get_size(){
 #ifdef MPIMODE
 	return MPI::COMM_WORLD.Get_size();
@@ -89,6 +92,7 @@ int mpi_get_size(){
 	return 1;
 #endif
 }
+
 void mpi_finalize(){
 #ifdef MPIMODE
 	MPI::Finalize();

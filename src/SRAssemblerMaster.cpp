@@ -9,7 +9,6 @@
 
 SRAssemblerMaster::SRAssemblerMaster() {
 	// TODO Auto-generated constructor stub
-	//cerr << "SRAssemblerMaster constructed." << endl ;
 }
 
 int SRAssemblerMaster::init(int argc, char * argv[], int rank, int mpiSize) {
@@ -80,7 +79,6 @@ void SRAssemblerMaster::output_libraries(){
 		logger->info("right read: " + libraries[i].get_right_read());
 		logger->info("reversed: " + int2str(libraries[i].get_reversed()));
 		logger->info("Paired-end: " + int2str(libraries[i].get_paired_end()));
-		//output_content += "<tr><td bgcolor=\"#000000\">" + int2str(i+1) + "</td><td bgcolor=\"#000000\">" + int2str(libraries[i].get_insert_size()) + "</td><td bgcolor=\"#000000\">" + libraries[i].get_left_read() + "</td><td bgcolor=\"#000000\">" + libraries[i].get_right_read() + "</td></tr>";
 		output_content += "<tr><td bgcolor=\"#ffffff\"><pre>\n";
 		output_content += int2str(i+1) + "\t\t" + int2str(libraries[i].get_insert_size()) + "\t\t" + int2str(libraries[i].get_paired_end()) + "\t" + libraries[i].get_left_read() + "," + libraries[i].get_right_read() + "\n";
 		output_content += "</td></tr>";
@@ -139,8 +137,6 @@ void SRAssemblerMaster::output_summary(int round){
 }
 
 void SRAssemblerMaster::output_spliced_alignment(){
-	//output_content += summary_best + "\nN50:\n\n" + title + summary_n50 + "\n\nN90:\n\n" + title + summary_n90 + "\n\nLongest contig length:\n\n" + title + summary_max + "\n\nTotal contigs:\n\n" + title + summary_total + "\n\n";
-	//output_content += "\n<Spliced alignment summary>\n";
 	SplicedAligner* spliced_aligner = get_spliced_aligner();
 	output_content += "</PRE><H3>Spliced alignment - " + spliced_aligner->get_program_name() + "</H3><HR>";
 	output_content += "<PRE>\n";
@@ -185,11 +181,8 @@ void SRAssemblerMaster::do_preprocessing(){
 		lib->set_num_parts(1);
 		// Test if split files have been generated.
 		if (file_exists(lib->get_split_file_name(1, LEFT_READ))){
-			//long library_read_count = get_read_count(lib->get_left_read(), lib->get_format()) + get_read_count(lib->get_right_read(), lib->get_format());
-			//long split_read_count = count_preprocessed_reads(lib_index);
-			//logger->debug("split_read_count: " + int2str(split_read_count));
 			lib->set_num_parts(get_file_count(lib->get_split_read_prefix(lib->get_left_read()) + "*.fasta"));
-			// Test if split reads have been indexed.
+			// Test if split reads have been indexed by looking for the final index file that we expect to exist from the left reads.
 			if (file_exists(lib->get_read_part_index_name(lib->get_num_parts(), LEFT_READ) + ".skp")){
 				logger->info("Using previously split files for read library " + int2str(lib_index+1));
 				broadcast_code(ACTION_TOTAL_PARTS, lib_index, lib->get_num_parts(), 0);
@@ -197,10 +190,11 @@ void SRAssemblerMaster::do_preprocessing(){
 			}
 		}
 		logger->info("Splitting read library " + int2str(lib_index+1) + " ...");
-		cmd = "rm -f " + data_dir + "/lib" + int2str(lib_index+1) + "/" + get_file_base_name(lib->get_left_read()) + "* " + data_dir + "/lib" + int2str(lib_index+1) + "/" + get_file_base_name(lib->get_right_read()) + "*"; //delete old files
-		//logger->debug(cmd);
+		// RM here
+		// Remove any pre-existing files in case of an incomplete earlier pre-processing.
+		cmd = "rm -f " + data_dir + "/lib" + int2str(lib_index+1) + "/" + get_file_base_name(lib->get_left_read()) + "* " + data_dir + "/lib" + int2str(lib_index+1) + "/" + get_file_base_name(lib->get_right_read()) + "*";
 		run_shell_command(cmd);
-		// 'from' variable is for identifying where an MPI message came from.
+		// TODO 'from' variable is for identifying where an MPI message came from.
 		int from;
 		int part = 0;
 		long long code_value;
@@ -213,7 +207,6 @@ void SRAssemblerMaster::do_preprocessing(){
 			mpi_receive(code_value, from);
 		}
 		else {
-			//'LEFT_READ' and 'RIGHT_READ' are constants
 			lib->do_split_files(LEFT_READ, this->reads_per_file);
 			if (lib->get_paired_end())
 				lib->do_split_files(RIGHT_READ, this->reads_per_file);
@@ -319,7 +312,7 @@ void SRAssemblerMaster::do_walking() {
 	if (preprocessing_only) {
 		logger->info("Do pre-processing of reads only. The chromosome walking is skipped.");
 		broadcast_code(ACTION_EXIT, 0, 0, 0);
-		//RM here
+		// RM here
 		// Remove the unnecessary mem_dir and symlink reminder.
 		run_shell_command("rm -rf " + out_dir + "/" + get_file_name(mem_dir) + " " + mem_dir);
 		return;
@@ -441,7 +434,7 @@ void SRAssemblerMaster::do_walking() {
 					if (contig_count > contig_limit) {
 						logger->info("The walking is terminated: " + int2str(contig_count) + " contigs produced in round " + int2str(round) + ". This is too many to be a good run. Consider adjusting parameters such as Vmatch_protein_vs_contigs or increasing -i initial_contig_min. You can also rerun with the -d 0 argument to ignore contig numbers.");
 						broadcast_code(ACTION_EXIT, 0, 0, 0);
-						//RM HERE
+						// RM HERE
 						clean_tmp_files(round-1);
 						return;
 					}
@@ -489,7 +482,7 @@ void SRAssemblerMaster::do_walking() {
 			}
 			// If we haven't yet found a contig that meets the required length, we try the next round.
 			if (longest_contig < min_contig_lgth) {
-				//RM HERE
+				// RM HERE
 				clean_tmp_files(round-1);
 				round++;
 				continue;
@@ -498,7 +491,6 @@ void SRAssemblerMaster::do_walking() {
 			// do spliced alignment and remove the probe sequences already assembled
 			if (round > 1 && check_gene_assembled){
 				string_map query_map = do_spliced_alignment(round);
-				//string_map query_map = this->get_spliced_aligner()->get_aligned_query_list();
 				logger->debug("Best coverage so far is in round " + int2str(std::get<0>(best_hits["coverage"])) + " with coverage " + double2str(std::get<1>(best_hits["coverage"])) + ".");
 				vector<string> contig_list;
 				BOOST_FOREACH(string_map::value_type item, query_map) {
@@ -552,12 +544,12 @@ void SRAssemblerMaster::do_walking() {
 				break;
 			}
 		}
-		//RM HERE
+		// RM HERE
 		clean_tmp_files(round-1);
 		round++;
 	}
 	// Walking ends.
-	//RM HERE
+	// RM HERE
 	clean_tmp_files(round-1);
 	// If this round has not been assembled yet, do assembling.
 	if ( ! assembled && assembly_round > round){
@@ -582,7 +574,7 @@ void SRAssemblerMaster::do_walking() {
 	}
 	do_spliced_alignment();
 	do_gene_finding();
-	//RM HERE
+	// RM HERE
 	this->get_spliced_aligner()->clean_files(this->final_contigs_file);
 	output_summary(round);
 	output_spliced_alignment();
@@ -592,7 +584,7 @@ void SRAssemblerMaster::do_walking() {
 	ofstream outFile(summary_file.c_str());
 	outFile << output_content << endl;
 	outFile.close();
-	//RM HERE
+	// RM HERE
 	// Now that we're done, clean up unneccessary temporary files and the link to the mem_dir
 	string cmd = "rm -rf " + probe_file + ".* " + aux_dir + "/qindex.* " + aux_dir + "/cindex.* " + out_dir + "/" + get_file_name(mem_dir) + " " + mem_dir;
 	logger->debug(cmd);
@@ -602,35 +594,28 @@ void SRAssemblerMaster::do_walking() {
 void SRAssemblerMaster::clean_tmp_files(int round){
 	if (round == 0) return;
 	if (!tidy) return;
-	//else: remove data of previous round
+	// Remove unneccessary files from the previous round.
 	string cmd;
-	// We don't need to remove vmatch files, they are now kept in mem_dir
-	//cmd = "rm -f " + aux_dir + "/vmatch_" + "r" + int2str(round) + "_*";
-	//logger->debug(cmd);
+	// TODO make into one command to run.
 	run_shell_command(cmd);
 	cmd = "rm -f " + aux_dir + "/matched_reads_left_" + "r" + int2str(round) + "_part*";
-	//logger->debug(cmd);
 	run_shell_command(cmd);
 	cmd = "rm -f " + aux_dir + "/matched_reads_right_" + "r" + int2str(round) + "_part*";
-	//logger->debug(cmd);
 	run_shell_command(cmd);
 	cmd = "rm -f " + aux_dir + "/matched_reads_" + "r" + int2str(round) + "_*";
-	//logger->debug(cmd);
 	run_shell_command(cmd);
 	cmd = "rm -f " + aux_dir + "/query-vs-contig_" + "r" + int2str(round) + ".*";
-	//logger->debug(cmd);
 	run_shell_command(cmd);
 	cmd = "rm -f " + aux_dir + "/hit_contigs_" +"r" + int2str(round) + ".*";
-	//logger->debug(cmd);
 	run_shell_command(cmd);
 	cmd = "rm -f " + aux_dir + "/long_contig_candidate_" + "r" + int2str(round) + ".*";
-	//logger->debug(cmd);
+	logger->debug(cmd);
 	run_shell_command(cmd);
 }
 
 void SRAssemblerMaster::save_query_list(){
 	string fn = aux_dir + "/query_list";
-	//RM HERE
+	// RM HERE
 	run_shell_command("rm -rf " + fn);
 	if (query_list.size() > 0){
 		ofstream fs(fn.c_str());
@@ -656,7 +641,7 @@ void SRAssemblerMaster::load_saved_contigs(){
 	string fn = get_saved_contig_file_name();
 	this->contig_number = 1;
 	if (start_round == 1)
-		//RM HERE
+		// RM HERE
 		run_shell_command("rm -rf " + fn);
 	else {
 		if (file_exists(fn)){
@@ -693,7 +678,7 @@ int SRAssemblerMaster::do_assembly(int round) {
 			SRAssembler::do_assembly(round, start_k + (i-1)*step_k, 1);
 	} else {
 		if (total_k < mpiSize-1){
-			// Multithreading this doesn't work because SOAPdenovo2 can't just use the nodes that aren't in use.
+			// TODO Multithreading this doesn't work because SOAPdenovo2 can't just use the nodes that aren't in use.
 			//int threads = (mpiSize - 1) / total_k;
 			for (i=1; i<=total_k; i++){
 				send_code(i, ACTION_ASSEMBLY, round, start_k + (i-1)*step_k, 1);
@@ -775,7 +760,7 @@ int SRAssemblerMaster::do_assembly(int round) {
 	if (best_k > 0) {
 		process_long_contigs(round, best_k);
 	}
-	//RM HERE
+	// RM HERE
 	if (tidy) {
 		get_assembler()->clean_files(aux_dir);
 	}
@@ -799,7 +784,7 @@ void SRAssemblerMaster::load_long_contigs() {
 	saved_contig_file.close();
 }
 
-//TODO This should probably be refactored
+// TODO This should probably be refactored
 // This function doesn't just process long contigs, it processes all contigs for length, including removing the short ones.
 void SRAssemblerMaster::process_long_contigs(int round, int k) {
 	string long_contig_candidate_file = aux_dir + "/long_contig_candidate_" + "r" + int2str(round-1)+ ".fasta";
@@ -893,7 +878,7 @@ void SRAssemblerMaster::process_long_contigs(int round, int k) {
 	if (long_contig_ids.size() > 0){
 		logger->info("Processing contigs longer than the specified maximal contig size " + int2str(this->max_contig_lgth) + " ...");
 		// Remove associated reads.
-		//TODO make this a function that remove_unmapped_reads also uses
+		// TODO make this a function that remove_unmapped_reads also uses
 		string cmd;
 		string long_contig_index = aux_dir + "/long_cindex";
 		Aligner* aligner = get_aligner(round);
@@ -973,9 +958,8 @@ void SRAssemblerMaster::process_long_contigs(int round, int k) {
 				run_shell_command(cmd);
 			}
 		}
-		//RM here
+		// RM here
 		cmd = "rm -f " + aux_dir + "/left_reads_index* " + aux_dir + "/right_reads_index*";
-		//logger->debug(cmd);
 		run_shell_command(cmd);
 	}
 }
@@ -1021,7 +1005,7 @@ void SRAssemblerMaster::remove_hit_contigs(vector<string> &contig_list, int roun
 	saved_contig_file.close();
 	string cmd = "cp " + tmp_file + " " + contig_file;
 	run_shell_command(cmd);
-	//RM HERE
+	// RM HERE
 	if (tidy) {
 		cmd = "rm " + tmp_file;
 		run_shell_command(cmd);
@@ -1032,7 +1016,6 @@ void SRAssemblerMaster::prepare_final_contigs_file(int round){
 	logger->debug("Prepare final contig file of round " + int2str(round));
 	string contig_file = get_contig_file_name(round);
 	string saved_contig_file_name = get_saved_contig_file_name();
-	//final_long_contig_file = results_dir + "/contigs_long.fasta";
 	ifstream last_round_contig(contig_file.c_str());
 	ifstream saved_contig(saved_contig_file_name.c_str());
 	ofstream final_contig(final_contigs_file.c_str());
@@ -1118,7 +1101,7 @@ void SRAssemblerMaster::remove_no_hit_contigs(int round){
 	string contig_file = get_contig_file_name(round);
 	string contig_index = aux_dir + "/cindex";
 	run_shell_command("rm -f " + contig_index + "*");
-run_shell_command("cp " + contig_file + " " + contig_file + ".beforeclean");
+	run_shell_command("cp " + contig_file + " " + contig_file + ".beforeclean");
 	Aligner* aligner = get_aligner(round);
 	// Index contigs for easy extraction of hit contigs
 	aligner->create_index(contig_index, "dna", contig_file);
@@ -1138,10 +1121,9 @@ run_shell_command("cp " + contig_file + " " + contig_file + ".beforeclean");
 	cmd = "vseqselect -seqnum " + out_file + " " + contig_index + " | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' > " + contig_file;
 	logger->debug(cmd);
 	run_shell_command(cmd);
-	//RM here
-	//string cmd = "rm -f " + aux_dir + "/qindex*";
+	// RM here
+	// TODO Restore allowing multiple queries again? //string cmd = "rm -f " + aux_dir + "/qindex*";
 	cmd = "rm -f " + out_file + " " + contig_index + "*";
-	//logger->debug(cmd);
 	run_shell_command(cmd);
 	// Create a new index of the good contigs for remove_unmapped_reads to use. Happens here because remove_unmapped_reads might be parallel.
 	aligner->create_index(contig_index, "dna", contig_file);

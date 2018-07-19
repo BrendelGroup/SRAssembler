@@ -39,10 +39,10 @@ int VmatchAligner::parse_output(const string& output_file, unordered_set<string>
 	int new_read_count = 0;
 	string line;
 	string cmd;
-	string part_string = int2str(read_part); //Calculate this once rather than over and over
+	string part_string = int2str(read_part);
 	string lib_string = int2str(lib_idx);
 	string tmpvseqselectfile = out_left_read + "-tmp";
-	//TODO put the temporary file in mem_dir
+	// TODO put the temporary file in mem_dir
 	ofstream tmp_file_stream(tmpvseqselectfile.c_str());
 
 	while (getline(report_file_stream, line)) {
@@ -69,8 +69,8 @@ int VmatchAligner::parse_output(const string& output_file, unordered_set<string>
 		logger->debug(cmd);
 		run_shell_command(cmd);
 	}
-	//TODO make this part of a cleanup function.
-	//RM here
+	// TODO make this part of a cleanup function.
+	// RM here
 	cmd = "\\rm " + tmpvseqselectfile;
 	run_shell_command(cmd);
 
@@ -154,7 +154,7 @@ string VmatchAligner::get_program_name() {
 }
 
 
-//TODO refactor
+// TODO refactor
 void VmatchAligner::align_long_contigs(const string& long_contig_candidate_file, const string& aux_dir, const string& contig_file, const int max_contig_size, unordered_set<string>& candidate_ids, unordered_set<string>& long_contig_ids) {
 	if (!file_exists(long_contig_candidate_file)){
 		return;
@@ -182,9 +182,8 @@ void VmatchAligner::align_long_contigs(const string& long_contig_candidate_file,
 		}
 	}
 	vmatch_file_stream.close();
-	//RM here
+	// RM here
 	cmd = "rm " + vmatch_out_file + " " + indexname + "*";
-	//logger->debug(cmd);
 	run_shell_command(cmd);
 }
 
