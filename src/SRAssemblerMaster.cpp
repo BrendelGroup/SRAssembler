@@ -1126,7 +1126,7 @@ run_shell_command("cp " + contig_file + " " + contig_file + ".beforeclean");
 	program_name += "_" + get_type(1) + "_vs_contigs";
 	Params params = get_parameters(program_name);
 	string out_file = aux_dir + "/query_vs_contig.round" + int2str(round) + ".vmatch";
-	if (this->probe_type == "cdna") {
+	if (this->probe_type == "dna") {
 		// The "reads" type alignment ensures that we keep the hit from the query (in this case, the contigs), not the index (the dna probe).
 		alignment_type = "reads";
 	} else {

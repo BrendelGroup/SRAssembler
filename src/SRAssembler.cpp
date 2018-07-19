@@ -77,7 +77,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 	usage.append("                [-l library_file OR -1 reads_file1 -2 reads_file2]\n");
 	usage.append("\n");
 	usage.append("-q: Required; FASTA-formatted query file.\n");
-	usage.append("-t: Query file type; options: 'protein', 'cdna' [Default: " + QUERY_TYPE + "].\n");
+	usage.append("-t: Query file type; options: 'protein', 'dna' [Default: " + QUERY_TYPE + "].\n");
 	usage.append("-p: Required; SRAssembler parameter configuration file.\n");
 	usage.append("-o: SRAssembler output directory [Default: current directory].\n");
 	usage.append("-T: directory for temporary file storage [Default: /dev/shm].\n");
@@ -336,14 +336,14 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 		return -1;
 	}
 
-	if (probe_type != TYPE_PROTEIN && probe_type != TYPE_CDNA){
-		print_message("-t must be 'protein' or 'cdna'");
+	if (probe_type != TYPE_PROTEIN && probe_type != TYPE_DNA){
+		print_message("-t must be 'protein' or 'dna'");
 		return -1;
 	} else {
-		if (default_e && probe_type == TYPE_CDNA)
-			mismatch_allowed = MISMATCH_ALLOWED_CDNA;
-		if (default_i && probe_type == TYPE_CDNA)
-			init_match_length = INIT_MATCH_LENGTH_CDNA;
+		if (default_e && probe_type == TYPE_DNA)
+			mismatch_allowed = MISMATCH_ALLOWED_DNA;
+		if (default_i && probe_type == TYPE_DNA)
+			init_match_length = INIT_MATCH_LENGTH_DNA;
 	}
 	if (species != "human" && species != "mouse" && species != "rat" && species != "chicken" && species != "drosophila" && species != "nematode" && species != "fission_yeast" && species != "aspergillus" && species != "arabidopsis" && species != "maize" && species != "rice" && species != "medicago"){
 		print_message("-s valid species is required");
@@ -746,7 +746,8 @@ void SRAssembler::create_index(int round) {
 }
 
 string SRAssembler:: get_type(int round){
-   return (round == 1)? probe_type: TYPE_CDNA;
+	//TODO Why?
+   return (round == 1)? probe_type: TYPE_DNA;
 }
 
 int SRAssembler::get_match_length(int round){

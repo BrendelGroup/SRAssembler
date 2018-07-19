@@ -11,9 +11,9 @@
 #include <boost/unordered_map.hpp>
 
 static const int INIT_MATCH_LENGTH_PROTEIN=10;
-static const int INIT_MATCH_LENGTH_CDNA=30;
+static const int INIT_MATCH_LENGTH_DNA=30;
 static const int MISMATCH_ALLOWED_PROTEIN=1;
-static const int MISMATCH_ALLOWED_CDNA=2;
+static const int MISMATCH_ALLOWED_DNA=2;
 static const int RECUR_MATCH_LENGTH=30;
 static const double MIN_SCORE=0.5;
 static const double MIN_COVERAGE=0.8;
@@ -59,7 +59,7 @@ static const int GENE_FINDING_PROGRAM = 0;
 static const int OVER_WRITE = 0;
 static const int CHECK_GENE_ASSEMBLED = 1;
 static const std::string TYPE_PROTEIN = "protein";
-static const std::string TYPE_CDNA = "cdna";
+static const std::string TYPE_DNA = "dna";
 static const std::string READS_DATA = "reads_data";
 static const std::string QUERY_TYPE = TYPE_PROTEIN;
 static const std::string DEFAULT_SPECIES = "arabidopsis";

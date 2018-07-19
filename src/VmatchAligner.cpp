@@ -81,9 +81,7 @@ int VmatchAligner::parse_output(const string& output_file, unordered_set<string>
 	return new_read_count;
 }
 
-void VmatchAligner::create_index(const string& index_name, const string& type, const string& fasta_file) {
-	string db_type = type;
-	if (db_type == "cdna") db_type = "dna";
+void VmatchAligner::create_index(const string& index_name, const string& db_type, const string& fasta_file) {
 	string cmd = "mkvtree -" + db_type + " -db " + fasta_file + " -pl -indexname " + index_name + " -allout >> " + logger->get_log_file();
 	logger->debug(cmd);
 	run_shell_command(cmd);
@@ -129,7 +127,7 @@ void VmatchAligner::do_alignment(const string& index_name, const string& alignme
 	 */
 	if (alignment_type == "protein" ) {
 		cmd = "vmatch -dnavsprot 1 -q " + query_file + " -d" + l_option + e_option + " " + param_list + " -nodist -noevalue -noscore -noidentity " + index_name + " | awk '$0 !~ /^#.*/ {print $6}' >> " + output_file + "; sort -nu " + output_file + " > " + tmpvmfile + "; \\mv " + tmpvmfile + " " + output_file;
-	} else if (alignment_type == "cdna" ) {
+	} else if (alignment_type == "dna" ) {
 		cmd = "vmatch -q " + query_file + " -d -p" + l_option + e_option + " " + param_list + " -nodist -noevalue -noscore -noidentity " + index_name + " | awk '$0 !~ /^#.*/ {print $2}' >> " + output_file + "; sort -nu " + output_file + " > " + tmpvmfile + "; \\mv " + tmpvmfile + " " + output_file;
 	} else if (alignment_type == "reads") {
 		cmd = "vmatch -q " + query_file + " -d -p" + l_option + e_option + " " + param_list + " -nodist -noevalue -noscore -noidentity " + index_name + " | awk '$0 !~ /^#.*/ {print $6}' >> " + output_file + "; sort -nu " + output_file + " > " + tmpvmfile + "; \\mv " + tmpvmfile + " " + output_file;

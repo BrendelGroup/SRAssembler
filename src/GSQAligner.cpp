@@ -40,10 +40,10 @@ void GSQAligner::do_spliced_alignment(const string& genomic_file, const string& 
 	for ( Params::const_iterator it = params.begin(); it != params.end(); ++it ){
 		param_list += " -" + it->first + " " + it->second;
 	}
-	string type_str = "E";
 	string species_str = species_names[species];
 	if (species_str == "")
 		species_str = "generic";
+	string type_str = "E";
 	if (query_type == "protein")
 		type_str = "Q";
 	string cmd = "GeneSeqer -L " + genomic_file + " -" + type_str + " " + query_file + " -species " + species_str + " " + param_list + " -o " + output_file + " >> /dev/null 2>> " + logger->get_log_file();
