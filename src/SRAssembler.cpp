@@ -443,6 +443,15 @@ bool SRAssembler::read_library_file() {
 			if (tokens.size() == 2){
 				string param = trim(tokens[0]);
 				string value = trim(tokens[1]);
+				if (param == "library_name" && lib != NULL) {
+					lib->set_library_name(value);
+				}
+				if (param == "insert_size" && lib != NULL) {
+					lib->set_insert_size(str2int(value));
+				}
+				if (param == "direction" && lib != NULL) {
+					lib->set_reversed(str2int(value));
+				}
 				if (param == "r1" && lib != NULL) {
 					lib->set_left_read(value);
 					if (!file_exists(lib->get_left_read()) && !preprocessed_exist) {
@@ -457,13 +466,6 @@ bool SRAssembler::read_library_file() {
 						return false;
 					}
 					lib->set_paired_end(true);
-				}
-
-				if (param == "insert_size" && lib != NULL) {
-					lib->set_insert_size(str2int(value));
-				}
-				if (param == "direction" && lib != NULL) {
-					lib->set_reversed(str2int(value));
 				}
 				if (param == "format" && lib != NULL) {
 					if (value == "fastq") {

@@ -1068,8 +1068,10 @@ void SRAssemblerMaster::create_folders(){
 		run_shell_command(cmd);
 	}
 	for (unsigned i=0;i<this->libraries.size();i++){
-		string dir = data_dir + "/lib" + int2str(i+1);
+		string dir = data_dir + "/" + libraries[i].get_library_name();
 		cmd = "mkdir -p " + dir;
+		string symlink = data_dir + "/lib" + int2str(i+1);
+		cmd = "ln -s " + libraries[i].get_library_name() + " " + symlink;
 		run_shell_command(cmd);
 	}
 	// If pre-processing only, don't bother making useless directories.

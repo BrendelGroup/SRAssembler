@@ -16,6 +16,7 @@ class Library {
 public:
 	Library(unsigned int lib_idx, string data_dir, string aux_dir, Logger* logger);
 	virtual ~Library();
+	string get_library_name();
 	int get_insert_size();
 	int get_num_parts();
 	int get_reversed();
@@ -23,6 +24,7 @@ public:
 	bool get_paired_end();
 	string get_left_read();
 	string get_right_read();
+	void set_library_name(string library_name);
 	void set_insert_size(int insert_size);
 	void set_num_parts(int num_parts);
 	void set_reversed(int reversed);
@@ -43,6 +45,7 @@ public:
 	void do_split_files(int read_type, int reads_per_file);
 private:
 	int lib_idx;
+	string library_name;
 	int insert_size;
 	int num_parts;
 	int reversed;

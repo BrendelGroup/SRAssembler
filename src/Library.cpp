@@ -8,6 +8,7 @@
 #include "Library.h"
 
 Library::Library(unsigned int lib_idx, string data_dir, string aux_dir, Logger* logger) {
+	this->library_name = "";
 	this->lib_idx = lib_idx;
 	this->data_dir = data_dir;
 	this->aux_dir = aux_dir;
@@ -20,6 +21,10 @@ Library::Library(unsigned int lib_idx, string data_dir, string aux_dir, Logger* 
 	this->num_parts = 0;
 	this->paired_end = false;
 	this->logger = logger;
+}
+
+string Library::get_library_name(){
+	return this->library_name;
 }
 
 int Library::get_insert_size(){
@@ -52,6 +57,10 @@ string Library::get_right_read(){
 
 string Library::get_file_extension(){
 	return this->file_extension;
+}
+
+void Library::set_library_name(string library_name){
+	this->library_name = library_name;
 }
 
 void Library::set_insert_size(int insert_size){
