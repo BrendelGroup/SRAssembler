@@ -489,7 +489,7 @@ void SRAssemblerMaster::do_walking() {
 			}
 
 			// do spliced alignment and remove the probe sequences already assembled
-			if (round > 1 && check_gene_assembled){
+			if (round >= assembly_round && check_gene_assembled){
 				string_map query_map = do_spliced_alignment(round);
 				logger->debug("Best coverage so far is in round " + int2str(std::get<0>(best_hits["coverage"])) + " with coverage " + double2str(std::get<1>(best_hits["coverage"])) + ".");
 				vector<string> contig_list;

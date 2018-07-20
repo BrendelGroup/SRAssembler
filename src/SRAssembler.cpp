@@ -100,9 +100,9 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 	usage.append("     'arabidopsis', 'maize', 'rice', 'medicago' [DEFAULT: " + DEFAULT_SPECIES + "].\n");
 	usage.append("-G: Ab initio gene finding program; options: 0=>None, 1=>Snap [Default: " + int2str(GENE_FINDING_PROGRAM) + "].\n");
 	usage.append("\n");
-	usage.append("-i: Initial and subsequent minimum contig size for chromosome walking [Default: " + int2str(QUERY_CONTIG_MIN) + "].\n");
-	usage.append("-m: Minimum contig length to be reported [Default: " + int2str(MIN_CONTIG_LGTH) + "].\n");
-	usage.append("-M: Maximum contig length to be reported [Default: " + int2str(MAX_CONTIG_LGTH) + "].\n");
+	usage.append("-i: Minimum contig length for chromosome walking [Default: " + int2str(QUERY_CONTIG_MIN) + "].\n");
+	usage.append("-m: Minimum contig length to accept as a hit [Default: " + int2str(MIN_CONTIG_LGTH) + "].\n");
+	usage.append("-M: Maximum contig length to accept as a hit [Default: " + int2str(MAX_CONTIG_LGTH) + "].\n");
 	usage.append("-e: Minimum spliced alignment score for hits [Default: " + double2str(MIN_SCORE) + "].\n");
 	usage.append("-c: Minimum spliced alignment coverage score for hits [Default: " + double2str(MIN_COVERAGE) + "].\n");
 	usage.append("\n");

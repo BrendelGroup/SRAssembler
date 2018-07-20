@@ -39,7 +39,7 @@ void Logger::info(const string& msg)
 
 void Logger::running(const string& msg)
 {
-	print_message(msg, " [RUN]", (log_level <= Logger::LEVEL_INFO));
+	print_message(msg, "  [RUN]", (log_level <= Logger::LEVEL_INFO));
 }
 
 void Logger::warn(const string& msg)
@@ -73,7 +73,7 @@ void Logger::print_message(const string &msg, const string &level, bool to_std_o
 	time ( &rawtime );
 	timeinfo = localtime ( &rawtime );
 
-	strftime (buffer,40,"[%c]",timeinfo);
+	strftime (buffer,40,"[%F %T]",timeinfo);
 
 	ofstream log_file_stream;
 	log_file_stream.open(log_file.c_str(), ios::out | ios::app );
