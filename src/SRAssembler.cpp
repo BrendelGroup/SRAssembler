@@ -237,7 +237,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 				verbose = true;
 				break;
 			case 'w':
-				check_gene_assembled = 0;
+				check_gene_assembled = false;
 				break;
 			case 'x':
 				reads_per_file = str2int(optarg);
@@ -246,7 +246,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 				end_search_length = str2int(optarg);
 				break;
 			case 'y':
-				over_write = 1;
+				over_write = true;
 				break;
 			case 'z':
 				insert_size = str2int(optarg);
@@ -314,9 +314,10 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 			print_message("-1 or library file is required");
 			return -1;
 		}
-		Library lib(0, this->data_dir, this->aux_dir,this->logger);
+		Library lib(0, this->data_dir, this->aux_dir, this->logger);
 		lib.set_format(FORMAT_FASTQ);
 		lib.set_left_read(left_read);
+		lib.set_library_name(get_file_base_name(lib.get_left_read()));
 		if (right_read != ""){
 			lib.set_paired_end(true);
 			lib.set_right_read(right_read);
@@ -431,8 +432,12 @@ bool SRAssembler::read_library_file() {
 		if (line == "[LIBRARY]") {
 			if (lib != NULL){
 				if (lib->get_left_read() == ""){
-					print_message("r1 file is expected in config file!");
+					print_message("r1 file is expected in library config file!");
 					return false;
+				}
+				// If the user didn't name their library, name it after the left read file.
+				if (lib->get_library_name() == "") {
+					lib->set_library_name(get_file_base_name(lib->get_left_read()));
 				}
 				this->libraries.push_back(*lib);
 			}
@@ -474,7 +479,7 @@ bool SRAssembler::read_library_file() {
 					else if (value == "fasta") {
 						lib->set_format(FORMAT_FASTA);
 					} else {
-						print_message("format in config file should be 'fastq' or 'fasta'!");
+						print_message("format in library config file should be 'fastq' or 'fasta'!");
 						return false;
 					}
 				}
@@ -483,13 +488,17 @@ bool SRAssembler::read_library_file() {
 	}
 	if (lib != NULL){
 		if (lib->get_left_read() == ""){
-			print_message("r1 file is expected in config file!");
+			print_message("r1 file is expected in library config file!");
 			return false;
+		}
+		// If the user didn't name their library, name it after the left read file.
+		if (lib->get_library_name() == "") {
+			lib->set_library_name(get_file_base_name(lib->get_left_read()));
 		}
 		this->libraries.push_back(*lib);
 	}
 	if (this->libraries.size() == 0){
-		print_message(" No [LIBRARY] section found in config file!");
+		print_message(" No [LIBRARY] section found in library config file!");
 		return false;
 	}
 	return true;

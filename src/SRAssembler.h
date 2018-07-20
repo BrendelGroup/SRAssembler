@@ -96,8 +96,8 @@ protected:
 	int assembly_round;
 	int clean_round;
 	int contig_limit;
-	int over_write;
-	int check_gene_assembled;
+	bool over_write;
+	bool check_gene_assembled;
 	int reads_per_file;
 	int start_k;
 	int end_k;

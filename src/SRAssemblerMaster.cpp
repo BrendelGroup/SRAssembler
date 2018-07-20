@@ -76,7 +76,7 @@ void SRAssemblerMaster::output_libraries(){
 	output_content += "<table border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"22\">";
 	logger->info("We have " + int2str(libraries.size()) + " libraries");
 	for (unsigned int i=0;i<this->libraries.size();i++){
-		logger->info("library " + int2str(i+1) + " :");
+		logger->info("library " + int2str(i+1) + ": " + libraries[i].get_library_name());
 		logger->info("insert size: " + int2str(libraries[i].get_insert_size()));
 		logger->info("left read: " + libraries[i].get_left_read());
 		logger->info("right read: " + libraries[i].get_right_read());
@@ -1069,9 +1069,12 @@ void SRAssemblerMaster::create_folders(){
 	}
 	for (unsigned i=0;i<this->libraries.size();i++){
 		string dir = data_dir + "/" + libraries[i].get_library_name();
-		cmd = "mkdir -p " + dir;
-		string symlink = data_dir + "/lib" + int2str(i+1);
-		cmd = "ln -s " + libraries[i].get_library_name() + " " + symlink;
+		cmd = "mkdir -p " + dir + "; ";
+		string slink = data_dir + "/lib" + int2str(i+1);
+		// RM here
+		cmd += "rm -f " + slink + "; ";
+		cmd += "ln -s " + libraries[i].get_library_name() + " " + slink;
+		logger->info(cmd);
 		run_shell_command(cmd);
 	}
 	// If pre-processing only, don't bother making useless directories.
