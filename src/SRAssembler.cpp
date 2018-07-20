@@ -11,6 +11,7 @@
 #include "SRAssemblerSlave.h"
 #include "SRAssemblerSlave.h"
 #include <vector>
+#include <regex>
 
 
 SRAssembler* SRAssembler::_srassembler = NULL;
@@ -257,7 +258,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 			case '?':
 				string msg = "input error! unknown option : -";
 				msg.append(1,optopt);
-				print_message(msg);
+				logger->error(msg);
 				return -1;
 		}
 	}
@@ -271,11 +272,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 	preprocessed_exist = file_exists(data_dir);
 	results_dir = out_dir + "/results";
 	intermediate_dir = results_dir + "/intermediates";
-	if (preprocessing_only){
-		log_file = data_dir + "/msg.log";
-	} else {
-		log_file = results_dir + "/msg.log";
-	}
+	log_file = results_dir + "/msg.log";
 	spliced_alignment_output_file = results_dir + "/output.aln";
 	gene_finding_output_file = results_dir + "/output.ano";
 	gene_finding_output_protein_file = results_dir + "/snap.predicted.prot";
@@ -293,37 +290,37 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 	// Create/confirm the existence of the output directory.
 	run_shell_command("mkdir -p " + out_dir);
 	if (!file_exists(out_dir)){
-		print_message("output directory: " + out_dir + " cannot be created!");
+		logger->error("output directory: " + out_dir + " cannot be created!");
 		return -1;
 	}
 
 	if (reads_per_file <= 1000){
-		print_message("-x value is not valid or too small");
+		logger->error("-x value is not valid or too small");
 		return -1;
 	}
 
 	if (library_file != ""){
 		if (!file_exists(library_file)){
-			print_message("library file: " + library_file + " does not exist!");
+			logger->error("library file: " + library_file + " does not exist!");
 			return -1;
 		}
 		if (!read_library_file())
 			return -1;
 	} else {
 		if (left_read == "" && !preprocessed_exist){
-			print_message("-1 or library file is required");
+			logger->error("-1 or library file is required");
 			return -1;
 		}
 		Library lib(0, this->data_dir, this->aux_dir, this->logger);
 		lib.set_format(FORMAT_FASTQ);
 		lib.set_left_read(left_read);
-		lib.set_library_name(get_file_base_name(lib.get_left_read()));
+		lib.set_library_name(get_file_base_name(lib.get_left_read()) + "library");
 		if (right_read != ""){
 			lib.set_paired_end(true);
 			lib.set_right_read(right_read);
 			lib.set_insert_size(insert_size);
 			if (!file_exists(right_read) && !preprocessed_exist){
-				print_message("file: " + right_read + " does not exist!");
+				logger->error("file: " + right_read + " does not exist!");
 				return -1;
 			}
 		}
@@ -337,29 +334,29 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 
 	// Confirm the existence of the probe file.
 	if (!file_exists(probe_file)){
-		print_message("query file: " + probe_file + " does not exist!");
+		logger->error("query file: " + probe_file + " does not exist!");
 		return -1;
 	}
 
 	if (param_file != ""){
 		if (!file_exists(param_file)){
-			print_message("Parameter file : " + param_file + " does not exist!");
+			logger->error("Parameter file : " + param_file + " does not exist!");
 			return -1;
 		} else {
 		parameters_dict = read_param_file();
 		}
 	} else {
-		print_message("Parameter file required!");
+		logger->error("Parameter file required!");
 		return -1;
 	}
 
 	if (num_rounds <= 0){
-		print_message("-n must be larger than 0");
+		logger->error("-n must be larger than 0");
 		return -1;
 	}
 
 	if (probe_type != TYPE_PROTEIN && probe_type != TYPE_DNA){
-		print_message("-t must be 'protein' or 'dna'");
+		logger->error("-t must be 'protein' or 'dna'");
 		return -1;
 	} else {
 		if (default_e && probe_type == TYPE_DNA)
@@ -368,11 +365,11 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 			init_match_length = INIT_MATCH_LENGTH_DNA;
 	}
 	if (species != "human" && species != "mouse" && species != "rat" && species != "chicken" && species != "drosophila" && species != "nematode" && species != "fission_yeast" && species != "aspergillus" && species != "arabidopsis" && species != "maize" && species != "rice" && species != "medicago"){
-		print_message("-s valid species is required");
+		logger->error("-s valid species is required");
 		return -1;
 	}
 	if (!k_format){
-		print_message("-k format error. The format is : start_k:interval:end_k. The start_k and end_k must be odd values, and the interval must be an even value.");
+		logger->error("-k format error. The format is : start_k:interval:end_k. The start_k and end_k must be odd values, and the interval must be an even value.");
 		return -1;
 	}
 
@@ -426,18 +423,19 @@ Params SRAssembler::get_parameters(string program_name) {
 bool SRAssembler::read_library_file() {
 	ifstream lib_file(this->library_file.c_str());
 	string line;
+	std::regex bad_name("lib[0-9]+");
 	Library* lib = NULL;
 	while (getline(lib_file, line)){
 		line = trim(line);
 		if (line == "[LIBRARY]") {
 			if (lib != NULL){
 				if (lib->get_left_read() == ""){
-					print_message("r1 file is expected in library config file!");
+					logger->error("r1 file is expected in library config file!");
 					return false;
 				}
 				// If the user didn't name their library, name it after the left read file.
 				if (lib->get_library_name() == "") {
-					lib->set_library_name(get_file_base_name(lib->get_left_read()));
+					lib->set_library_name(get_file_base_name(lib->get_left_read()) + "library");
 				}
 				this->libraries.push_back(*lib);
 			}
@@ -449,6 +447,10 @@ bool SRAssembler::read_library_file() {
 				string param = trim(tokens[0]);
 				string value = trim(tokens[1]);
 				if (param == "library_name" && lib != NULL) {
+					if (std::regex_match(value, bad_name)){
+						logger->error("You can't name a library \"lib\" and a number. We're already using that notation.");
+						return false;
+					}
 					lib->set_library_name(value);
 				}
 				if (param == "insert_size" && lib != NULL) {
@@ -460,14 +462,14 @@ bool SRAssembler::read_library_file() {
 				if (param == "r1" && lib != NULL) {
 					lib->set_left_read(value);
 					if (!file_exists(lib->get_left_read()) && !preprocessed_exist) {
-						print_message("r1 file in config file: " + lib->get_left_read() + " does not exist!");
+						logger->error("r1 file in config file: " + lib->get_left_read() + " does not exist!");
 						return false;
 					}
 				}
 				if (param == "r2" && lib != NULL) {
 					lib->set_right_read(value);
 					if (!file_exists(lib->get_right_read()) && !preprocessed_exist) {
-						print_message("r2 file in config file: " + lib->get_right_read() + " does not exist!");
+						logger->error("r2 file in config file: " + lib->get_right_read() + " does not exist!");
 						return false;
 					}
 					lib->set_paired_end(true);
@@ -479,7 +481,7 @@ bool SRAssembler::read_library_file() {
 					else if (value == "fasta") {
 						lib->set_format(FORMAT_FASTA);
 					} else {
-						print_message("format in library config file should be 'fastq' or 'fasta'!");
+						logger->error("format in library config file should be 'fastq' or 'fasta'!");
 						return false;
 					}
 				}
@@ -488,17 +490,17 @@ bool SRAssembler::read_library_file() {
 	}
 	if (lib != NULL){
 		if (lib->get_left_read() == ""){
-			print_message("r1 file is expected in library config file!");
+			logger->error("r1 file is expected in library config file!");
 			return false;
 		}
 		// If the user didn't name their library, name it after the left read file.
 		if (lib->get_library_name() == "") {
-			lib->set_library_name(get_file_base_name(lib->get_left_read()));
+			lib->set_library_name(get_file_base_name(lib->get_left_read()) + "library");
 		}
 		this->libraries.push_back(*lib);
 	}
 	if (this->libraries.size() == 0){
-		print_message(" No [LIBRARY] section found in library config file!");
+		logger->error(" No [LIBRARY] section found in library config file!");
 		return false;
 	}
 	return true;

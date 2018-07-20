@@ -1067,18 +1067,21 @@ void SRAssemblerMaster::create_folders(){
 		cmd = "rm -rf " + intermediate_dir;
 		run_shell_command(cmd);
 	}
+	// Remove pre-existing library symlinks.
+	// RM here
+	cmd = "rm -f " + data_dir + "/lib{0..9}*";
+	run_shell_command(cmd);
 	for (unsigned i=0;i<this->libraries.size();i++){
 		string dir = data_dir + "/" + libraries[i].get_library_name();
 		cmd = "mkdir -p " + dir + "; ";
 		string slink = data_dir + "/lib" + int2str(i+1);
-		// RM here
-		cmd += "rm -f " + slink + "; ";
 		cmd += "ln -s " + libraries[i].get_library_name() + " " + slink;
 		logger->info(cmd);
 		run_shell_command(cmd);
 	}
 	// If pre-processing only, don't bother making useless directories.
 	if (preprocessing_only){
+		run_shell_command("mkdir " + results_dir);
 		return;
 	}
 
