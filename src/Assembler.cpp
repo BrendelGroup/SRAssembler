@@ -16,9 +16,8 @@ Assembler::Assembler(int log_level, string log_file) {
 }
 
 Assembler::~Assembler() {
-	// TODO Auto-generated destructor stub
+	// Auto-generated destructor stub
 }
-
 
 // singleton implementation
 Assembler* Assembler::getInstance(int assembler_type, int log_level, string log_file){

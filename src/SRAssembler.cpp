@@ -16,11 +16,11 @@
 SRAssembler* SRAssembler::_srassembler = NULL;
 
 SRAssembler::SRAssembler() {
-	// TODO Auto-generated constructor stub
+	// Auto-generated constructor stub
 }
 
 SRAssembler::~SRAssembler() {
-	// TODO Auto-generated destructor stub
+	// Auto-generated destructor stub
 }
 
 int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {

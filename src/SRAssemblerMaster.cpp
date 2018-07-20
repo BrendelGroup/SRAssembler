@@ -8,7 +8,7 @@
 
 
 SRAssemblerMaster::SRAssemblerMaster() {
-	// TODO Auto-generated constructor stub
+	// Auto-generated constructor stub
 }
 
 int SRAssemblerMaster::init(int argc, char * argv[], int rank, int mpiSize) {
@@ -1170,6 +1170,5 @@ void SRAssemblerMaster::remove_unmapped_reads(int round){
 }
 
 SRAssemblerMaster::~SRAssemblerMaster() {
-	// TODO Auto-generated destructor stub
-	cerr << "SRAssemblerMaster destructed" << endl ;
+	// Auto-generated destructor stub
 }

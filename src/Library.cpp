@@ -164,5 +164,5 @@ void Library::do_split_files(int read_direction, int reads_per_file){
 }
 
 Library::~Library() {
-	// TODO Auto-generated destructor stub
+	// Auto-generated destructor stub
 }

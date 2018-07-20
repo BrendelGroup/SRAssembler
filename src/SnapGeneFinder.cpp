@@ -8,12 +8,11 @@
 #include "SnapGeneFinder.h"
 
 SnapGeneFinder::SnapGeneFinder(int log_level, string log_file):GeneFinder(log_level, log_file){
-	// TODO Auto-generated constructor stub
-
+	// Auto-generated constructor stub
 }
 
 SnapGeneFinder::~SnapGeneFinder() {
-	// TODO Auto-generated destructor stub
+	// Auto-generated destructor stub
 }
 
 void SnapGeneFinder::do_gene_finding(const string& genomic_file, const string& species, const Params& params, const string& output_file, const string& protein_output_file){

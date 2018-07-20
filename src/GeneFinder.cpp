@@ -15,7 +15,7 @@ GeneFinder::GeneFinder(int log_level, string log_file) {
 }
 
 GeneFinder::~GeneFinder() {
-	// TODO Auto-generated destructor stub
+	// Auto-generated destructor stub
 }
 
 // singleton implementation

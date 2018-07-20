@@ -8,8 +8,7 @@
 #include "SRAssemblerSlave.h"
 
 SRAssemblerSlave::SRAssemblerSlave() {
-	// TODO Auto-generated constructor stub
-
+	// Auto-generated constructor stub
 }
 
 int SRAssemblerSlave::init(int argc, char * argv[], int rank, int mpiSize) {
@@ -100,5 +99,5 @@ void SRAssemblerSlave::process_message(){
 }
 
 SRAssemblerSlave::~SRAssemblerSlave() {
-	// TODO Auto-generated destructor stub
+	// Auto-generated destructor stub
 }

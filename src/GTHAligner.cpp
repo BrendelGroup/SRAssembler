@@ -190,7 +190,6 @@ void GTHAligner::get_hit_contigs(const double& min_score, const double& min_cove
 	}
 	if (best_coverage > final_high_coverage) {
 		logger->warn("Contig with better coverage found in round " + int2str(std::get<0>(best_hits["coverage"])));
-		// TODO Maybe run spliced aligner on contigs from this round?
 	}
 	output_string += "\nLength: cumulative length of scored exons\nCov G/P/C: coverage of contig (G) or cDNA (C) or protein (P), whichever is highest";
 	alignment_fs.close();

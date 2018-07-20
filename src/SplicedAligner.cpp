@@ -17,7 +17,7 @@ SplicedAligner::SplicedAligner(int log_level, string log_file) {
 }
 
 SplicedAligner::~SplicedAligner() {
-	// TODO Auto-generated destructor stub
+	// Auto-generated destructor stub
 }
 
 string_map SplicedAligner::get_aligned_query_list(){

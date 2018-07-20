@@ -14,7 +14,7 @@ SOAPDenovoAssembler::SOAPDenovoAssembler(int log_level, string log_file):Assembl
 }
 
 SOAPDenovoAssembler::~SOAPDenovoAssembler() {
-	// TODO Auto-generated destructor stub
+	// Auto-generated destructor stub
 }
 bool SOAPDenovoAssembler::is_available(){
 	int ret_127 = system("SOAPdenovo-127mer > /dev/null 2>&1");

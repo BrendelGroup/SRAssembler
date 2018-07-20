@@ -32,7 +32,7 @@ VmatchAligner::VmatchAligner(int log_level, string log_file):Aligner(log_level, 
  *
  */
 int VmatchAligner::parse_output(const string& output_file, unordered_set<string>& found_reads, const int lib_idx, const int read_part, const string& left_read_index, const string& right_read_index, const string& out_left_read, const string& out_right_read) {
-	// Parse the output file and get the mapped reads that had not been found yet.
+	// Parse the output file and get the mapped reads that have not been found yet.
 	bool paired_end = (out_right_read != "");
 	ifstream report_file_stream(output_file.c_str());
 	int read_found = 0;
@@ -42,7 +42,6 @@ int VmatchAligner::parse_output(const string& output_file, unordered_set<string>
 	string part_string = int2str(read_part);
 	string lib_string = int2str(lib_idx);
 	string tmpvseqselectfile = out_left_read + "-tmp";
-	// TODO put the temporary file in tmp_dir
 	ofstream tmp_file_stream(tmpvseqselectfile.c_str());
 
 	while (getline(report_file_stream, line)) {
@@ -56,22 +55,25 @@ int VmatchAligner::parse_output(const string& output_file, unordered_set<string>
 			tmp_file_stream << seq_number << '\n';
 		}
 	}
-	logger->debug("Matched " + int2str(read_found) + " reads and " + int2str(new_read_count / 2) + " new read (pairs) in library " + int2str(lib_idx + 1) + ", part " + part_string);
+	logger->debug("Matched " + int2str(read_found) + " reads and " + int2str(new_read_count) + " new read (pairs) in library " + int2str(lib_idx + 1) + ", part " + part_string);
 	report_file_stream.close();
 	tmp_file_stream.close();
-
-	// Use awk to strip out linebreaks from within the sequence.
-	cmd = "vseqselect -seqnum " + tmpvseqselectfile + " " + left_read_index + " | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' >> " + out_left_read;
+	// Use vseqselect to fetch the newly found reads.
+	cmd = "vseqselect -seqnum " + tmpvseqselectfile + " " + left_read_index;
+	// Use awk to strip out linebreaks from within the read sequences.
+	cmd += " | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }'";
+	// Append the found reads to the found read file.
+	cmd += " >> " + out_left_read;
 	logger->debug(cmd);
 	run_shell_command(cmd);
 	if (paired_end) {
+		// Same as with the left reads, but one line.
 		cmd = "vseqselect -seqnum " + tmpvseqselectfile + " " + right_read_index + " | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' >> " + out_right_read;
 		logger->debug(cmd);
 		run_shell_command(cmd);
 	}
-	// TODO make this part of a cleanup function.
 	// RM here
-	cmd = "\\rm " + tmpvseqselectfile;
+	cmd = "rm -f " + tmpvseqselectfile;
 	run_shell_command(cmd);
 
 	// We are catching two new reads if the library is paired end
@@ -153,13 +155,10 @@ string VmatchAligner::get_program_name() {
 	return "Vmatch";
 }
 
-
-// TODO refactor
 void VmatchAligner::align_long_contigs(const string& long_contig_candidate_file, const string& aux_dir, const string& contig_file, const int max_contig_size, unordered_set<string>& candidate_ids, unordered_set<string>& long_contig_ids) {
 	if (!file_exists(long_contig_candidate_file)){
 		return;
 	}
-
 	string indexname = aux_dir + "/contigs_index";
 	string vmatch_out_file = aux_dir + "/long_contigs_candidates.vmatch";
 	string cmd = "mkvtree -dna -db " + contig_file + " -pl -indexname " + indexname + " -allout >> " + logger->get_log_file();
@@ -169,7 +168,7 @@ void VmatchAligner::align_long_contigs(const string& long_contig_candidate_file,
 	logger->debug(cmd);
 	run_shell_command(cmd);
 	ifstream vmatch_file_stream(vmatch_out_file.c_str());
-	// parse the output file and remove the long contigs and associated reads.
+	// Parse the output file and remove the long contigs and associated reads.
 	string line;
 	while (getline(vmatch_file_stream, line)){
 		if (line[0] != '#'){
@@ -188,5 +187,5 @@ void VmatchAligner::align_long_contigs(const string& long_contig_candidate_file,
 }
 
 VmatchAligner::~VmatchAligner() {
-	// TODO Auto-generated destructor stub
+	// Auto-generated destructor stub
 }
