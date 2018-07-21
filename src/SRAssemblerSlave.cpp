@@ -36,10 +36,10 @@ void SRAssemblerSlave::process_message(){
 	int value1;
 	int value2;
 	int value3;
-	int from;
+	int source;
 	mpi_code code;
 	while(1){
-		mpi_receive(code_value, from);
+		mpi_receive(code_value, source);
 		code = get_mpi_code(code_value);
 		action = code.action;
 		value1 = code.value1;
@@ -59,27 +59,27 @@ void SRAssemblerSlave::process_message(){
 				this->libraries[value1].do_split_files(LEFT_READ, this->reads_per_file);
 			if (value2 == 2)
 				this->libraries[value1].do_split_files(RIGHT_READ, this->reads_per_file);
-			send_code(from, ACTION_RETURN, 0, 0, 0);
+			send_code(source, ACTION_RETURN, 0, 0, 0);
 		}
 		if (action == ACTION_PRE_PROCESSING){
 			// Slave manages indexing of reads in one library part file.
 			SRAssembler::preprocess_read_part(value1, value2);
-			send_code(from, ACTION_RETURN, 0, value2, 0);
+			send_code(source, ACTION_RETURN, 0, value2, 0);
 		}
 		if (action == ACTION_ASSEMBLY){
 			// Slave manages assembly with one kmer value.
 			do_assembly(value1, value2, value3);
-			send_code(from, ACTION_RETURN, 0, 0, 0);
+			send_code(source, ACTION_RETURN, 0, 0, 0);
 		}
 		if (action == ACTION_ALIGNMENT){
 			// Slave manages alignment.
 			int found_new_reads = do_alignment(value1, value3, value2);
-			send_code(from, ACTION_RETURN, value2, found_new_reads, 0);
+			send_code(source, ACTION_RETURN, value2, found_new_reads, 0);
 		}
 		if (action == ACTION_LOAD_PREVIOUS){
 			// If continuing a previous SRAssembler run, the list of previously found reads needs to be loaded to each Slave so they don't capture them again.
 			load_found_reads(value1);
-			send_code(from, ACTION_RETURN, 0, 0, 0);
+			send_code(source, ACTION_RETURN, 0, 0, 0);
 		}
 		if (action == ACTION_MEMDIR){
 			// Slaves need to know where the shared directory for storing temporary files is.
@@ -88,12 +88,12 @@ void SRAssemblerSlave::process_message(){
 		if (action == ACTION_SAVE){
 			// Save any reads found by this Slave in case this SRAssembler run is started again.
 			save_found_reads(value1);
-			send_code(from, ACTION_RETURN, 0, 0, 0);
+			send_code(source, ACTION_RETURN, 0, 0, 0);
 		}
 		if (action == ACTION_CLEAN){
 			// Slave manages aligning of found reads pool to contigs kept after cleaning, and retains only the hit reads.
 			SRAssembler::remove_unmapped_reads(value1, value2);
-			send_code(from, ACTION_RETURN, value1, 0, 0);
+			send_code(source, ACTION_RETURN, value1, 0, 0);
 		}
 	}
 }

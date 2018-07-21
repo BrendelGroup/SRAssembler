@@ -197,8 +197,8 @@ void SRAssemblerMaster::do_preprocessing(){
 		// Remove any pre-existing files in case of an incomplete earlier pre-processing.
 		cmd = "rm -f " + data_dir + "/lib" + int2str(lib_index+1) + "/" + get_file_base_name(lib->get_left_read()) + "* " + data_dir + "/lib" + int2str(lib_index+1) + "/" + get_file_base_name(lib->get_right_read()) + "*";
 		run_shell_command(cmd);
-		// TODO 'from' variable is for identifying where an MPI message came from.
-		int from;
+		// 'source' variable is for identifying where an MPI message came from.
+		int source;
 		int part = 0;
 		long long code_value;
 		mpi_code code;
@@ -206,8 +206,8 @@ void SRAssemblerMaster::do_preprocessing(){
 		if (lib->get_paired_end() && mpiSize > 2){
 			send_code(1, ACTION_SPLIT, lib_index, 1, 0);
 			send_code(2, ACTION_SPLIT, lib_index, 2, 0);
-			mpi_receive(code_value, from);
-			mpi_receive(code_value, from);
+			mpi_receive(code_value, source);
+			mpi_receive(code_value, source);
 		}
 		else {
 			lib->do_split_files(LEFT_READ, this->reads_per_file);
@@ -228,7 +228,7 @@ void SRAssemblerMaster::do_preprocessing(){
 					send_code(part, ACTION_PRE_PROCESSING, lib_index, part, 0);
 				}
 				while(completed < lib->get_num_parts()){
-					mpi_receive(code_value, from);
+					mpi_receive(code_value, source);
 					completed++;
 				}
 			}
@@ -237,11 +237,11 @@ void SRAssemblerMaster::do_preprocessing(){
 					send_code(part, ACTION_PRE_PROCESSING, lib_index, part, 0);
 				}
 				while (completed < lib->get_num_parts()){
-					mpi_receive(code_value, from);
+					mpi_receive(code_value, source);
 					code = get_mpi_code(code_value);
 					completed++;
 					if (part <= lib->get_num_parts()){
-						send_code(from, ACTION_PRE_PROCESSING, lib_index, part, 0);
+						send_code(source, ACTION_PRE_PROCESSING, lib_index, part, 0);
 						part++;
 					}
 				}
@@ -295,9 +295,9 @@ int SRAssemblerMaster::get_start_round(){
 						send_code(i, ACTION_LOAD_PREVIOUS, start_round - 1, 0, 0);
 					int completed = 0;
 					long long code_value = 0;
-					int from = 0;
+					int source = 0;
 					while(completed < mpiSize - 1) {
-						mpi_receive(code_value, from);
+						mpi_receive(code_value, source);
 						completed++;
 					}
 				} else {
@@ -320,7 +320,7 @@ void SRAssemblerMaster::do_walking() {
 
 	logger->info("Start chromosome walking ...");
 	logger->info("Total processors: " + int2str(mpiSize));
-	int from;
+	int source;
 	int read_part = 0;
 	long long code_value;
 	mpi_code code;
@@ -366,7 +366,7 @@ void SRAssemblerMaster::do_walking() {
 						send_code(read_part, ACTION_ALIGNMENT, round, read_part, lib_idx);
 					}
 					while(completed < lib.get_num_parts()){
-						mpi_receive(code_value, from);
+						mpi_receive(code_value, source);
 						code = get_mpi_code(code_value);
 						int found_new_reads = code.value2;
 						new_reads_count += found_new_reads;
@@ -378,7 +378,7 @@ void SRAssemblerMaster::do_walking() {
 						send_code(read_part, ACTION_ALIGNMENT, round, read_part, lib_idx);
 					}
 					while (completed < lib.get_num_parts()){
-						mpi_receive(code_value, from);
+						mpi_receive(code_value, source);
 						code = get_mpi_code(code_value);
 						int found_new_reads = code.value2;
 						int file_idx = code.value1;
@@ -387,7 +387,7 @@ void SRAssemblerMaster::do_walking() {
 						// As files are completed, new files are sent to slaves to be aligned.
 						int next_file_idx = file_idx + mpiSize - 1;
 						if (next_file_idx <= lib.get_num_parts())
-							send_code(from, ACTION_ALIGNMENT, round, next_file_idx, lib_idx);
+							send_code(source, ACTION_ALIGNMENT, round, next_file_idx, lib_idx);
 					}
 				}
 			}
@@ -401,7 +401,7 @@ void SRAssemblerMaster::do_walking() {
 			for (slave=1; slave < mpiSize; slave++) {
 				send_code(slave, ACTION_SAVE, round, 0, 0);
 				// Wait until all the slaves have saved their found reads.
-				mpi_receive(code_value, from);
+				mpi_receive(code_value, source);
 			}
 		}
 		if (new_reads_count == 0) {
@@ -669,7 +669,7 @@ int SRAssemblerMaster::do_assembly(int round) {
 	int spliced_align_length = 0;
 	int max_spliced_align = 0;
 	int total_k = (end_k-start_k)/step_k + 1;
-	int from;
+	int source;
 	int i = 0;
 	int completed = 0;
 	long long code_value;
@@ -684,7 +684,7 @@ int SRAssemblerMaster::do_assembly(int round) {
 				send_code(i, ACTION_ASSEMBLY, round, start_k + (i-1)*step_k, 1);
 			}
 			while(completed < total_k){
-				mpi_receive(code_value, from);
+				mpi_receive(code_value, source);
 				completed++;
 			}
 		} else {
@@ -692,10 +692,10 @@ int SRAssemblerMaster::do_assembly(int round) {
 				send_code(i, ACTION_ASSEMBLY, round, start_k + (i-1)*step_k, 1);
 			}
 			while(completed < total_k){
-				mpi_receive(code_value, from);
+				mpi_receive(code_value, source);
 				completed++;
 				if (i <= total_k) {
-					send_code(from, ACTION_ASSEMBLY, round, start_k + (i-1)*step_k, 1);
+					send_code(source, ACTION_ASSEMBLY, round, start_k + (i-1)*step_k, 1);
 					i++;
 				}
 			}
@@ -1140,7 +1140,7 @@ void SRAssemblerMaster::remove_no_hit_contigs(int round){
 
 void SRAssemblerMaster::remove_unmapped_reads(int round){
 	logger->info("Removing found reads without matched contigs ...");
-	int from;
+	int source;
 	unsigned int completed = 0;
 	long long code_value;
 	mpi_code code;
@@ -1154,7 +1154,7 @@ void SRAssemblerMaster::remove_unmapped_reads(int round){
 				send_code(lib_idx + 1, ACTION_CLEAN, lib_idx, round, 0);
 			}
 			while (completed < this->libraries.size()){
-				mpi_receive(code_value, from);
+				mpi_receive(code_value, source);
 				completed++;
 			}
 		// If there are more libraries than processors
@@ -1163,14 +1163,14 @@ void SRAssemblerMaster::remove_unmapped_reads(int round){
 				send_code(lib_idx + 1, ACTION_CLEAN, lib_idx, round, 0);
 			}
 			while (completed < this->libraries.size()){
-				mpi_receive(code_value, from);
+				mpi_receive(code_value, source);
 				code = get_mpi_code(code_value);
 				int lib_idx = code.value1;
 				completed++;
 				// As libraries are completed, new libraries are sent to slaves to be cleaned
 				int next_lib_idx = lib_idx + mpiSize - 1;
 				if (next_lib_idx < int(this->libraries.size())) {
-					send_code(from, ACTION_CLEAN, next_lib_idx, round, 0);
+					send_code(source, ACTION_CLEAN, next_lib_idx, round, 0);
 				}
 			}
 		}

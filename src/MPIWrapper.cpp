@@ -37,14 +37,14 @@ void mpi_send( const char* msg, const int& to ) {
 #endif
 }
 
-void mpi_receive( char* msg, int& from ) {
+void mpi_receive( char* msg, int& source ) {
 #ifdef MPIMODE
 	int len;
 	MPI::Status status;
 
 	MPI::COMM_WORLD.Recv( &len, 1, MPI::INT, MPI::ANY_SOURCE,MPI::ANY_TAG,  status );
-	from = ( ( int )status.Get_source(  ) );
-	MPI::COMM_WORLD.Recv(  msg, len, MPI::CHAR, from, MPI::ANY_TAG );
+	source = ( ( int )status.Get_source(  ) );
+	MPI::COMM_WORLD.Recv(  msg, len, MPI::CHAR, source, MPI::ANY_TAG );
 	msg[len] = '\0';
 #endif
 }
@@ -63,11 +63,11 @@ void mpi_bcast(const long long& code_value) {
 			mpi_send(code_value, i);
 }
 
-void mpi_receive( long long& code_value, int& from ) {
+void mpi_receive( long long& code_value, int& source ) {
 #ifdef MPIMODE
 	MPI::Status status;
 	MPI::COMM_WORLD.Recv( &code_value, 1, MPI::LONG_LONG_INT, MPI::ANY_SOURCE,MPI::ANY_TAG,  status );
-	from = ( ( int )status.Get_source(  ) );
+	source = ( ( int )status.Get_source(  ) );
 #endif
 }
 
