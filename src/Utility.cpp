@@ -2,7 +2,7 @@
  * Utility.cpp
  *
  *  Created on: Jul 27, 2010
- *      Author: hchou
+ *     Authors: Hsien-chao Chou (first version); Thomas McCarthy and Volker Brendel (modifications)
  */
 
 #include "Utility.h"

@@ -2,7 +2,7 @@
  * MPIWrapper.h
  *
  *  Created on: Oct 16, 2011
- *      Author: hchou
+ *     Authors: Hsien-chao Chou (first version); Thomas McCarthy and Volker Brendel (modifications)
  */
 
 #ifndef MPIWRAPPER_H_

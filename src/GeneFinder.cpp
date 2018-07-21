@@ -2,7 +2,7 @@
  * GeneFinder.cpp
  *
  *  Created on: Nov 14, 2012
- *      Author: hchou
+ *     Authors: Hsien-chao Chou (first version); Thomas McCarthy and Volker Brendel (modifications)
  */
 
 #include "GeneFinder.h"

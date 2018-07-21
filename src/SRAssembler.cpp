@@ -2,7 +2,7 @@
  * SRAssembler.cpp
  *
  *  Created on: Oct 12, 2011
- *      Author: Hsien-chao Chou
+ *      Authors: Hsien-chao Chou (first version); Thomas McCarthy and Volker Brendel (modifications)
  */
 
 #include <ctime>

@@ -2,7 +2,7 @@
  * SRAssemblerSlave.h
  *
  *  Created on: Oct 13, 2011
- *      Author: hchou
+ *     Authors: Hsien-chao Chou (first version); Thomas McCarthy and Volker Brendel (modifications)
  */
 
 #ifndef SRASSEMBLERSLAVE_H_

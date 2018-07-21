@@ -25,7 +25,7 @@ document.
 
 ## Reference
 
-Thomas W. McCarthy, Hsien-Chao Chou, and Volker P. Brendel (2017) __SRAssembler:__
+Thomas W. McCarthy, Hsien-Chao Chou, and Volker P. Brendel (2018) __SRAssembler:__
 _Selective Recursive local Assembly of homologous genomic regions._ To be submitted.
 
 ## Contact

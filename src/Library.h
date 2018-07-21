@@ -2,7 +2,7 @@
  * Library.h
  *
  *  Created on: Feb 27, 2012
- *      Author: hchou
+ *     Authors: Hsien-chao Chou (first version); Thomas McCarthy and Volker Brendel (modifications)
  */
 
 #ifndef LIBRARY_H_
