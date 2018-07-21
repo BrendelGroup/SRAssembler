@@ -32,17 +32,16 @@ VmatchAligner::VmatchAligner(int log_level, string log_file):Aligner(log_level, 
  *
  */
 int VmatchAligner::parse_output(const string& output_file, unordered_set<string>& found_reads, const int lib_idx, const int read_part, const string& left_read_index, const string& right_read_index, const string& out_left_read, const string& out_right_read) {
-	// Parse the output file and get the mapped reads that had not been found yet.
+	// Parse the output file and get the mapped reads that have not been found yet.
 	bool paired_end = (out_right_read != "");
 	ifstream report_file_stream(output_file.c_str());
 	int read_found = 0;
 	int new_read_count = 0;
 	string line;
 	string cmd;
-	string part_string = int2str(read_part); //Calculate this once rather than over and over
+	string part_string = int2str(read_part);
 	string lib_string = int2str(lib_idx);
 	string tmpvseqselectfile = out_left_read + "-tmp";
-	//TODO put the temporary file in mem_dir
 	ofstream tmp_file_stream(tmpvseqselectfile.c_str());
 
 	while (getline(report_file_stream, line)) {
@@ -56,22 +55,25 @@ int VmatchAligner::parse_output(const string& output_file, unordered_set<string>
 			tmp_file_stream << seq_number << '\n';
 		}
 	}
-	logger->debug("Matched " + int2str(read_found) + " reads and " + int2str(new_read_count / 2) + " new read (pairs) in library " + int2str(lib_idx + 1) + ", part " + part_string);
+	logger->debug("Matched " + int2str(read_found) + " reads and " + int2str(new_read_count) + " new read (pairs) in library " + int2str(lib_idx + 1) + ", part " + part_string);
 	report_file_stream.close();
 	tmp_file_stream.close();
-
-	// Use awk to strip out linebreaks from within the sequence.
-	cmd = "vseqselect -seqnum " + tmpvseqselectfile + " " + left_read_index + " | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' >> " + out_left_read;
+	// Use vseqselect to fetch the newly found reads.
+	cmd = "vseqselect -seqnum " + tmpvseqselectfile + " " + left_read_index;
+	// Use awk to strip out linebreaks from within the read sequences.
+	cmd += " | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }'";
+	// Append the found reads to the found read file.
+	cmd += " >> " + out_left_read;
 	logger->debug(cmd);
 	run_shell_command(cmd);
 	if (paired_end) {
+		// Same as with the left reads, but one line.
 		cmd = "vseqselect -seqnum " + tmpvseqselectfile + " " + right_read_index + " | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' >> " + out_right_read;
 		logger->debug(cmd);
 		run_shell_command(cmd);
 	}
-	//TODO make this part of a cleanup function.
-	//RM here
-	cmd = "\\rm " + tmpvseqselectfile;
+	// RM here
+	cmd = "rm -f " + tmpvseqselectfile;
 	run_shell_command(cmd);
 
 	// We are catching two new reads if the library is paired end
@@ -81,9 +83,7 @@ int VmatchAligner::parse_output(const string& output_file, unordered_set<string>
 	return new_read_count;
 }
 
-void VmatchAligner::create_index(const string& index_name, const string& type, const string& fasta_file) {
-	string db_type = type;
-	if (db_type == "cdna") db_type = "dna";
+void VmatchAligner::create_index(const string& index_name, const string& db_type, const string& fasta_file) {
 	string cmd = "mkvtree -" + db_type + " -db " + fasta_file + " -pl -indexname " + index_name + " -allout >> " + logger->get_log_file();
 	logger->debug(cmd);
 	run_shell_command(cmd);
@@ -92,8 +92,8 @@ void VmatchAligner::create_index(const string& index_name, const string& type, c
 /* This function APPENDS the sequence numbers of hits (usually reads) to the output_file.
  * This is suitable input for vseqselect to pull those hits out of the mkvtree index.
  */
-void VmatchAligner::do_alignment(const string& index_name, const string& type, int match_length, int mismatch_allowed, const string& query_file, const Params& params, const string& output_file) {
-	// Are mismatches allowed? If not, empty string.
+void VmatchAligner::do_alignment(const string& index_name, const string& alignment_type, int match_length, int mismatch_allowed, const string& query_file, const Params& params, const string& output_file) {
+	// Are mismatches allowed by default? If not, empty string.
 	string e_option = "";
 	string l_option;
 	if (mismatch_allowed > 0) {
@@ -124,13 +124,14 @@ void VmatchAligner::do_alignment(const string& index_name, const string& type, i
 	string tmpvmfile = output_file + "-tmp";
 	/* Vmatch output is appended to the output file so that left and right read searches for one part go into the same output file.
 	 * In the DNA searches, the "-d -p" options search both strands.
-	 * AWK selects only the column containing the sequence number. It is different for proteins and reads because the reads are used as queries.
+	 * AWK selects only the column containing the sequence number. It is column 2 for "proteins" and "reads" because in those cases reads are being used as queries, not subjects.
+	 * The results are sorted and each unique hit reported only once. This is not piped because the output_file may already have left reads in it.
 	 */
-	if (type == "protein" ) {
+	if (alignment_type == "protein" ) {
 		cmd = "vmatch -dnavsprot 1 -q " + query_file + " -d" + l_option + e_option + " " + param_list + " -nodist -noevalue -noscore -noidentity " + index_name + " | awk '$0 !~ /^#.*/ {print $6}' >> " + output_file + "; sort -nu " + output_file + " > " + tmpvmfile + "; \\mv " + tmpvmfile + " " + output_file;
-	} else if (type == "cdna" ) {
+	} else if (alignment_type == "dna" ) {
 		cmd = "vmatch -q " + query_file + " -d -p" + l_option + e_option + " " + param_list + " -nodist -noevalue -noscore -noidentity " + index_name + " | awk '$0 !~ /^#.*/ {print $2}' >> " + output_file + "; sort -nu " + output_file + " > " + tmpvmfile + "; \\mv " + tmpvmfile + " " + output_file;
-	} else if (type == "reads") {
+	} else if (alignment_type == "reads") {
 		cmd = "vmatch -q " + query_file + " -d -p" + l_option + e_option + " " + param_list + " -nodist -noevalue -noscore -noidentity " + index_name + " | awk '$0 !~ /^#.*/ {print $6}' >> " + output_file + "; sort -nu " + output_file + " > " + tmpvmfile + "; \\mv " + tmpvmfile + " " + output_file;
 	}
 	logger->debug(cmd);
@@ -154,15 +155,12 @@ string VmatchAligner::get_program_name() {
 	return "Vmatch";
 }
 
-
-//TODO refactor
-void VmatchAligner::align_long_contigs(const string& long_contig_candidate_file, const string& tmp_dir, const string& contig_file, const int max_contig_size, unordered_set<string>& candidate_ids, unordered_set<string>& long_contig_ids) {
+void VmatchAligner::align_long_contigs(const string& long_contig_candidate_file, const string& aux_dir, const string& contig_file, const int max_contig_size, unordered_set<string>& candidate_ids, unordered_set<string>& long_contig_ids) {
 	if (!file_exists(long_contig_candidate_file)){
 		return;
 	}
-
-	string indexname = tmp_dir + "/contigs_index";
-	string vmatch_out_file = tmp_dir + "/long_contigs_candidates.vmatch";
+	string indexname = aux_dir + "/contigs_index";
+	string vmatch_out_file = aux_dir + "/long_contigs_candidates.vmatch";
 	string cmd = "mkvtree -dna -db " + contig_file + " -pl -indexname " + indexname + " -allout >> " + logger->get_log_file();
 	logger->debug(cmd);
 	run_shell_command(cmd);
@@ -170,7 +168,7 @@ void VmatchAligner::align_long_contigs(const string& long_contig_candidate_file,
 	logger->debug(cmd);
 	run_shell_command(cmd);
 	ifstream vmatch_file_stream(vmatch_out_file.c_str());
-	// parse the output file and remove the long contigs and associated reads.
+	// Parse the output file and remove the long contigs and associated reads.
 	string line;
 	while (getline(vmatch_file_stream, line)){
 		if (line[0] != '#'){
@@ -183,12 +181,11 @@ void VmatchAligner::align_long_contigs(const string& long_contig_candidate_file,
 		}
 	}
 	vmatch_file_stream.close();
-	//RM here
+	// RM here
 	cmd = "rm " + vmatch_out_file + " " + indexname + "*";
-	//logger->debug(cmd);
 	run_shell_command(cmd);
 }
 
 VmatchAligner::~VmatchAligner() {
-	// TODO Auto-generated destructor stub
+	// Auto-generated destructor stub
 }

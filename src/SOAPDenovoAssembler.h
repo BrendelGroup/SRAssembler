@@ -13,7 +13,7 @@
 class SOAPDenovoAssembler: public Assembler {
 public:
 	SOAPDenovoAssembler(int, string);
-	void do_assembly(int kmer, const vector<Library>& libraries, const string& output_file, int threads);
+	void do_assembly(int kmer, const vector<Library>& libraries, const string& output_file, int threads, boost::unordered_map<std::string,Params> parameters_dict);
 	bool is_available();
 	void clean_files(const string& dir);
 	string get_output_contig_file_name(string prefix);

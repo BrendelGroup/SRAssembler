@@ -1,9 +1,0 @@
-#!/bin/bash
-
-echo "============================================================================================================"
-echo " TestC: Using a cDNA as query input."
-echo "============================================================================================================"
-rm -rf StestoutC
-rm -rf reads_data
-mkdir -p StestoutC
-../bin/SRAssembler -q input/cdna -t cdna -p SRAssembler.conf -1 input/reads1_200.fq -2 input/reads2_200.fq -z 200 -r ./reads_data -x 14000 -o StestoutC -A 0 -S 0 -s arabidopsis -n 10

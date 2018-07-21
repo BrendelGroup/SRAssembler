@@ -35,23 +35,24 @@ bool GSQAligner::is_available(){
 	return true;
 }
 
-void GSQAligner::do_spliced_alignment(const string& genomic_file, const string& type, const string& query_file, const string& species, const Params& params, const string& output_file){
+void GSQAligner::do_spliced_alignment(const string& genomic_file, const string& query_type, const string& query_file, const string& species, const Params& params, const string& output_file){
 	string param_list = "";
 	for ( Params::const_iterator it = params.begin(); it != params.end(); ++it ){
 		param_list += " -" + it->first + " " + it->second;
 	}
-	string type_str = "E";
 	string species_str = species_names[species];
 	if (species_str == "")
 		species_str = "generic";
-	if (type == "protein")
+	string type_str = "E";
+	if (query_type == "protein")
 		type_str = "Q";
-	string cmd = "GeneSeqer -L " + genomic_file + " -" + type_str + " " + query_file + " -species " + species_str + " " + param_list + " -o " + output_file + " >> " + logger->get_log_file() + " 2>&1";
+	string cmd = "GeneSeqer -L " + genomic_file + " -" + type_str + " " + query_file + " -species " + species_str + " " + param_list + " -o " + output_file + " >> /dev/null 2>> " + logger->get_log_file();
 	logger->debug(cmd);
 	run_shell_command(cmd);
 }
 
 string_map GSQAligner::get_aligned_contigs(const double& min_score, const double& min_coverage, const unsigned int& min_contig_lgth, const string& all_contig_file, const string& hit_contig_file, const string& alignment_file, const int round, tuple_map& best_hits){
+// This is for each round, to see if the ending criteria have been met.
 	double best_coverage = std::get<1>(best_hits["coverage"]);
 	ifstream old_contig_fs(all_contig_file.c_str());
 	ifstream alignment_fs(alignment_file.c_str());
@@ -60,7 +61,7 @@ string_map GSQAligner::get_aligned_contigs(const double& min_score, const double
 	char currentid[20];
 	unsigned int contig_length;
 	vector<string> contig_list;
-	logger->info("Finding the aligned contigs");
+	logger->running("Finding the aligned contigs");
 	num_matches = 0;
 	output_string = "<B>" + string_format("%-15s %-8s %-30s %-10s %-15s %-15s %-15s","Contig","Strand","Query","Score","Length","Coverage","G/P/C") + "</B>\n";
 	output_string += "----------------------------------------------------------------------------------------------------------\n";
@@ -84,7 +85,7 @@ string_map GSQAligner::get_aligned_contigs(const double& min_score, const double
 			output_string += string_format("%-15s %-8s %-30s %-10s %-15s %-15s %-15s",contig.c_str(),strand.c_str(),query.c_str(),score.c_str(),length.c_str(),cov.c_str(),type.c_str()) + "\n";
 			num_matches++;
 			output_string += "\n";
-			logger->debug("   ... MATCH found with coverage:\t" + cov + " " + type + "\tscore:\t" + score + "\tlength:\t" + int2str(contig_length));
+			logger->info("   ... MATCH found with coverage:\t" + cov + " " + type + "\tscore:\t" + score + "\tcontig length:\t" + int2str(contig_length));
 			if (type == "P" || type == "C"){
 				if (str2double(score) > min_score && str2double(cov) > best_coverage) {
 					get<0>(best_hits["coverage"]) = round;
@@ -117,6 +118,7 @@ string_map GSQAligner::get_aligned_contigs(const double& min_score, const double
 }
 
 void GSQAligner::get_hit_contigs(const double& min_score, const double& min_coverage, const unsigned int& min_contig_lgth, const string& final_contigs_file, const string& hit_contig_file, const string& alignment_file, tuple_map& best_hits){
+// This is for the final round. The hit contigs are identified and put in the final hit_contigs.fasta file.
 	double best_coverage = std::get<1>(best_hits["coverage"]);
 	double final_high_coverage = 0.0;
 	ifstream old_contig_fs(final_contigs_file.c_str());
@@ -130,7 +132,7 @@ void GSQAligner::get_hit_contigs(const double& min_score, const double& min_cove
 	double min_match_length;
 	char query_type[10];
 	vector<string> contig_list;
-	logger->info("Finding the aligned contigs");
+	logger->running("Finding the hit contigs");
 	num_matches = 0;
 	output_string = "<B>" + string_format("%-15s %-8s %-30s %-10s %-15s %-15s %-15s","Contig","Strand","Query","Score","Length","Coverage","G/P/C") + "</B>\n";
 	output_string += "----------------------------------------------------------------------------------------------------------\n";
@@ -179,7 +181,7 @@ void GSQAligner::get_hit_contigs(const double& min_score, const double& min_cove
 				output_string += string_format("%-15s %-8s %-30s %-10s %-15s %-15s %-15s",contig_id.c_str(),strand.c_str(),query.c_str(),score.c_str(),length.c_str(),cov.c_str(),type.c_str()) + "\n";
 				num_matches++;
 				output_string += "\n";
-				logger->info("   ... HIT found with coverage:\t" + cov + " " + type + "\tscore:\t" + score + "\tlength:\t" + int2str(contig_length));
+				logger->info("   ... HIT MATCH found with coverage:\t" + cov + " " + type + "\tscore:\t" + score + "\tcontig length:\t" + int2str(contig_length));
 				contig_list.push_back(contig_id);
 			}
 		}
@@ -187,7 +189,6 @@ void GSQAligner::get_hit_contigs(const double& min_score, const double& min_cove
 
 	if (best_coverage > final_high_coverage) {
 		logger->warn("Contig with better coverage found in round " + int2str(std::get<0>(best_hits["coverage"])));
-		//TODO Maybe run spliced aligner on contigs from this round?
 	}
 	output_string += "\nLength: cumulative length of scored exons\nCov G/P/C: coverage of contig (G) or cDNA (C) or protein (P), whichever is highest";
 	alignment_fs.close();
@@ -206,6 +207,49 @@ void GSQAligner::get_hit_contigs(const double& min_score, const double& min_cove
 	}
 	old_contig_fs.close();
 	new_contig_fs.close();
+}
+
+int GSQAligner::get_longest_match(int round, int k, const double& min_score, const unsigned int& query_contig_min, const string& alignment_file, tuple_map& best_hits){
+	double best_coverage = std::get<1>(best_hits["coverage"]);
+	int best_length = 0;
+	ifstream alignment_fs(alignment_file.c_str());
+	string line;
+	unsigned int contig_length;
+	vector<string> contig_list;
+	while (getline(alignment_fs, line)) {
+		// Get the length of the contig being checked.
+		if (line.substr(0,8) == "Sequence"){
+			sscanf(line.c_str(),"Sequence %*d: %*80[^,], from %*d to %d,%*s",&contig_length);
+			continue;
+		}
+		// Parse the MATCH line
+		if (line.substr(0,5) == "MATCH"){
+			vector<string> tokens;
+			tokenize(line, tokens, "\t");
+			string contig_id = tokens[1].substr(0, tokens[1].length()-1);
+			string strand = tokens[1].substr(tokens[1].length()-1,1);
+			string query = tokens[2];
+			string score = tokens[3];
+			string length = tokens[4];
+			string cov = tokens[5];
+			string type = tokens[6];
+			logger->debug("   ... " + int2str(k) + "-mer check MATCH found with coverage:\t" + cov + " " + type + "\tscore:\t" + score + "\tlength:\t" + length);
+			// Keep track of better coverage if it is seen. This should correspond to the aligned length.
+			if (type == "P" || type == "C"){
+				if (str2double(score) > min_score && str2double(cov) > best_coverage) {
+					get<0>(best_hits["coverage"]) = round;
+					get<1>(best_hits["coverage"]) = str2double(cov);
+					best_coverage = str2double(cov);
+				}
+			}
+			// If this has a longer alignment length than seen before, update best_length.
+			if (str2double(score) > min_score && contig_length >= query_contig_min && str2int(length) > best_length) {
+				best_length = str2int(length);
+			}
+		}
+	}
+	alignment_fs.close();
+	return best_length;
 }
 
 string GSQAligner::get_program_name(){

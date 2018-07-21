@@ -8,12 +8,11 @@
 #include "SnapGeneFinder.h"
 
 SnapGeneFinder::SnapGeneFinder(int log_level, string log_file):GeneFinder(log_level, log_file){
-	// TODO Auto-generated constructor stub
-
+	// Auto-generated constructor stub
 }
 
 SnapGeneFinder::~SnapGeneFinder() {
-	// TODO Auto-generated destructor stub
+	// Auto-generated destructor stub
 }
 
 void SnapGeneFinder::do_gene_finding(const string& genomic_file, const string& species, const Params& params, const string& output_file, const string& protein_output_file){
@@ -39,7 +38,7 @@ string SnapGeneFinder::get_program_name(){
 bool SnapGeneFinder::is_available(){
 	int ret = system("snap > /dev/null 2>&1");
 	if (WEXITSTATUS(ret) != 1) {
-		logger->info("Cannot find snap, check your PATH variable!");
+		logger->error("Cannot find snap, check your PATH variable!");
 		return false;
 	}
 	return true;

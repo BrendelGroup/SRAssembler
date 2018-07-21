@@ -18,10 +18,10 @@ typedef struct m_code {
 } mpi_code;
 
 void mpi_send(const char* msg, const int& to );
-void mpi_receive(char* msg, int& from );
+void mpi_receive(char* msg, int& source );
 void mpi_send( const long long& code_value, const int& to );
 void mpi_bcast(const long long& code_value);
-void mpi_receive( long long& code_value, int& from );
+void mpi_receive( long long& code_value, int& source );
 long long get_mpi_code_value(mpi_code code);
 mpi_code get_mpi_code(long long code_value);
 void mpi_init(int argc, char * argv[] );

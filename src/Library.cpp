@@ -7,10 +7,11 @@
 
 #include "Library.h"
 
-Library::Library(unsigned int lib_idx, string data_dir, string tmp_dir, Logger* logger) {
+Library::Library(unsigned int lib_idx, string data_dir, string aux_dir, Logger* logger) {
+	this->library_name = "";
 	this->lib_idx = lib_idx;
 	this->data_dir = data_dir;
-	this->tmp_dir = tmp_dir;
+	this->aux_dir = aux_dir;
 	this->reversed = DIRECTION_FR;
 	this->left_read = "";
 	this->right_read = "";
@@ -20,6 +21,10 @@ Library::Library(unsigned int lib_idx, string data_dir, string tmp_dir, Logger* 
 	this->num_parts = 0;
 	this->paired_end = false;
 	this->logger = logger;
+}
+
+string Library::get_library_name(){
+	return this->library_name;
 }
 
 int Library::get_insert_size(){
@@ -54,6 +59,10 @@ string Library::get_file_extension(){
 	return this->file_extension;
 }
 
+void Library::set_library_name(string library_name){
+	this->library_name = library_name;
+}
+
 void Library::set_insert_size(int insert_size){
 	this->insert_size = insert_size;
 }
@@ -84,28 +93,28 @@ void Library::set_right_read(string right_read){
 }
 
 string Library::get_matched_left_reads_filename(){
-	return tmp_dir + "/matched_reads_left_" + "lib" + int2str(lib_idx+1) + ".fasta";
+	return aux_dir + "/matched_reads_left_" + "lib" + int2str(lib_idx+1) + ".fasta";
 }
 
 string Library::get_matched_left_reads_filename(int round){
-	return tmp_dir + "/matched_reads_left_" + "r" + int2str(round) + "_" + "lib" + int2str(lib_idx+1) + ".fasta";
+	return aux_dir + "/matched_reads_left_" + "r" + int2str(round) + "_" + "lib" + int2str(lib_idx+1) + ".fasta";
 }
 
 string Library::get_matched_left_reads_filename(int round, int part){
-	return tmp_dir + "/matched_reads_left_" + "r" + int2str(round) + "_" + "lib" + int2str(lib_idx+1) + "_" + "part" + int2str(part) + ".fasta";
+	return aux_dir + "/matched_reads_left_" + "r" + int2str(round) + "_" + "lib" + int2str(lib_idx+1) + "_" + "part" + int2str(part) + ".fasta";
 }
 
 string Library::get_matched_right_reads_filename(){
-	return tmp_dir + "/matched_reads_right_" + "lib" + int2str(lib_idx+1) + ".fasta";
+	return aux_dir + "/matched_reads_right_" + "lib" + int2str(lib_idx+1) + ".fasta";
 }
 
 string Library::get_matched_right_reads_filename(int round){
-	return tmp_dir + "/matched_reads_right_" + "r" + int2str(round) + "_" + "lib" + int2str(lib_idx+1) + ".fasta";
+	return aux_dir + "/matched_reads_right_" + "r" + int2str(round) + "_" + "lib" + int2str(lib_idx+1) + ".fasta";
 }
 
 string Library::get_matched_right_reads_filename(int round, int part){
 	if (paired_end)
-		return tmp_dir + "/matched_reads_right_" + "r" + int2str(round) + "_" + "lib" + int2str(lib_idx+1) + "_" + "part" + int2str(part) + ".fasta";
+		return aux_dir + "/matched_reads_right_" + "r" + int2str(round) + "_" + "lib" + int2str(lib_idx+1) + "_" + "part" + int2str(part) + ".fasta";
 	return "";
 }
 
@@ -122,21 +131,6 @@ string Library::get_read_part_index_name(int file_part, int read_direction){
 string Library::get_split_read_prefix(string src_read){
 	return data_dir + "/lib" + int2str(lib_idx+1) + "/" + get_file_base_name(src_read) + "_" + "part";
 }
-
-//void Library::do_split_files(int read_direction, int reads_per_file){
-	//string read_file = (read_direction == LEFT_READ)? this->left_read:this->right_read;
-	//string cmd;
-	 ////multiplier is based on the number of lines in a read. Assumes FASTQ to start.
-	//if (get_format() == FORMAT_FASTQ) {
-		 ////Use sed magic to turn fastq into fasta. Assumes single-line reads.
-		 ////Use awk to split in a controllable way that gives nice suffixes
-		//cmd = "< " + read_file + " sed -n -e '1~4s/^@/>/p;2~4p' | awk -v prefix=" + get_split_read_prefix(read_file) + " -v lines=" + int2str(reads_per_file * 2) + " 'NR%lines==1 {++i; file = prefix i \".fasta\"} {print > file}'";
-	//} else {
-		//cmd = "< " + read_file + " awk -v prefix=" + get_split_read_prefix(read_file) + " -v lines=" + int2str(reads_per_file * 2) + " 'NR%lines==1 {++i; file = prefix i \".fasta\"} {print > file}'";
-	//}
-	//logger->debug(cmd);
-	//run_shell_command(cmd);
-//}
 
 void Library::do_split_files(int read_direction, int reads_per_file){
 	string read_file = (read_direction == LEFT_READ)? this->left_read:this->right_read;
@@ -179,5 +173,5 @@ void Library::do_split_files(int read_direction, int reads_per_file){
 }
 
 Library::~Library() {
-	// TODO Auto-generated destructor stub
+	// Auto-generated destructor stub
 }

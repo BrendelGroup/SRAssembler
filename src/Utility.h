@@ -27,7 +27,7 @@ typedef boost::unordered_map<std::string, string> string_map;
 typedef boost::unordered_map<std::string, std::tuple<int, double>> tuple_map;
 
 string readfile(const string& fn);
-void tokenize(const string& str, vector<string>& tokens, const string& delimiters);
+void tokenize(const string& line, vector<string>& tokens, const string& delimiters);
 void run_shell_command(const string& cmd);
 string run_shell_command_with_return(const string& cmd);
 int str2int(const string &str);
@@ -48,7 +48,6 @@ string get_file_name(const string& path);
 string trim(const string& str);
 string string_format(const std::string fmt, ...);
 void fastq2fasta(const string& fq, const string& fa);
-void remove_duplicate_reads(const string& filename, int read_format);
 unsigned int count_letters(string &str);
 
 #endif /* UTILITY_H_ */

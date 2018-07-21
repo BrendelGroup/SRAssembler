@@ -14,7 +14,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
-#include <sys/stat.h> //stat, stat()
+#include <sys/stat.h> // stat, stat()
 
 using namespace std;
 
@@ -47,19 +47,19 @@ void fastq2fasta(const string& fq, const string& fa) {
 	out_file.close();
 };
 
-void tokenize(const string& str, vector<string>& tokens, const string& delimiters) {
+void tokenize(const string& line, vector<string>& tokens, const string& delimiters) {
 	// Skip delimiters at beginning.
-	string::size_type lastPos = str.find_first_not_of(delimiters, 0);
+	string::size_type lastPos = line.find_first_not_of(delimiters, 0);
 	// Find first "non-delimiter".
-	string::size_type pos = str.find_first_of(delimiters, lastPos);
+	string::size_type pos = line.find_first_of(delimiters, lastPos);
 
 	while (string::npos != pos || string::npos != lastPos) {
 		// Found a token, add it to the vector.
-		tokens.push_back(str.substr(lastPos, pos - lastPos));
+		tokens.push_back(line.substr(lastPos, pos - lastPos));
 		// Skip delimiters.  Note the "not_of"
-		lastPos = str.find_first_not_of(delimiters, pos);
+		lastPos = line.find_first_not_of(delimiters, pos);
 		// Find next "non-delimiter"
-		pos = str.find_first_of(delimiters, lastPos);
+		pos = line.find_first_of(delimiters, lastPos);
 	}
 }
 
@@ -132,8 +132,7 @@ int randgen(int XMin, int XMax){
 bool file_exists(const char* filename) {
 	struct stat info;
 	int ret = -1;
-
-	//get the file attributes
+	// Get the file attributes.
 	ret = stat(filename, &info);
 	return (ret == 0);
 }
@@ -143,7 +142,7 @@ bool file_exists(const string& filename) {
 
 long get_file_size(const char* filename) {
 	struct stat info;
-	//get the file attributes
+	// Get the file attributes.
 	stat(filename, &info);
 	return info.st_size;
 }
@@ -197,50 +196,6 @@ string string_format(const string fmt, ...) {
 			size=n+1;
 		else
 			size*=2;
-	}
-}
-
-// This function is not used.
-void remove_duplicate_reads(const string& filename, int read_format) {
-	if (read_format == FORMAT_FASTA) {
-		string tmp_file = filename + ".tmp";
-		//TODO this does not return them in order
-		string cmd = "awk '$0 ~ /^>/ && !seen[$0] {getline seq; seen[$0]=seq;} END {for (read in seen) {print read; print seen[read];}}' " + filename + " > " + tmp_file;
-		run_shell_command(cmd);
-		run_shell_command("cp " + tmp_file + " " + filename);
-		run_shell_command("rm " + tmp_file);
-	}
-	//TODO make this more efficient as above, or possibly remove.
-	else {
-		boost::unordered_set<string> found_reads;
-		string tmp_file = filename + ".tmp";
-		ifstream src_stream(filename.c_str());
-		ofstream tmp_stream(tmp_file.c_str());
-		string lead_chr = "@";
-		string line;
-		while (getline(src_stream, line)){
-			if (line.substr(0,1) == lead_chr){
-				if (found_reads.find(line) == found_reads.end()) {
-					found_reads.insert(line);
-					tmp_stream << line << '\n';
-					getline(src_stream, line);
-					tmp_stream << line << '\n';
-					getline(src_stream, line);
-					tmp_stream << line << '\n';
-					getline(src_stream, line);
-					tmp_stream << line << '\n';
-				}
-				else {
-					getline(src_stream, line);
-					getline(src_stream, line);
-					getline(src_stream, line);
-				}
-			}
-		}
-		src_stream.close();
-		tmp_stream.close();
-		run_shell_command("cp " + tmp_file + " " + filename);
-		run_shell_command("rm " + tmp_file);
 	}
 }
 

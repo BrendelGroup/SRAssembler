@@ -21,7 +21,6 @@ Aligner.cpp \
 Assembler.cpp \
 GSQAligner.cpp \
 GTHAligner.cpp \
-ExonerateAligner.cpp \
 GeneFinder.cpp \
 SnapGeneFinder.cpp \
 Logger.cpp \
@@ -41,7 +40,6 @@ Aligner.o \
 Assembler.o \
 GSQAligner.o \
 GTHAligner.o \
-ExonerateAligner.o \
 GeneFinder.o \
 SnapGeneFinder.o \
 Logger.o \
@@ -61,7 +59,6 @@ Aligner.d \
 Assembler.d \
 GSQAligner.d \
 GTHAligner.d \
-ExonerateAligner.d \
 GeneFinder.d \
 SnapGeneFinder.d \
 Logger.d \

@@ -12,13 +12,12 @@ Aligner* Aligner::protein_aligner=NULL;
 Aligner* Aligner::dna_aligner=NULL;
 
 
-// TODO Auto-generated constructor stub
 Aligner::Aligner(int log_level, string log_file) {
 	logger = Logger::getInstance(log_level, log_file);
 }
 
 Aligner::~Aligner() {
-	// TODO Auto-generated destructor stub
+	// Auto-generated destructor stub
 }
 
 // singleton implementation

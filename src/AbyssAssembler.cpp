@@ -23,8 +23,9 @@ bool AbyssAssembler::is_available(){
 	return true;
 }
 
-void AbyssAssembler::do_assembly(int kmer, const vector<Library>& libraries, const string& output_file, int threads)
-{
+void AbyssAssembler::do_assembly(int kmer, const vector<Library>& libraries, const string& output_file, int threads, boost::unordered_map<std::string,Params> parameters_dict){
+	Params contig_params;
+	string contig_param_list = "";
 	string lib_list = "";
 	string paired_files = "";
 	string single_files = "";
@@ -41,8 +42,13 @@ void AbyssAssembler::do_assembly(int kmer, const vector<Library>& libraries, con
 	if (lib_list != ""){
 		lib_list = "lib='" + lib_list + "'";
 	}
+	// Import the parameters for the Abyss "abyss-pe contig" command.
+	contig_params = parameters_dict["Abyss_contig"];
+	for ( Params::const_iterator it = contig_params.begin(); it != contig_params.end(); ++it ){
+		contig_param_list += " -" + it->first + " " + it->second;
+	}
 	single_files = "se='" + single_files + "'";
-	string cmd = "abyss-pe contigs k=" + int2str(kmer) + " name=" + output_file + " " + lib_list + " " + paired_files + " " + single_files + ">> " + logger->get_log_file() + " 2>&1";
+	string cmd = "abyss-pe contigs k=" + int2str(kmer) + " name=" + output_file + " " + lib_list + " " + paired_files + " " + single_files + contig_param_list + ">> " + logger->get_log_file() + " 2>&1";
 	logger->debug(cmd);
 	run_shell_command(cmd);
 }

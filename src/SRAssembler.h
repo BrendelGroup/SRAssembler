@@ -45,11 +45,11 @@ public:
 	virtual void print_message(const std::string&)=0;
 	static SRAssembler* getInstance(int pid);
 	Logger* get_logger();
-	//void signalHandler(int signum);
 protected:
 	int do_alignment(int round, int lib_idx, int idx);
 	void do_spliced_alignment();
 	string_map do_spliced_alignment(int);
+	int do_spliced_alignment(int round, int k);
 	void do_gene_finding();
 	void do_assembly(int, int, int threads);
 	void create_index(int round);
@@ -65,6 +65,7 @@ protected:
 	int get_mismatch_allowed(int round);
 	std::string get_assembly_file_name(int round, int k);
 	std::string get_assembled_scaf_file_name(int round, int k);
+	std::string get_spliced_alignment_file_name(int round, int k);
 	void do_split_files(string read_file);
 	void preprocess_read_part(int lib_idx, int file_part);
 	int get_file_count(std::string);
@@ -74,7 +75,6 @@ protected:
 	void save_found_reads(int round);
 	void load_found_reads(int round);
 	void remove_unmapped_reads(unsigned int lib_idx, int round);
-	//void prepare_contig_file(int round, int k);
 	void keep_long_contigs(string in_file, string out_file, unsigned int min_length);
 	long get_total_read_count(int round);
 	void send_code(const int& to, const int& action, const int& value1, const int& value2, const int& value3);
@@ -85,18 +85,18 @@ protected:
 	GeneFinder* get_gene_finder();
 	boost::unordered_map<std::string,Params> read_param_file();
 	Params get_parameters(string program_name);
-	std::string query_file, species, type, out_dir;
+	std::string probe_file, species, probe_type, out_dir;
 	int init_match_length;
 	int recur_match_length;
 	int mismatch_allowed;
 	int num_rounds;
-	int verbose;
-	int preprocessing_only;
+	bool verbose;
+	bool preprocessing_only;
 	int assembly_round;
 	int clean_round;
 	int contig_limit;
-	int over_write;
-	int check_gene_assembled;
+	bool over_write;
+	bool check_gene_assembled;
 	int reads_per_file;
 	int start_k;
 	int end_k;
@@ -108,18 +108,21 @@ protected:
 	int spliced_alignment_program;
 	int gene_finding_program;
 	int assembler_program;
+	bool masking;
+	int end_search_length;
 	double min_score;
 	double min_coverage;
 	// A dictionary for tracking the best contigs found between rounds.
 	tuple_map best_hits;
-	unsigned int ini_contig_size;
+	unsigned int query_contig_min;
 	unsigned int min_contig_lgth;
 	unsigned int max_contig_lgth;
 	bool preprocessed_exist;
 	bool ignore_contig_explosion;
 	std::string library_file;
+	std::string aux_dir;
 	std::string tmp_dir;
-	std::string mem_dir;
+	std::string tmp_loc;
 	std::string intermediate_dir;
 	std::string data_dir;
 	std::string results_dir;
