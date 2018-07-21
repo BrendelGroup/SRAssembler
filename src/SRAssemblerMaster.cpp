@@ -558,7 +558,7 @@ void SRAssemblerMaster::do_walking() {
 	// Notify all slaves to stop listening.
 	broadcast_code(ACTION_EXIT, 0, 0, 0);
 	// if the final contig size is 0, then report the previous round
-	while (round > 1) {
+	while (round > 0) {
 		logger->info("Checking the final contigs assembled in round " + int2str(round) + " ...");
 		prepare_final_contigs_file(round);
 		if (get_file_size(final_contigs_file) == 0){
