@@ -199,50 +199,6 @@ string string_format(const string fmt, ...) {
 	}
 }
 
-// This function is not used.
-void remove_duplicate_reads(const string& filename, int read_format) {
-	if (read_format == FORMAT_FASTA) {
-		string tmp_file = filename + ".tmp";
-		// TODO this does not return them in order
-		string cmd = "awk '$0 ~ /^>/ && !seen[$0] {getline seq; seen[$0]=seq;} END {for (read in seen) {print read; print seen[read];}}' " + filename + " > " + tmp_file;
-		run_shell_command(cmd);
-		run_shell_command("cp " + tmp_file + " " + filename);
-		run_shell_command("rm " + tmp_file);
-	}
-	// TODO make this more efficient as above, or possibly remove.
-	else {
-		boost::unordered_set<string> found_reads;
-		string tmp_file = filename + ".tmp";
-		ifstream src_stream(filename.c_str());
-		ofstream tmp_stream(tmp_file.c_str());
-		string lead_chr = "@";
-		string line;
-		while (getline(src_stream, line)){
-			if (line.substr(0,1) == lead_chr){
-				if (found_reads.find(line) == found_reads.end()) {
-					found_reads.insert(line);
-					tmp_stream << line << '\n';
-					getline(src_stream, line);
-					tmp_stream << line << '\n';
-					getline(src_stream, line);
-					tmp_stream << line << '\n';
-					getline(src_stream, line);
-					tmp_stream << line << '\n';
-				}
-				else {
-					getline(src_stream, line);
-					getline(src_stream, line);
-					getline(src_stream, line);
-				}
-			}
-		}
-		src_stream.close();
-		tmp_stream.close();
-		run_shell_command("cp " + tmp_file + " " + filename);
-		run_shell_command("rm " + tmp_file);
-	}
-}
-
 unsigned int count_letters(string &str) {
 	unsigned int count = 0;
 	char const constexpr alpha[] = R"(abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ)";

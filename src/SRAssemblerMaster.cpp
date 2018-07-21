@@ -596,7 +596,6 @@ void SRAssemblerMaster::clean_tmp_files(int round){
 	if (!tidy) return;
 	// Remove unneccessary files from the previous round.
 	string cmd;
-	// TODO make into one command to run.
 	logger->debug("Clean tmp files from round " + int2str(round));
 	cmd = "rm -f " + aux_dir + "/matched_reads_left_" + "r" + int2str(round) + "_part* ";
 	cmd += aux_dir + "/matched_reads_right_" + "r" + int2str(round) + "_part* ";
@@ -780,7 +779,6 @@ void SRAssemblerMaster::load_long_contigs() {
 	saved_contig_file.close();
 }
 
-// TODO This should probably be refactored
 // This function doesn't just process long contigs, it processes all contigs for length, including removing the short ones.
 void SRAssemblerMaster::process_long_contigs(int round, int k) {
 	string long_contig_candidate_file = aux_dir + "/long_contig_candidate_" + "r" + int2str(round-1)+ ".fasta";
@@ -1127,7 +1125,6 @@ void SRAssemblerMaster::remove_no_hit_contigs(int round){
 	logger->debug(cmd);
 	run_shell_command(cmd);
 	// RM here
-	// TODO Restore allowing multiple queries again? //string cmd = "rm -f " + aux_dir + "/qindex*";
 	cmd = "rm -f " + out_file + " " + contig_index + "*";
 	run_shell_command(cmd);
 	// Create a new index of the good contigs for remove_unmapped_reads to use. Happens here because remove_unmapped_reads might be parallel.

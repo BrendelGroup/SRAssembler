@@ -49,7 +49,6 @@ void GTHAligner::do_spliced_alignment(const string& genomic_file, const string& 
 
 string_map GTHAligner::get_aligned_contigs(const double& min_score, const double& min_coverage, const unsigned int& min_contig_lgth, const string& all_contig_file, const string& hit_contig_file, const string& alignment_file, const int round, tuple_map& best_hits){
 // This is for each round, to see if the ending criteria have been met.
-// TODO this can probably be combined with the spliced alignment of each k-mer size, rather than being done again after the best kmer is chosen.
 	double best_coverage = std::get<1>(best_hits["coverage"]);
 	ifstream alignment_fs(alignment_file.c_str());
 	ofstream new_contig_fs(hit_contig_file.c_str());

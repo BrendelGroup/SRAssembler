@@ -560,7 +560,6 @@ string SRAssembler:: get_query_fasta_file_name(int round){
  * It does not just return a string naming a fasta file that contains all of the matched reads.
  * This function is also responsible for assembling the contents of that file.
  */
- // TODO break into multiple functions, this is ridiculous
  	if (round > 1){
 		// If we have passed the round to start assembling, use the assembled contig files as the query.
 		if (assembly_round < round)
@@ -769,7 +768,6 @@ void SRAssembler::create_index(int round) {
 }
 
 string SRAssembler:: get_type(int round){
-	// TODO Why?
    return (round == 1)? probe_type: TYPE_DNA;
 }
 
