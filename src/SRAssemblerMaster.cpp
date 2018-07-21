@@ -597,18 +597,14 @@ void SRAssemblerMaster::clean_tmp_files(int round){
 	// Remove unneccessary files from the previous round.
 	string cmd;
 	// TODO make into one command to run.
-	run_shell_command(cmd);
-	cmd = "rm -f " + aux_dir + "/matched_reads_left_" + "r" + int2str(round) + "_part*";
-	run_shell_command(cmd);
-	cmd = "rm -f " + aux_dir + "/matched_reads_right_" + "r" + int2str(round) + "_part*";
-	run_shell_command(cmd);
-	cmd = "rm -f " + aux_dir + "/matched_reads_" + "r" + int2str(round) + "_*";
-	run_shell_command(cmd);
-	cmd = "rm -f " + aux_dir + "/query-vs-contig_" + "r" + int2str(round) + ".*";
-	run_shell_command(cmd);
-	cmd = "rm -f " + aux_dir + "/hit_contigs_" +"r" + int2str(round) + ".*";
-	run_shell_command(cmd);
-	cmd = "rm -f " + aux_dir + "/long_contig_candidate_" + "r" + int2str(round) + ".*";
+	logger->debug("Clean tmp files from round " + int2str(round));
+	cmd = "rm -f " + aux_dir + "/matched_reads_left_" + "r" + int2str(round) + "_part* ";
+	cmd += aux_dir + "/matched_reads_right_" + "r" + int2str(round) + "_part* ";
+	cmd += aux_dir + "/matched_reads_" + "r" + int2str(round) + "_* ";
+	cmd += aux_dir + "/query-vs-contig_" + "r" + int2str(round) + ".* ";
+	cmd += aux_dir + "/query-vs-contig_k*" + "r" + int2str(round) + ".aln ";
+	cmd += aux_dir + "/hit_contigs_" +"r" + int2str(round) + ".* ";
+	cmd += aux_dir + "/long_contig_candidate_" + "r" + int2str(round) + ".* ";
 	logger->debug(cmd);
 	run_shell_command(cmd);
 }
