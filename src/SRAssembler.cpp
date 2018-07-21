@@ -669,17 +669,17 @@ void SRAssembler::do_assembly(int round, int k, int threads) {
 }
 
 void SRAssembler::do_spliced_alignment() {
-	logger->info("Doing the final spliced alignment ...");
+	logger->running("Doing the final spliced alignment ...");
 	SplicedAligner* spliced_aligner = get_spliced_aligner();
 	string program_name = spliced_aligner->get_program_name();
 	Params params = this->get_parameters(program_name);
 	spliced_aligner->do_spliced_alignment(this->final_contigs_file, this->probe_type, this->probe_file, this->species, params, this->spliced_alignment_output_file);
 	spliced_aligner->get_hit_contigs(min_score, min_coverage, min_contig_lgth, this->final_contigs_file, this->hit_contigs_file, this->spliced_alignment_output_file, this->best_hits);
-	logger->info("Done.");
+	logger->running("Done with final spliced alignment.");
 }
 
 string_map SRAssembler::do_spliced_alignment(int round) {
-	logger->info("Now running the spliced alignment program ...");
+	logger->running("Now running the spliced alignment program on the contigs of round " + int2str(round) + " ...");
 	SplicedAligner* spliced_aligner = get_spliced_aligner();
 	string program_name = spliced_aligner->get_program_name();
 	Params params = this->get_parameters(program_name);
@@ -690,7 +690,7 @@ string_map SRAssembler::do_spliced_alignment(int round) {
 	string_map query_map = spliced_aligner->get_aligned_contigs(min_score, min_coverage, min_contig_lgth, contig_file, hit_file, output_file, round, best_hits);
 	// RM HERE
 	spliced_aligner->clean_files(contig_file);
-	logger->info("Done.");
+	logger->running("Done with spliced alignment for round " + int2str(round) + ".");
 	return query_map;
 }
 
@@ -716,11 +716,11 @@ void SRAssembler::do_gene_finding() {
 		return;
 	if (!gene_finder->is_available())
 		return;
-	logger->info("Now running the ab initio gene finding program ...");
+	logger->running("Now running the ab initio gene finding program ...");
 	string program_name = gene_finder->get_program_name();
 	Params params = this->get_parameters(program_name);
 	gene_finder->do_gene_finding(this->hit_contigs_file, this->species, params, this->gene_finding_output_file, this->gene_finding_output_protein_file);
-	logger->info("Done.");
+	logger->running("Done with gene finding.");
 }
 
 string SRAssembler::get_assembly_file_name(int round, int k){

@@ -129,7 +129,7 @@ void GTHAligner::get_hit_contigs(const double& min_score, const double& min_cove
 	double min_match_length;
 	char query_type[10];
 	vector<string> contig_list;
-	logger->debug("Finding the aligned contigs");
+	logger->running("Finding the hit contigs");
 	num_matches = 0;
 	output_string = "<B>" + string_format("%-15s %-8s %-30s %-10s %-15s %-15s %-15s","Contig","Strand","Query","Score","Length","Coverage","G/P/C") + "</B>\n";
 	output_string += "----------------------------------------------------------------------------------------------------------\n";

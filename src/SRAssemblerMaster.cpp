@@ -176,7 +176,7 @@ void SRAssemblerMaster::show_usage(){
 }
 
 void SRAssemblerMaster::do_preprocessing(){
-	logger->info("Now pre-processing the reads files ...");
+	logger->running("Now pre-processing the reads files ...");
 	string cmd;
 	logger->debug("Checking the existence of split reads data ...");
 	for (unsigned lib_index=0;lib_index<this->libraries.size();lib_index++) {
@@ -192,7 +192,7 @@ void SRAssemblerMaster::do_preprocessing(){
 				continue;
 			}
 		}
-		logger->info("Splitting read library " + int2str(lib_index+1) + " ...");
+		logger->running("Splitting read library " + int2str(lib_index+1) + " ...");
 		// RM here
 		// Remove any pre-existing files in case of an incomplete earlier pre-processing.
 		cmd = "rm -f " + data_dir + "/lib" + int2str(lib_index+1) + "/" + get_file_base_name(lib->get_left_read()) + "* " + data_dir + "/lib" + int2str(lib_index+1) + "/" + get_file_base_name(lib->get_right_read()) + "*";
@@ -215,7 +215,7 @@ void SRAssemblerMaster::do_preprocessing(){
 				lib->do_split_files(RIGHT_READ, this->reads_per_file);
 		}
 		lib->set_num_parts(get_file_count(lib->get_split_read_prefix(lib->get_left_read()) + "*.fasta"));
-		logger->info("We have " + int2str(lib->get_num_parts()) +" split files");
+		logger->info("Library " + int2str(lib_index+1) + " has " + int2str(lib->get_num_parts()) +" split files");
 		broadcast_code(ACTION_TOTAL_PARTS, lib_index, lib->get_num_parts(), 0);
 		int completed = 0;
 
@@ -248,7 +248,7 @@ void SRAssemblerMaster::do_preprocessing(){
 			}
 		}
 	}
-	logger->info("Preprocessing done.");
+	logger->running("Preprocessing done.");
 }
 
 int SRAssemblerMaster::get_start_round(){
@@ -318,7 +318,7 @@ void SRAssemblerMaster::do_walking() {
 		return;
 	}
 
-	logger->info("Start chromosome walking ...");
+	logger->info("Begin chromosome walking ...");
 	logger->info("Total processors: " + int2str(mpiSize));
 	int source;
 	int read_part = 0;
@@ -464,7 +464,7 @@ void SRAssemblerMaster::do_walking() {
 				break;
 			}
 			// If maximum round is reached, stop
-			logger->info("Round " + int2str(round) + " is done.");
+			logger->info("Round " + int2str(round) + " is finished.");
 			if (round == num_rounds) {
 				logger->info("The walking is terminated: The maximum round (" + int2str(num_rounds) + ") has been reached.");
 				break;
@@ -538,7 +538,7 @@ void SRAssemblerMaster::do_walking() {
 					run_shell_command(cmd);
 				}
 			}
-			logger->info("Round " + int2str(round) + " is done.");
+			logger->info("Round " + int2str(round) + " is finished.");
 			if (round == num_rounds) {
 				logger->info("The walking is terminated: The maximum round (" + int2str(num_rounds) + ") has been reached.");
 				break;
@@ -559,7 +559,7 @@ void SRAssemblerMaster::do_walking() {
 	broadcast_code(ACTION_EXIT, 0, 0, 0);
 	// if the final contig size is 0, then report the previous round
 	while (round > 0) {
-		logger->info("Checking the final contigs assembled in round " + int2str(round) + " ...");
+		logger->running("Checking the final contigs assembled in round " + int2str(round) + " ...");
 		prepare_final_contigs_file(round);
 		if (get_file_size(final_contigs_file) == 0){
 			logger->info("... no contigs found in round " + int2str(round));
@@ -657,7 +657,7 @@ string SRAssemblerMaster::get_saved_contig_file_name(){
 }
 
 int SRAssemblerMaster::do_assembly(int round) {
-	logger->info("Doing assembly, round: " + int2str(round));
+	logger->running("Doing assembly, round " + int2str(round));
 	int best_k = 0;
 	unsigned int max_longest_contig = 0;
 	unsigned int best_longest_contig = 0;
@@ -1070,7 +1070,7 @@ void SRAssemblerMaster::create_folders(){
 		cmd = "mkdir -p " + dir + "; ";
 		string slink = data_dir + "/lib" + int2str(i+1);
 		cmd += "ln -s " + libraries[i].get_library_name() + " " + slink;
-		logger->info(cmd);
+		logger->running(cmd);
 		run_shell_command(cmd);
 	}
 	// If pre-processing only, don't bother making useless directories.
@@ -1098,7 +1098,7 @@ void SRAssemblerMaster::create_folders(){
 }
 
 void SRAssemblerMaster::remove_no_hit_contigs(int round){
-	logger->info("Removing contigs without hits ...");
+	logger->running("Removing contigs without hits ...");
 	string cmd;
 	string alignment_type;
 	string contig_file = get_contig_file_name(round);
@@ -1132,7 +1132,7 @@ void SRAssemblerMaster::remove_no_hit_contigs(int round){
 }
 
 void SRAssemblerMaster::remove_unmapped_reads(int round){
-	logger->info("Removing found reads without matched contigs ...");
+	logger->running("Removing found reads without matched contigs ...");
 	int source;
 	unsigned int completed = 0;
 	long long code_value;
