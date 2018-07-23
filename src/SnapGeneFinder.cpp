@@ -2,7 +2,7 @@
  * SnapGeneFinder.cpp
  *
  *  Created on: 2012-11-14
- *      Author: hchou
+ *     Authors: Hsien-chao Chou (first version); Thomas McCarthy and Volker Brendel (modifications)
  */
 
 #include "SnapGeneFinder.h"

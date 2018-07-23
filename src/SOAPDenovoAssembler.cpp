@@ -2,7 +2,7 @@
  * SOAPDenovoAssembler.cpp
  *
  *  Created on: Oct 15, 2011
- *      Author: hchou
+ *     Authors: Hsien-chao Chou (first version); Thomas McCarthy and Volker Brendel (modifications)
  *  Updated for use with SOAPdenovo2: Aug 21, 2013 (VB)
  */
 

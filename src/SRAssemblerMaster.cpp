@@ -2,7 +2,7 @@
  * SRAssemblerMaster.cpp
  *
  *  Created on: Oct 13, 2011
- *      Author: hchou
+ *     Authors: Hsien-chao Chou (first version); Thomas McCarthy and Volker Brendel (modifications)
  */
 #include "SRAssemblerMaster.h"
 
@@ -593,8 +593,8 @@ void SRAssemblerMaster::do_walking() {
 
 void SRAssemblerMaster::clean_tmp_files(int round){
 	if (round == 0) return;
-	if (!tidy) return;
-	// Remove unneccessary files from the previous round.
+	if (verbose) return;
+	// Unless verbose output is set, remove unneccessary files from the finished round:
 	string cmd;
 	logger->debug("Clean tmp files from round " + int2str(round));
 	cmd = "rm -f " + aux_dir + "/matched_reads_left_" + "r" + int2str(round) + "_part* ";
@@ -756,7 +756,7 @@ int SRAssemblerMaster::do_assembly(int round) {
 		process_long_contigs(round, best_k);
 	}
 	// RM HERE
-	if (tidy) {
+	if (!verbose) {
 		get_assembler()->clean_files(aux_dir);
 	}
 	return max_longest_contig;
@@ -883,7 +883,7 @@ void SRAssemblerMaster::process_long_contigs(int round, int k) {
 			string left_matched_reads = lib.get_matched_left_reads_filename();
 			string right_matched_reads;
 			if (lib.get_paired_end()) {
-				 right_matched_reads = lib.get_matched_right_reads_filename();
+				right_matched_reads = lib.get_matched_right_reads_filename();
 			}
 			aligner->create_index(aux_dir + "/left_reads_index", "dna", left_matched_reads);
 			if (lib.get_paired_end()) {
@@ -1000,7 +1000,7 @@ void SRAssemblerMaster::remove_hit_contigs(vector<string> &contig_list, int roun
 	string cmd = "cp " + tmp_file + " " + contig_file;
 	run_shell_command(cmd);
 	// RM HERE
-	if (tidy) {
+	if (!verbose) {
 		cmd = "rm " + tmp_file;
 		run_shell_command(cmd);
 	}

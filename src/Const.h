@@ -2,7 +2,7 @@
  * Const.h
  *
  *  Created on: Oct 21, 2011
- *      Author: hchou
+ *     Authors: Hsien-chao Chou (first version); Thomas McCarthy and Volker Brendel (modifications)
  */
 
 #ifndef CONST_H_
@@ -60,7 +60,6 @@ static const unsigned int MAX_CONTIG_LGTH=10000;
 static const bool MASKING=true;
 static const bool VERBOSE=false;
 static const bool PREPROCESSING_ONLY=false;
-static const bool TIDY=true;
 static const bool OVER_WRITE = false;
 static const bool CHECK_GENE_ASSEMBLED = true;
 static const std::string READS_DATA = "processed_reads";

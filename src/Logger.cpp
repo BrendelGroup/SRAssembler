@@ -2,7 +2,7 @@
  * Logger.cpp
  *
  *  Created on: Oct 22, 2011
- *      Author: hchou
+ *     Authors: Hsien-chao Chou (first version); Thomas McCarthy and Volker Brendel (modifications)
  */
 
 #include "Logger.h"

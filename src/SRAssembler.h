@@ -2,7 +2,7 @@
  * SRAssembler.h
  *
  *  Created on: Oct 12, 2011
- *      Author: hchou
+ *     Authors: Hsien-chao Chou (first version); Thomas McCarthy and Volker Brendel (modifications)
  */
 
 #ifndef SRASSEMBLER_H_
@@ -92,7 +92,6 @@ protected:
 	int num_rounds;
 	bool verbose;
 	bool preprocessing_only;
-	bool tidy;
 	int assembly_round;
 	int clean_round;
 	int contig_limit;

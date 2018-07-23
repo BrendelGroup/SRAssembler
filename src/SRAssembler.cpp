@@ -2,7 +2,7 @@
  * SRAssembler.cpp
  *
  *  Created on: Oct 12, 2011
- *      Author: Hsien-chao Chou
+ *      Authors: Hsien-chao Chou (first version); Thomas McCarthy and Volker Brendel (modifications)
  */
 
 #include <ctime>
@@ -119,12 +119,12 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 	usage.append("-y: Disable SRAssembler resumption from previous checkpoint [will overwrite existing output].\n");
 	usage.append("-Z: Disable dustmasker masking of low-complexity regions of contigs before searching for reads.\n");
 	usage.append("\n");
-	usage.append("-v: Verbose output.\n");
+	usage.append("-v: Verbose output (typically only used for debugging).\n");
 	usage.append("-h: Print this usage synopsis.");
 
 
 	char c;
-	while((c = getopt(argc, argv, "1:2:a:A:b:c:d:e:G:hi:k:l:m:M:n:No:p:Pq:r:s:S:t:T:vwx:X:yz:Z")) != -1) {
+	while((c = getopt(argc, argv, "1:2:a:A:b:c:d:e:G:hi:k:l:m:M:n:o:p:Pq:r:s:S:t:T:vwx:X:yz:Z")) != -1) {
 		switch (c){
 			case '1':
 				left_read = optarg;

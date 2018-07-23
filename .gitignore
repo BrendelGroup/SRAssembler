@@ -1,8 +1,5 @@
-demo/*testout*
 bin/
+demo/reads_data
+demo/testout*
 src/*.d
 src/*.o
-speedtest/
-demo/processed_reads
-demo/x*
-.~lock*

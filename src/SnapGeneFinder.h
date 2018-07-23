@@ -2,7 +2,7 @@
  * Snap.h
  *
  *  Created on: 2012-11-14
- *      Author: hchou
+ *     Authors: Hsien-chao Chou (first version); Thomas McCarthy and Volker Brendel (modifications)
  */
 
 #ifndef SNAPGENEFINDER_H_

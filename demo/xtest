@@ -8,11 +8,11 @@ rm -rf processed_reads
 ../bin/SRAssembler -q input/LOC_Os06g04560.pep -p SRAssembler.conf -1 input/reads1_200.fq -2 input/reads2_200.fq -z 200 -r ./processed_reads -x 15000 -o testout1
 
 echo "============================================================================================================"
-echo " Test2: Use a cDNA as query input."
+echo " Test2: Use a cDNA sequence as query input."
 echo "============================================================================================================"
 rm -rf testout2
 # Because we have existing pre-processed reads, we do not need to specify the number of reads per split file with -x.
-../bin/SRAssembler -q input/cdna -t dna -p SRAssembler.conf -l libraries_200bp.conf -r ./processed_reads -o testout2
+../bin/SRAssembler -q input/AT1G01950.cdna -t dna -p SRAssembler.conf -l libraries_200bp.conf -r ./processed_reads -o testout2
 
 echo "============================================================================================================"
 echo " Test3: Use two libraries. Only the second library still needs to be processed."
