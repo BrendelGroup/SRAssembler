@@ -22,10 +22,9 @@ rm -rf testout3
 ../bin/SRAssembler -q input/LOC_Os06g04560.pep -p SRAssembler.conf -l libraries_200bp_1kb.conf -r ./processed_reads -x 15000 -o testout3
 
 echo "============================================================================================================"
-echo " Test4: Previous example, but using the MPI implementation."
+echo " Test4: Previous example, but using the MPI implementation and force a full 3 rounds of assembly."
 echo "============================================================================================================"
 rm -rf testout4
-# Force it to go 3 rounds or it will end after one.
 mpirun -n 4 ../bin/SRAssembler_MPI -q input/LOC_Os06g04560.pep -p SRAssembler.conf -l libraries_200bp_1kb.conf -r ./processed_reads -o testout4 -n 3 -w
 
 echo "============================================================================================================"
