@@ -193,7 +193,7 @@ void SRAssemblerMaster::do_preprocessing(){
 			}
 		}
 		logger->running("Splitting read library " + int2str(lib_index+1) + " ...");
-		// RM here
+		// Intermediate files are removed here.
 		// Remove any pre-existing files in case of an incomplete earlier pre-processing.
 		cmd = "rm -f " + data_dir + "/lib" + int2str(lib_index+1) + "/" + get_file_base_name(lib->get_left_read()) + "* " + data_dir + "/lib" + int2str(lib_index+1) + "/" + get_file_base_name(lib->get_right_read()) + "*";
 		run_shell_command(cmd);
@@ -434,7 +434,7 @@ void SRAssemblerMaster::do_walking() {
 					if (contig_count > contig_limit) {
 						logger->info("The walking is terminated: " + int2str(contig_count) + " contigs produced in round " + int2str(round) + ". This is too many to be a good run. Consider adjusting parameters such as Vmatch_protein_vs_contigs or increasing -i initial_contig_min. You can also rerun with the -d 0 argument to ignore contig numbers.");
 						broadcast_code(ACTION_EXIT, 0, 0, 0);
-						// RM HERE
+						// Intermediate files are removed here.
 						clean_tmp_files(round-1);
 						return;
 					}
@@ -482,7 +482,7 @@ void SRAssemblerMaster::do_walking() {
 			}
 			// If we haven't yet found a contig that meets the required length, we try the next round.
 			if (longest_contig < min_contig_lgth) {
-				// RM HERE
+				// Intermediate files are removed here.
 				clean_tmp_files(round-1);
 				round++;
 				continue;
@@ -544,12 +544,12 @@ void SRAssemblerMaster::do_walking() {
 				break;
 			}
 		}
-		// RM HERE
+		// Intermediate files are removed here.
 		clean_tmp_files(round-1);
 		round++;
 	}
 	// Walking ends.
-	// RM HERE
+	// Intermediate files are removed here.
 	clean_tmp_files(round-1);
 	// If this round has not been assembled yet, do assembling.
 	if ( ! assembled && assembly_round > round){
@@ -574,7 +574,7 @@ void SRAssemblerMaster::do_walking() {
 	}
 	do_spliced_alignment();
 	do_gene_finding();
-	// RM HERE
+	// Intermediate files are removed here.
 	this->get_spliced_aligner()->clean_files(this->final_contigs_file);
 	output_summary(round);
 	output_spliced_alignment();
@@ -584,7 +584,7 @@ void SRAssemblerMaster::do_walking() {
 	ofstream outFile(summary_file.c_str());
 	outFile << output_content << endl;
 	outFile.close();
-	// RM HERE
+	// Intermediate files are removed here.
 	// Now that we're done, clean up unneccessary temporary files and the link to the tmp_dir
 	string cmd = "rm -rf " + probe_file + ".* " + aux_dir + "/qindex.* " + aux_dir + "/cindex.* " + out_dir + "/" + get_file_name(tmp_dir) + " " + tmp_dir;
 	logger->debug(cmd);
@@ -610,7 +610,7 @@ void SRAssemblerMaster::clean_tmp_files(int round){
 
 void SRAssemblerMaster::save_query_list(){
 	string fn = aux_dir + "/query_list";
-	// RM HERE
+	// Intermediate files are removed here.
 	run_shell_command("rm -rf " + fn);
 	if (query_list.size() > 0){
 		ofstream fs(fn.c_str());
@@ -636,7 +636,7 @@ void SRAssemblerMaster::load_saved_contigs(){
 	string fn = get_saved_contig_file_name();
 	this->contig_number = 1;
 	if (start_round == 1)
-		// RM HERE
+		// Intermediate files are removed here.
 		run_shell_command("rm -rf " + fn);
 	else {
 		if (file_exists(fn)){
@@ -755,7 +755,7 @@ int SRAssemblerMaster::do_assembly(int round) {
 	if (best_k > 0) {
 		process_long_contigs(round, best_k);
 	}
-	// RM HERE
+	// Intermediate files are removed here.
 	if (!verbose) {
 		get_assembler()->clean_files(aux_dir);
 	}
@@ -952,7 +952,7 @@ void SRAssemblerMaster::process_long_contigs(int round, int k) {
 				run_shell_command(cmd);
 			}
 		}
-		// RM here
+		// Intermediate files are removed here.
 		cmd = "rm -f " + aux_dir + "/left_reads_index* " + aux_dir + "/right_reads_index*";
 		run_shell_command(cmd);
 	}
@@ -999,7 +999,7 @@ void SRAssemblerMaster::remove_hit_contigs(vector<string> &contig_list, int roun
 	saved_contig_file.close();
 	string cmd = "cp " + tmp_file + " " + contig_file;
 	run_shell_command(cmd);
-	// RM HERE
+	// Intermediate files are removed here.
 	if (!verbose) {
 		cmd = "rm " + tmp_file;
 		run_shell_command(cmd);
@@ -1062,7 +1062,7 @@ void SRAssemblerMaster::create_folders(){
 		run_shell_command(cmd);
 	}
 	// Remove pre-existing library symlinks.
-	// RM here
+	// Intermediate files are removed here.
 	cmd = "rm -f " + data_dir + "/lib{0..9}*";
 	run_shell_command(cmd);
 	for (unsigned i=0;i<this->libraries.size();i++){
@@ -1124,7 +1124,7 @@ void SRAssemblerMaster::remove_no_hit_contigs(int round){
 	cmd = "vseqselect -seqnum " + out_file + " " + contig_index + " | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' > " + contig_file;
 	logger->debug(cmd);
 	run_shell_command(cmd);
-	// RM here
+	// Intermediate files are removed here.
 	cmd = "rm -f " + out_file + " " + contig_index + "*";
 	run_shell_command(cmd);
 	// Create a new index of the good contigs for remove_unmapped_reads to use. Happens here because remove_unmapped_reads might be parallel.
