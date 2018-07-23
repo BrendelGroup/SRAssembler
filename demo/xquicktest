@@ -11,5 +11,6 @@ echo "==========================================================================
 echo " Test2: Use the MPI implementation, read library specifications from conf file (only the second, new"
 echo "        library will be pre-processed)."
 echo "============================================================================================================"
-rm -rf testout2
-mpirun -n 4 ../bin/SRAssembler_MPI -q input/LOC_Os06g04560.pep -p SRAssembler.conf -l libraries_200bp_1kb.conf -r ./processed_reads -x 15000 -o testout2
+# Outputs to testout4 to maintain congruity with the complete test suite.
+rm -rf testout4
+mpirun -n 4 ../bin/SRAssembler_MPI -q input/LOC_Os06g04560.pep -p SRAssembler.conf -l libraries_200bp_1kb.conf -r ./processed_reads -x 15000 -o testout4

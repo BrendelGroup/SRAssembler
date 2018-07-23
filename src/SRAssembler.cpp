@@ -684,7 +684,7 @@ string_map SRAssembler::do_spliced_alignment(int round) {
 	string hit_file = aux_dir + "/hit_contigs_" + "r" + int2str(round) + ".fasta";
 	spliced_aligner->do_spliced_alignment(contig_file, this->probe_type, this->probe_file, this->species, params, output_file);
 	string_map query_map = spliced_aligner->get_aligned_contigs(min_score, min_coverage, min_contig_lgth, contig_file, hit_file, output_file, round, best_hits);
-	// RM HERE
+	// Intermediate files are removed here.
 	spliced_aligner->clean_files(contig_file);
 	logger->running("Done with spliced alignment for round " + int2str(round) + ".");
 	return query_map;
@@ -700,7 +700,7 @@ int SRAssembler::do_spliced_alignment(int round, int k) {
 	string output_file = this->get_spliced_alignment_file_name(round, k);
 	spliced_aligner->do_spliced_alignment(contig_file, this->probe_type, this->probe_file, this->species, params, output_file);
 	best_spliced_length = spliced_aligner->get_longest_match(round, k, min_score, query_contig_min, output_file, best_hits);
-	// RM HERE
+	// Intermediate files are removed here.
 	spliced_aligner->clean_files(contig_file);
 	logger->debug("Done with spliced alignment for round " + int2str(round) + ", k-mer " + int2str(k) + ".");
 	return best_spliced_length;
@@ -787,7 +787,7 @@ void SRAssembler::merge_mapped_files(int round){
 		string cmd = "cat " + left_files + " >> " + lib.get_matched_left_reads_filename();
 		logger->debug(cmd);
 		run_shell_command(cmd);
-		// RM HERE
+		// Intermediate files are removed here.
 		cmd = "rm -f " + left_files;
 		logger->debug(cmd);
 		run_shell_command(cmd);
@@ -797,7 +797,7 @@ void SRAssembler::merge_mapped_files(int round){
 			cmd = "cat " + right_files + " >> " + lib.get_matched_right_reads_filename();
 			logger->debug(cmd);
 			run_shell_command(cmd);
-			// RM HERE
+			// Intermediate files are removed here.
 			cmd = "rm -f " + right_files;
 			logger->debug(cmd);
 			run_shell_command(cmd);
@@ -806,7 +806,7 @@ void SRAssembler::merge_mapped_files(int round){
 		if (lib.get_paired_end())
 			run_shell_command("cp " + lib.get_matched_right_reads_filename() + " " + lib.get_matched_right_reads_filename(round));
 	}
-	// RM HERE
+	// Intermediate files are removed here.
 	string cmd = "rm -f " + get_contigs_index_name(round) + ".*";;
 	logger->debug(cmd);
 	run_shell_command(cmd);
@@ -955,7 +955,7 @@ void SRAssembler::remove_unmapped_reads(unsigned int lib_idx, int round){
 		cmd = "cp " + right_matched_reads + " " + lib.get_matched_right_reads_filename(round);
 		run_shell_command(cmd);
 	}
-	// RM here
+	// Intermediate files are removed here.
 	cmd = "rm -f " + vmatch_outfile + " " + left_reads_index + "*";
 	run_shell_command(cmd);
 	if (lib.get_paired_end()) {

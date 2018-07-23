@@ -72,7 +72,7 @@ int VmatchAligner::parse_output(const string& output_file, unordered_set<string>
 		logger->debug(cmd);
 		run_shell_command(cmd);
 	}
-	// RM here
+	// Intermediate files are removed here.
 	cmd = "rm -f " + tmpvseqselectfile;
 	run_shell_command(cmd);
 
@@ -181,7 +181,7 @@ void VmatchAligner::align_long_contigs(const string& long_contig_candidate_file,
 		}
 	}
 	vmatch_file_stream.close();
-	// RM here
+	// Intermediate files are removed here.
 	cmd = "rm " + vmatch_out_file + " " + indexname + "*";
 	run_shell_command(cmd);
 }

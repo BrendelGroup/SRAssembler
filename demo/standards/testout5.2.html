@@ -1,0 +1,67 @@
+<HTML>
+<HEAD>
+<TITLE>SRAssembler Output</TITLE>
+</HEAD>
+<BODY>
+<A NAME=top><A NAME=file1>
+<H3>Libraries summary</H3><HR><PRE>
+
+1 library is tested
+
+<B>Library		Insert size	Paired	reads</B>
+------------------------------------------------------------------------------
+<table border="0" cellpadding="0" cellspacing="0" width="22"><tr><td bgcolor="#ffffff"><pre>
+1		200		1	input/reads1_200.fq,input/reads2_200.fq
+</td></tr></table>Paired: 1 : paired-end, 0: single</PRE><H3>Assembly summary</H3><HR><PRE>
+
+The final contigs file(<a href="all_contigs.fasta">all_contigs.fasta</a>) are generated from round 4 with k=0
+
+</PRE><H5>The best k and the number of matched reads:</H5></PRE>
+<PRE><B>Round	Best_k	Matched_reads</B>
+----------------------------------------------------
+<table border="0" cellpadding="0" cellspacing="0" width="22"><tr><td bgcolor="#ffffff"><pre>
+4	25	4638
+</td></tr></table></PRE>
+
+<H5>N50:</H5>
+<PRE><B>Round	k=15	k=25	k=35	k=45	</B>
+----------------------------------------------------
+<table border="0" cellpadding="0" cellspacing="0" width="22"><tr><td bgcolor="#ffffff"><pre>
+4	2904	<B><font color="red">6281</font></B>	5166	4683	
+</td></tr></table></PRE>
+
+<H5>N90:</H5>
+<PRE><B>Round	k=15	k=25	k=35	k=45	</B>
+----------------------------------------------------
+<table border="0" cellpadding="0" cellspacing="0" width="22"><tr><td bgcolor="#ffffff"><pre>
+4	2904	<B><font color="red">6281</font></B>	1096	1096	
+</td></tr></table></PRE>
+
+<H5>Longest contig length:</H5>
+<PRE><B>Round	k=15	k=25	k=35	k=45	</B>
+----------------------------------------------------
+<table border="0" cellpadding="0" cellspacing="0" width="22"><tr><td bgcolor="#ffffff"><pre>
+4	3158	<B><font color="red">6281</font></B>	5166	4683	
+</td></tr></table></PRE>
+
+<H5>Total contigs:</H5>
+<PRE><B>Round	k=15	k=25	k=35	k=45	</B>
+----------------------------------------------------
+<table border="0" cellpadding="0" cellspacing="0" width="22"><tr><td bgcolor="#ffffff"><pre>
+4	3	<B><font color="red">1</font></B>	2	3	
+</td></tr></table>
+The red number refers to "Best k"</PRE></PRE><H3>Spliced alignment - GenomeThreader</H3><HR><PRE>
+
+Found 1 matches
+The detailed GenomeThreader alignment report is <a href="output.aln">output.aln</a>
+The contigs aligned to query sequences only can be found in <a href="hit_contigs.fasta">hit_contigs.fasta</a>
+
+
+<B>Contig          Strand   Query                          Score      Length          Coverage        G/P/C          </B>
+----------------------------------------------------------------------------------------------------------
+contig1         +        LOC_Os06g04560.1               0.699      2521            0.942           P              
+
+
+Length: cumulative length of scored exons
+Cov G/P/C: coverage of contig (G) or cDNA (C) or protein (P), whichever is highest
+

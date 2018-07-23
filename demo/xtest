@@ -1,4 +1,5 @@
 #!/bin/bash
+set -uo pipefail
 
 echo "============================================================================================================"
 echo " Test1: Use the -1, -2 options to assign reads files."
@@ -74,27 +75,28 @@ rm -rf testout9
 ../bin/SRAssembler -q input/LOC_Os06g04560.pep -p SRAssembler.conf -l libraries_200bp.conf -r ./processed_reads -o testout9 -e 0.6 -c 0.9 -m 7000 -G 1
 
 echo "============================================================================================================"
-echo " Test10: Pre-process reads only (-P)."
+echo " Test10: Remove unrelated contigs and reads every 2 rounds (-b 2)."
 echo "============================================================================================================"
 rm -rf testout10
-rm -rf processed_reads
-../bin/SRAssembler -l libraries_200bp.conf -r ./processed_reads -x 15000 -o testout10 -P
+../bin/SRAssembler -q input/LOC_Os06g04560.pep -p SRAssembler.conf -l libraries_200bp.conf -r ./processed_reads -o testout10 -b 2
 
 echo "============================================================================================================"
-echo " Test11: Remove unrelated contigs and reads every 2 rounds (-b 2)."
+echo " Test11: Assemble contigs only from round 3 onward (-a 3)."
 echo "============================================================================================================"
 rm -rf testout11
-../bin/SRAssembler -q input/LOC_Os06g04560.pep -p SRAssembler.conf -l libraries_200bp.conf -r ./processed_reads -o testout11 -b 2
+../bin/SRAssembler -q input/LOC_Os06g04560.pep -p SRAssembler.conf -l libraries_200bp.conf -r ./processed_reads -o testout11 -a 3
 
 echo "============================================================================================================"
-echo " Test12: Assemble contigs only from round 3 onward (-a 3)."
+echo " Test12: Do not check if the query genes are assembled until the last round (-w)."
 echo "============================================================================================================"
 rm -rf testout12
-../bin/SRAssembler -q input/LOC_Os06g04560.pep -p SRAssembler.conf -l libraries_200bp.conf -r ./processed_reads -o testout12 -a 3
+# Here we specify that SRAssembler should continue for 13 rounds because it causes it to hit the default maximum contig length (10000 bp).
+../bin/SRAssembler -q input/LOC_Os06g04560.pep -p SRAssembler.conf -l libraries_200bp.conf -r ./processed_reads -o testout12 -n 13 -w -M 10000
 
 echo "============================================================================================================"
-echo " Test13: Do not check if the query genes are assembled until the last round (-w)."
+echo " Test13: Pre-process reads only (-P)."
 echo "============================================================================================================"
 rm -rf testout13
-# Here we specify that SRAssembler should continue for 13 rounds because it causes it to hit the default maximum contig length (10000 bp).
-../bin/SRAssembler -q input/LOC_Os06g04560.pep -p SRAssembler.conf -l libraries_200bp.conf -r ./processed_reads -o testout13 -n 13 -w -M 10000
+rm -rf processed_reads
+../bin/SRAssembler -l libraries_200bp_1kb.conf -r ./processed_reads -x 15000 -o testout13 -P
+
