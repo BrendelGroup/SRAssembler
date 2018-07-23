@@ -2,7 +2,7 @@
  * Snap.h
  *
  *  Created on: 2012-11-14
- *      Author: hchou
+ *     Authors: Hsien-chao Chou (first version); Thomas McCarthy and Volker Brendel (modifications)
  */
 
 #ifndef SNAPGENEFINDER_H_
@@ -14,7 +14,7 @@ class SnapGeneFinder: public GeneFinder {
 public:
 	SnapGeneFinder(int, string);
 	virtual ~SnapGeneFinder();
-	void do_gene_finding(const string& genomic_file, const string& species, const Params& params, const string& output_file);
+	void do_gene_finding(const string& genomic_file, const string& species, const Params& params, const string& output_file, const string& protein_output_file);
 	string get_output_summary();
 	string get_program_name();
 	bool is_available();

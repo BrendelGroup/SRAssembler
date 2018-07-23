@@ -2,7 +2,7 @@
  * Aligner.cpp
  *
  *  Created on: Oct 15, 2011
- *      Author: hchou
+ *     Authors: Hsien-chao Chou (first version); Thomas McCarthy and Volker Brendel (modifications)
  */
 
 #include "Aligner.h"
@@ -12,16 +12,15 @@ Aligner* Aligner::protein_aligner=NULL;
 Aligner* Aligner::dna_aligner=NULL;
 
 
-// TODO Auto-generated constructor stub
 Aligner::Aligner(int log_level, string log_file) {
 	logger = Logger::getInstance(log_level, log_file);
 }
 
 Aligner::~Aligner() {
-	// TODO Auto-generated destructor stub
+	// Auto-generated destructor stub
 }
 
-//singleton implementation
+// singleton implementation
 Aligner* Aligner::getInstance(int type, int log_level, string log_file){
 	if (type == PROTEIN_ALIGNER){
 		if (protein_aligner == NULL)

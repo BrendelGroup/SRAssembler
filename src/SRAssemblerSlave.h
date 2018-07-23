@@ -2,7 +2,7 @@
  * SRAssemblerSlave.h
  *
  *  Created on: Oct 13, 2011
- *      Author: hchou
+ *     Authors: Hsien-chao Chou (first version); Thomas McCarthy and Volker Brendel (modifications)
  */
 
 #ifndef SRASSEMBLERSLAVE_H_
@@ -13,7 +13,7 @@
 class SRAssemblerSlave: public SRAssembler {
 public:
 	SRAssemblerSlave();
-	int init(int argc, char * argv[], int rank, int size);
+	int init(int argc, char * argv[], int rank, int mpiSize);
 	void show_usage();
 	void print_message(const string&);
 	void do_preprocessing();

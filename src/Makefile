@@ -21,7 +21,6 @@ Aligner.cpp \
 Assembler.cpp \
 GSQAligner.cpp \
 GTHAligner.cpp \
-ExonerateAligner.cpp \
 GeneFinder.cpp \
 SnapGeneFinder.cpp \
 Logger.cpp \
@@ -41,7 +40,6 @@ Aligner.o \
 Assembler.o \
 GSQAligner.o \
 GTHAligner.o \
-ExonerateAligner.o \
 GeneFinder.o \
 SnapGeneFinder.o \
 Logger.o \
@@ -61,7 +59,6 @@ Aligner.d \
 Assembler.d \
 GSQAligner.d \
 GTHAligner.d \
-ExonerateAligner.d \
 GeneFinder.d \
 SnapGeneFinder.d \
 Logger.d \
@@ -80,7 +77,7 @@ Library.d \
 %.o: %.cpp
 	@echo 'Building file: $<'
 	@echo 'Invoking: GCC C++ Compiler'
-	$(CXX) $(DFLAG) $(CPPFLAG) -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o"$@" "$<"
+	$(CXX) $(DFLAG) $(CPPFLAG) -std=c++0x -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o"$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 

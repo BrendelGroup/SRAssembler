@@ -2,7 +2,7 @@
  * GeneFinder.h
  *
  *  Created on: Nov 14, 2012
- *      Author: hchou
+ *     Authors: Hsien-chao Chou (first version); Thomas McCarthy and Volker Brendel (modifications)
  */
 
 #ifndef GENEFINDER_H_
@@ -19,7 +19,7 @@ class GeneFinder {
 public:
 	GeneFinder(int, string);
 	virtual ~GeneFinder();
-	virtual void do_gene_finding(const string& genomic_file, const string& species, const Params& params, const string& output_file)=0;
+	virtual void do_gene_finding(const string& genomic_file, const string& species, const Params& params, const string& output_file, const string& protein_output_file)=0;
 	virtual string get_output_summary()=0;
 	virtual string get_program_name()=0;
 	virtual bool is_available()=0;

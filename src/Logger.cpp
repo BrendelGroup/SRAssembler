@@ -2,7 +2,7 @@
  * Logger.cpp
  *
  *  Created on: Oct 22, 2011
- *      Author: hchou
+ *     Authors: Hsien-chao Chou (first version); Thomas McCarthy and Volker Brendel (modifications)
  */
 
 #include "Logger.h"
@@ -12,12 +12,11 @@
 Logger* Logger::logger=NULL;
 
 Logger::Logger(int level, string log_file):log_level(level), log_file(log_file)	 {
-	// TODO Auto-generated constructor stub
-
+	// Auto-generated constructor stub
 }
 
 Logger::~Logger() {
-	// TODO Auto-generated destructor stub
+	// Auto-generated destructor stub
 }
 
 Logger *Logger::getInstance(int level, string log_file)
@@ -36,6 +35,11 @@ void Logger::fatal(const string& msg)
 void Logger::info(const string& msg)
 {
 	print_message(msg, " [INFO]", (log_level <= Logger::LEVEL_INFO));
+}
+
+void Logger::running(const string& msg)
+{
+	print_message(msg, "  [RUN]", (log_level <= Logger::LEVEL_INFO));
 }
 
 void Logger::warn(const string& msg)
@@ -69,13 +73,12 @@ void Logger::print_message(const string &msg, const string &level, bool to_std_o
 	time ( &rawtime );
 	timeinfo = localtime ( &rawtime );
 
-	strftime (buffer,40,"[%c]",timeinfo);
+	strftime (buffer,40,"[%F %T]",timeinfo);
 
 	ofstream log_file_stream;
 	log_file_stream.open(log_file.c_str(), ios::out | ios::app );
-	log_file_stream << buffer << level << " " << msg << endl;
+	log_file_stream << buffer << level + " " + msg << endl;
 	log_file_stream.close();
 	if (to_std_out)
-	    cout << buffer << level << " " << msg << endl;
+		cout << buffer << level + " " + msg << endl;
 }
-

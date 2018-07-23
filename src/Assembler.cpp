@@ -2,7 +2,7 @@
  * Assembler.cpp
  *
  *  Created on: Oct 15, 2011
- *      Author: hchou
+ *     Authors: Hsien-chao Chou (first version); Thomas McCarthy and Volker Brendel (modifications)
  */
 
 #include "Assembler.h"
@@ -13,22 +13,20 @@ Assembler* Assembler::assembler = NULL;
 
 Assembler::Assembler(int log_level, string log_file) {
 	logger = Logger::getInstance(log_level, log_file);
-
 }
 
 Assembler::~Assembler() {
-	// TODO Auto-generated destructor stub
+	// Auto-generated destructor stub
 }
 
-
-//singleton implementation
-Assembler* Assembler::getInstance(int type, int log_level, string log_file){
-	if (type == ABYSS_ASSEMBLER){
+// singleton implementation
+Assembler* Assembler::getInstance(int assembler_type, int log_level, string log_file){
+	if (assembler_type == ABYSS_ASSEMBLER){
 		if (assembler == NULL)
 			assembler = new AbyssAssembler(log_level, log_file);
 		return assembler;
 	}
-	if (type == SOAPDENOVO_ASSEMBLER){
+	if (assembler_type == SOAPDENOVO_ASSEMBLER){
 		if (assembler == NULL)
 			assembler = new SOAPDenovoAssembler(log_level, log_file);
 		return assembler;

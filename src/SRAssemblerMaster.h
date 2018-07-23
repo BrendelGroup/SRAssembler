@@ -2,7 +2,7 @@
  * SRAssemblerMaster.h
  *
  *  Created on: Oct 13, 2011
- *      Author: hchou
+ *     Authors: Hsien-chao Chou (first version); Thomas McCarthy and Volker Brendel (modifications)
  */
 
 #ifndef SRASSEMBLERMASTER_H_
@@ -14,7 +14,7 @@
 class SRAssemblerMaster: public SRAssembler {
 public:
 	SRAssemblerMaster();
-	int init(int argc, char * argv[], int rank, int size);
+	int init(int argc, char * argv[], int rank, int mpiSize);
 	void show_usage();
 	void print_message(const string&);
 	int do_assembly(int round);
@@ -23,14 +23,13 @@ public:
 	virtual ~SRAssemblerMaster();
 private:
 	void process_long_contigs(int round, int k);
-	void prepare_final_contig_file(int round);
+	void prepare_final_contigs_file(int round);
 	void remove_hit_contigs(vector<string> &contig_list, int round);
-	void remove_no_hit_contigs(unordered_set<string> &contig_list, int round);
 	void remove_no_hit_contigs(int round);
 	int get_start_round();
 	void load_long_contigs();
 	void remove_contigs_no_hits(int round);
-	void clean_unmapped_reads(int round);
+	void remove_unmapped_reads(int round);
 	void clean_tmp_files(int round);
 	void create_folders();
 	void save_query_list();
@@ -53,7 +52,6 @@ private:
 	string summary_max;
 	string summary_total;
 	string summary_best;
-	//vector<string> long_contigs;
 	vector<string> query_list;
 };
 

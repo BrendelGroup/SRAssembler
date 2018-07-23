@@ -2,7 +2,7 @@
  * Assembler.h
  *
  *  Created on: Oct 15, 2011
- *      Author: hchou
+ *     Authors: Hsien-chao Chou (first version); Thomas McCarthy and Volker Brendel (modifications)
  */
 
 #ifndef ASSEMBLER_H_
@@ -18,8 +18,7 @@ class Assembler {
 public:
 	Assembler(int, string);
 	virtual ~Assembler();
-	//virtual void do_assembly(int kmer, int min_cov, int insert_size, const string& left_read, const string& right_read,  const string& output_file)=0;
-	virtual void do_assembly(int kmer, const vector<Library>& libraries, const string& output_file)=0;
+	virtual void do_assembly(int kmer, const vector<Library>& libraries, const string& output_file, int threads, boost::unordered_map<std::string,Params> parameters_dict)=0;
 	virtual bool is_available()=0;
 	virtual void clean_files(const string& dir)=0;
 	virtual string get_output_contig_file_name(string prefix)=0;

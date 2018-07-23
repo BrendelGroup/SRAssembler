@@ -29,7 +29,6 @@ which must be pre-installed on your system.
 - at least one program for spliced-alignment:
    [GeneSeqer](https://github.com/BrendelGroup/GeneSeqer)
    [Genomethreader](http://www.genomethreader.org)
-   [Exonerate](hhttp://www.ebi.ac.uk/about/vertebrate-genomics/software/exonerate)
 
 - (optional) a gene finder:
   [SNAP](http://korflab.ucdavis.edu/software.html)

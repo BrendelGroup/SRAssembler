@@ -2,7 +2,7 @@
  * Logger.h
  *
  *  Created on: Oct 22, 2011
- *      Author: hchou
+ *     Authors: Hsien-chao Chou (first version); Thomas McCarthy and Volker Brendel (modifications)
  */
 
 #ifndef LOGGER_H_
@@ -26,6 +26,7 @@ public:
 	static Logger* getInstance(int level, string log_file);
 	void debug(const string& msg);
 	void info(const string& msg);
+	void running(const string& msg);
 	void warn(const string& msg);
 	void error(const string& msg);
 	void fatal(const string& msg);
