@@ -52,7 +52,6 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 	over_write = OVER_WRITE;
 	check_gene_assembled = CHECK_GENE_ASSEMBLED;
 	preprocessing_only = PREPROCESSING_ONLY;
-	tidy = TIDY;
 	min_score = MIN_SCORE;
 	min_coverage = MIN_COVERAGE;
 	query_contig_min = QUERY_CONTIG_MIN;
@@ -203,9 +202,6 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 				break;
 			case 'n':
 				num_rounds = str2int(optarg);
-				break;
-			case 'N':
-				tidy = false;
 				break;
 			case 'o':
 				out_dir = optarg;

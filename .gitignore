@@ -1,5 +1,5 @@
 bin/
-demo/reads_data
+demo/processed_reads
 demo/testout*
 src/*.d
 src/*.o
