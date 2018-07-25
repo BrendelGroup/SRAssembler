@@ -152,7 +152,6 @@ echo " Confirm results of all tests."
 echo "============================================================================================================"
 for file in testout{1,2,3,4,5.1,5.2,5.3,6,7,8,9,10,11,12}; do
 	diff -qs standards/${file}.html ${file}/results/summary.html
-	diff -q standards/${file}.aln ${file}/results/output.aln
 	if [[ "$file" = "testout9" ]]; then
 		diff -q standards/${file}.ano ${file}/results/output.ano
 	fi

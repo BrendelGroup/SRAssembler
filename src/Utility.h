@@ -49,5 +49,7 @@ string trim(const string& str);
 string string_format(const std::string fmt, ...);
 void fastq2fasta(const string& fq, const string& fa);
 unsigned int count_letters(string &str);
+void copy_file(string &sourcefile, string &destfile);
+void standardize_contigs(string filename);
 
 #endif /* UTILITY_H_ */

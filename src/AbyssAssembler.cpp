@@ -51,6 +51,7 @@ void AbyssAssembler::do_assembly(int kmer, const vector<Library>& libraries, con
 	string cmd = "abyss-pe contigs k=" + int2str(kmer) + " name=" + output_file + " " + lib_list + " " + paired_files + " " + single_files + contig_param_list + ">> " + logger->get_log_file() + " 2>&1";
 	logger->debug(cmd);
 	run_shell_command(cmd);
+	standardize_contigs(get_output_contig_file_name(output_file));
 }
 
 void AbyssAssembler::clean_files(const string& dir){
