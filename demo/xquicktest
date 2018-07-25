@@ -3,14 +3,20 @@
 echo "============================================================================================================"
 echo " Test1: Use the -1, -2 options to assign reads files."
 echo "============================================================================================================"
-rm -rf testout1
+out=testout1
+rm -rf $out
 rm -rf processed_reads
-../bin/SRAssembler -q input/LOC_Os06g04560.pep -p SRAssembler.conf -1 input/reads1_200.fq -2 input/reads2_200.fq -z 200 -r ./processed_reads -x 15000 -o testout1
+../bin/SRAssembler -q input/LOC_Os06g04560.pep -p SRAssembler.conf -1 input/reads1_200.fq -2 input/reads2_200.fq -z 200 -r ./processed_reads -x 15000 -o $out
+echo "Checking results against standards..."
+diff -qs standards/${out}.html ${out}/results/summary.html
 
 echo "============================================================================================================"
 echo " Test2: Use the MPI implementation, read library specifications from conf file (only the second, new"
-echo "        library will be pre-processed), and force a full 3 rounds of assembly."
+echo "        library will be pre-processed)."
 echo "============================================================================================================"
 # Outputs to testout4 to maintain congruity with the complete test suite.
-rm -rf testout4
-mpirun -n 4 ../bin/SRAssembler_MPI -q input/LOC_Os06g04560.pep -p SRAssembler.conf -l libraries_200bp_1kb.conf -r ./processed_reads -x 15000 -o testout4 -n 3 -w
+out=testout4
+rm -rf $out
+mpirun -n 4 ../bin/SRAssembler_MPI -q input/LOC_Os06g04560.pep -p SRAssembler.conf -l libraries_200bp_1kb.conf -r ./processed_reads -o $out -n 3 -w
+echo "Checking results against standards..."
+diff -qs standards/${out}.html ${out}/results/summary.html

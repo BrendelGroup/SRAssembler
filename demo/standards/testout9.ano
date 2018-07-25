@@ -1,0 +1,24 @@
+scoring.....decoding.10.20.30.40.50.60.70.80.90.100 done
+scoring.....decoding.10.20.30.40.50.60.70.80.90.100 done
+>contig1 length 7191 cvg_31.0_tip_1 
+Einit	840	1008	+	20.870	0	1	2	contig1-snap.1
+Exon	1280	1380	+	9.664	2	0	0	contig1-snap.1
+Exon	1473	1595	+	20.055	0	0	2	contig1-snap.1
+Exon	1699	1884	+	29.082	0	0	0	contig1-snap.1
+Exon	1961	2182	+	18.319	0	0	1	contig1-snap.1
+Exon	2298	2451	+	14.279	0	1	2	contig1-snap.1
+Exon	2604	2753	+	22.616	2	1	1	contig1-snap.1
+Exon	2855	2943	+	4.985	2	0	0	contig1-snap.1
+Exon	3030	3233	+	32.605	0	0	2	contig1-snap.1
+Exon	3367	3474	+	19.401	0	0	0	contig1-snap.1
+Exon	3555	3689	+	21.753	0	0	2	contig1-snap.1
+Exon	3791	3922	+	21.665	0	0	1	contig1-snap.1
+Exon	4265	4397	+	6.504	0	1	1	contig1-snap.1
+Exon	4486	4578	+	25.561	2	1	2	contig1-snap.1
+Exon	4678	4803	+	12.308	2	1	2	contig1-snap.1
+Exon	4940	5065	+	12.643	2	1	0	contig1-snap.1
+Exon	5148	5291	+	13.035	2	1	1	contig1-snap.1
+Exon	5385	5522	+	1.147	2	1	1	contig1-snap.1
+Eterm	5610	5770	+	15.801	2	0	1	contig1-snap.1
+Einit	6901	7149	-	24.781	0	0	0	contig1-snap.2
+Eterm	6197	6790	-	22.020	0	0	2	contig1-snap.2

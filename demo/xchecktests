@@ -3,4 +3,10 @@ set -uo pipefail
 
 for file in testout{1,2,3,4,5.1,5.2,5.3,6,7,8,9,10,11,12}; do
 	diff -qs standards/${file}.html ${file}/results/summary.html
+	if [[ "$file" = "testout9" ]]; then
+		diff -q standards/${file}.ano ${file}/results/output.ano
+	fi
 done
+if [[ -e processed_reads/reads1_200library/reads2_200_part4.skp && -e processed_reads/1kb_lib/reads2_1000_part4.skp ]]; then
+	printf "Test13 Preprocess-only successful.\n"
+fi

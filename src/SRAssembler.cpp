@@ -409,6 +409,11 @@ boost::unordered_map<std::string,Params> SRAssembler::read_param_file() {
 			}
 		}
 	}
+	// Capture the last set of parameters.
+	if (found_program) {
+		parameters_dict.insert(make_pair(program_name, params));
+		params.clear();
+	}
 	return parameters_dict;
 }
 
