@@ -210,3 +210,49 @@ unsigned int count_letters(string &str) {
 	}
 	return count;
 }
+
+void copy_file(string &sourcefile, string &destfile) {
+	ifstream source(sourcefile.c_str());
+    ofstream dest(destfile.c_str());
+
+    dest << source.rdbuf();
+
+    source.close();
+    dest.close();
+}
+
+void standardize_contigs(string filename) {
+	int i = 0;
+	string header;
+	string old_header;
+	string sequence;
+	string line;
+	string temp = filename + "-tmp";
+	copy_file(filename, temp);
+	ifstream old_contig_fs(temp.c_str());
+	ofstream standard_contig_fs(filename.c_str());
+	while (getline(old_contig_fs, line)) {
+		if (line.substr(0,1) == ">"){
+			// If we have seen a sequence, output it.
+			if (i > 0) {
+				header += " length " + int2str(sequence.length()) + " | " + old_header;
+				standard_contig_fs << header << '\n' << sequence << '\n';
+			}
+			// Start a new sequence.
+			i++;
+			header = ">contig" + int2str(i);
+			// Capture the old header in case it has useful information.
+			old_header = line.substr(1, line.length() - 1);
+			sequence = "";
+		} else {
+			sequence += line;
+		}
+	}
+	// Output the final sequence, if it exists.
+	if (i > 0) {
+		header += " length " + int2str(sequence.length()) + " | " + old_header;
+		standard_contig_fs << header << '\n' << sequence << '\n';
+	}
+	old_contig_fs.close();
+	standard_contig_fs.close();
+}

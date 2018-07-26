@@ -75,6 +75,7 @@ void SOAPDenovoAssembler::do_assembly(int kmer, const vector<Library>& libraries
 	cmd = program + " contig -g " + output_file + contig_param_list + " >> " + logger->get_log_file() + " 2>&1";
 	logger->debug(cmd);
 	run_shell_command(cmd);
+	standardize_contigs(get_output_contig_file_name(output_file));
 }
 
 void SOAPDenovoAssembler::clean_files(const string& dir){

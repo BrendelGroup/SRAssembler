@@ -63,7 +63,7 @@ string_map GTHAligner::get_aligned_contigs(const double& min_score, const double
 	output_string += "--------------------------------------------------------------------------------------------------------------------\n";
 	while (getline(alignment_fs, line)) {
 		if (line.substr(0,16) == "Genomic Template"){
-			sscanf(line.c_str(),"Genomic Template: %*s %*s %*s %*s description=%s length %d %*s",currentid,&contig_length);
+			sscanf(line.substr(0, line.find_first_of("|")).c_str(),"Genomic Template: %*s %*s %*s %*s description=%*s length %d ",&contig_length);
 			logger->debug("... checking contig:\t" + std::string(currentid) + "\tof length:\t" + int2str(contig_length));
 		}
 		if (line.substr(0,5) == "MATCH"){
@@ -136,7 +136,7 @@ void GTHAligner::get_hit_contigs(const double& min_score, const double& min_cove
 	while (getline(alignment_fs, line)) {
 		// Identify the contig being checked
 		if (line.substr(0,16) == "Genomic Template"){
-			sscanf(line.c_str(),"Genomic Template: %*s %*s %*s %*s description=%s length %d %*s",currentid,&contig_length);
+			sscanf(line.substr(0, line.find_first_of("|")).c_str(),"Genomic Template: %*s %*s %*s %*s description=%*s length %d ",&contig_length);
 			logger->info("... checking contig:\t" + std::string(currentid) + "\tof length:\t" + int2str(contig_length));
 			continue;
 		}
@@ -219,7 +219,8 @@ int GTHAligner::get_longest_match(int round, int k, const double& min_score, con
 	while (getline(alignment_fs, line)) {
 		// Get the length of the contig being checked.
 		if (line.substr(0,16) == "Genomic Template"){
-			sscanf(line.c_str(),"Genomic Template: %*s %*s %*s %*s description=%*s length %d %*s",&contig_length);
+			//sscanf(line.c_str(),"Genomic Template: %*s %*s %*s %*s description=%*s length %d %*s",&contig_length);
+			sscanf(line.substr(0, line.find_first_of("|")).c_str(),"Genomic Template: %*s %*s %*s %*s description=%*s length %d ",&contig_length);
 			continue;
 		}
 		// Parse the MATCH line

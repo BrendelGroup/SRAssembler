@@ -1,6 +1,6 @@
 scoring.....decoding.10.20.30.40.50.60.70.80.90.100 done
 scoring.....decoding.10.20.30.40.50.60.70.80.90.100 done
->contig1 length 7191 cvg_31.0_tip_1 
+>contig1 length 7191 | 1 length 7191 cvg_31.0_tip_1 
 Einit	840	1008	+	20.870	0	1	2	contig1-snap.1
 Exon	1280	1380	+	9.664	2	0	0	contig1-snap.1
 Exon	1473	1595	+	20.055	0	0	2	contig1-snap.1
