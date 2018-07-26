@@ -15,7 +15,7 @@ From: fedora:27
     dnf -y update
     dnf -y install @development-tools
     dnf -y install gcc-c++
-    dnf -y install bc git tcsh tzdata unzip zip wget
+    dnf -y install bc git tcsh tzdata unzip zip wget which
     dnf -y install nano
 
     echo 'Installing Abyss assembler '
