@@ -637,7 +637,7 @@ int SRAssembler::do_alignment(int round, int lib_idx, int read_part) {
 		criteria = "extend_contig";
 	}
 	program = program_name + "_" + criteria;
-	logger->running("Aligning: Round " + int2str(round) + ", Lib " + int2str(lib_idx+1) + " of " + int2str(this->libraries.size()) + ", Reads part " + int2str(read_part) + " of " + int2str(lib.get_num_parts()) + " using " + program_name + " criteria: " + criteria);
+	logger->running("Aligning using " + program_name + " criteria " + criteria +": Round " + int2str(round) + ", Lib " + int2str(lib_idx+1) + " of " + int2str(this->libraries.size()) + ", Reads part " + int2str(read_part) + " of " + int2str(lib.get_num_parts()));
 	Params params = this->get_parameters(program);
 	int new_read_count;
 
