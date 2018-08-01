@@ -108,8 +108,9 @@ protected:
 	int spliced_alignment_program;
 	int gene_finding_program;
 	int assembler_program;
-	bool masking;
+	int masking_round;
 	int end_search_length;
+	int end_search_round;
 	double min_score;
 	double min_coverage;
 	// A dictionary for tracking the best contigs found between rounds.

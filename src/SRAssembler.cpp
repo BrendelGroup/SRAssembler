@@ -57,8 +57,9 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 	query_contig_min = QUERY_CONTIG_MIN;
 	min_contig_lgth = MIN_CONTIG_LGTH;
 	max_contig_lgth = MAX_CONTIG_LGTH;
-	masking = MASKING;
+	masking_round = MASKING_ROUND;
 	end_search_length = END_SEARCH_LENGTH;
+	end_search_round = END_SEARCH_ROUND;
 	bool k_format = true;
 	this->rank = rank;
 	this->mpiSize = mpiSize;
@@ -84,8 +85,8 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 	usage.append("-1: Required if the -l option is not used; use this option to specify the single-end reads file\n");
 	usage.append("    or the left-end reads file for paired-end reads.\n");
 	usage.append("-2: Right-end reads file for paired-end reads.\n");
-	usage.append("-z: Insert size of the paired-end reads [Default: " + int2str(INSERT_SIZE) + "].\n");
-	usage.append("-x: Number of reads per pre-preprocessed reads file [Default: " + int2str(READS_PER_FILE) + "].\n");
+	usage.append("-Z: Insert size of the paired-end reads [Default: " + int2str(INSERT_SIZE) + "].\n");
+	usage.append("-R: Number of reads per pre-preprocessed reads file [Default: " + int2str(READS_PER_FILE) + "].\n");
 	usage.append("-r: Directory in which to store or from which to retrieve the pre-processed reads [Default: output_directory/" + READS_DATA + "].\n");
 	usage.append("-P: Run the read pre-processing step only, then terminate SRAssembler.\n");
 	usage.append("\n");
@@ -106,24 +107,27 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 	usage.append("-c: Minimum spliced alignment coverage score for hits [Default: " + double2str(MIN_COVERAGE) + "].\n");
 	usage.append("\n");
 	usage.append("-n: Maximum number of rounds for chromosome walking [Default: " + int2str(NUM_ROUNDS) + "].\n");
-	usage.append("-a: The number of the round in which to start read assembly [Default: " + int2str(ASSEMBLY_ROUND) + "].\n");
+	usage.append("-a: The round in which to start read assembly [Default: " + int2str(ASSEMBLY_ROUND) + "].\n");
 	usage.append("-b: The frequency with which to periodically remove unrelated contigs and reads. For example, '-b 3' \n");
 	usage.append("    specifies that SRAssembler will remove unrelated contigs and reads after two rounds of not doing so. [Default: " + int2str(CLEAN_ROUND) + "].\n");
 	usage.append("-d: The minimum number of assembled contigs to automatically trigger removal of unrelated contigs and reads.\n");
 	usage.append("    If set to '0', do not remove unrelated contigs and reads except as scheduled by '-b' option. [Default: " + int2str(CONTIG_LIMIT) + "].\n");
 	usage.append("\n");
 	usage.append("-w: Forgo spliced alignment check after intermediate assembly rounds [SRAssembler will continue for the -n specified number of rounds].\n");
-	usage.append("-X: Length of contig ends to use as queries to find new reads.\n");
-	usage.append("    If set to '0', do not mask center of query contigs. [Default: " + int2str(END_SEARCH_LENGTH) + "].\n");
 	usage.append("-y: Disable SRAssembler resumption from previous checkpoint [will overwrite existing output].\n");
-	usage.append("-Z: Disable dustmasker masking of low-complexity regions of contigs before searching for reads.\n");
+	usage.append("-x: The round in which to start masking the center of query contigs when searching for new reads.\n");
+	usage.append("    If set to '0', do not mask center of query contigs. [Default: " + int2str(END_SEARCH_ROUND) + "].\n");
+	usage.append("-X: Length of contig ends to leave unmasked as queries to find new reads.\n");
+	usage.append("    If set to '0', do not mask center of query contigs. [Default: " + int2str(END_SEARCH_LENGTH) + "].\n");
+	usage.append("-z: The round in which to start masking low-complexity regions of contigs before searching for reads.\n");
+	usage.append("    If set to '0', do not mask low-complexity regions of query contigs. [Default: " + int2str(MASKING_ROUND) + "].\n");
 	usage.append("\n");
 	usage.append("-v: Verbose output (typically only used for debugging).\n");
 	usage.append("-h: Print this usage synopsis.");
 
 
 	char c;
-	while((c = getopt(argc, argv, "1:2:a:A:b:c:d:e:G:hi:k:l:m:M:n:o:p:Pq:r:s:S:t:T:vwx:X:yz:Z")) != -1) {
+	while((c = getopt(argc, argv, "1:2:a:A:b:c:d:e:G:hi:k:l:m:M:n:o:p:Pq:r:R:s:S:t:T:vwx:X:yz:Z:")) != -1) {
 		switch (c){
 			case '1':
 				left_read = optarg;
@@ -218,6 +222,9 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 			case 'r':
 				data_dir = optarg;
 				break;
+			case 'R':
+				reads_per_file = str2int(optarg);
+				break;
 			case 's':
 				species = optarg;
 				break;
@@ -237,7 +244,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 				check_gene_assembled = false;
 				break;
 			case 'x':
-				reads_per_file = str2int(optarg);
+				end_search_round = str2int(optarg);
 				break;
 			case 'X':
 				end_search_length = str2int(optarg);
@@ -246,10 +253,10 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 				over_write = true;
 				break;
 			case 'z':
-				insert_size = str2int(optarg);
+				masking_round = str2int(optarg);
 				break;
 			case 'Z':
-				masking = false;
+				insert_size = str2int(optarg);
 				break;
 			case '?':
 				string msg = "input error! unknown option : -";
@@ -580,7 +587,7 @@ void SRAssembler::mask_contigs(int round){
 	contig_file = get_contig_file_name(round);
 	string masked_file = contig_file + ".masked";
 	cmd = "cat " + contig_file;
-	if (masking) {
+	if (masking_round > 0 && round >= masking_round) {
 		// NCBI's dustmasker identifies regions of low complexity.
 		cmd += "| dustmasker -outfmt fasta ";
 		// Sed command replaces lowercase atcg NOT in the header with capital Ns.
@@ -588,7 +595,7 @@ void SRAssembler::mask_contigs(int round){
 		// AWK command converts FASTA to single-line.
 		cmd += "| awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }'";
 	}
-	if (end_search_length > 0) {
+	if (end_search_length > 0 && end_search_round > 0 && round >= end_search_round) {
 		// A more complex AWK command will mask any base farther than end_search_length away from the ends of the contigs.
 		cmd += "| awk -v keeplength=" + int2str(end_search_length);
 		// Set the field separator to an empty string so that AWK can act on every character.
