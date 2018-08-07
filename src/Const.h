@@ -34,7 +34,7 @@ static const std::string TYPE_PROTEIN = "protein";
 static const std::string TYPE_DNA = "dna";
 
 // Default parameters.
-static const int CLEAN_ROUND=3;
+static const int CLEAN_ROUND=4;
 static const int CONTIG_LIMIT=500;
 static const int SPLICED_ALIGNMENT_PROGRAM = 1;
 static const int ASSEMBLER_PROGRAM = 0;
@@ -44,7 +44,7 @@ static const int READS_PER_FILE=500000;
 static const int START_K=15;
 static const int END_K=45;
 static const int STEP_K=10;
-static const int END_SEARCH_LENGTH=75;
+static const int END_SEARCH_LENGTH=0;
 static const int END_SEARCH_ROUND=2;
 static const int MASKING_ROUND=1;
 static const int NUM_ROUNDS=10;
@@ -66,8 +66,8 @@ static const bool CHECK_GENE_ASSEMBLED = true;
 static const std::string READS_DATA = "processed_reads";
 static const std::string QUERY_TYPE = TYPE_PROTEIN;
 static const std::string DEFAULT_SPECIES = "arabidopsis";
-static const std::string OUT_DIR = "./output";
-static const std::string TMP_LOC = "/dev/shm";
+static const std::string OUT_DIR = "./SRAssembler_output";
+static const std::string TMP_LOC = "/tmp";
 
 
 
