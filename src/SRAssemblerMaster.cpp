@@ -267,7 +267,7 @@ int SRAssemblerMaster::get_start_round(){
 				int procID=getpid();
 				broadcast_code(ACTION_MEMDIR, 0, procID, 0);
 				// Make sure there is a tmp_dir.
-				this->tmp_dir = this->tmp_loc + "/SRAssemblermem" + int2str(procID);
+				this->tmp_dir = this->tmp_loc + "/SRAssemblertemp" + int2str(procID);
 				string cmd = "\\rm -rf " + tmp_dir + "; mkdir " + tmp_dir;
 				logger->debug(cmd);
 				run_shell_command(cmd);
@@ -312,6 +312,7 @@ int SRAssemblerMaster::get_start_round(){
 }
 
 void SRAssemblerMaster::do_walking() {
+	string cmd;
 	if (preprocessing_only) {
 		logger->info("Do pre-processing of reads only. The chromosome walking is skipped.");
 		broadcast_code(ACTION_EXIT, 0, 0, 0);
@@ -523,7 +524,6 @@ void SRAssemblerMaster::do_walking() {
 		} else {
 			// Collect found reads into a file to be used as query in next round.
 			string joined_file = aux_dir + "/matched_reads_joined.fasta";
-			string cmd;
 			// For each library, append the matched reads to the matched_reads_joined.fasta
 			for (unsigned i=0;i<this->libraries.size();i++){
 				string left_file = aux_dir + "/matched_reads_left_" + "lib" + int2str(i+1) + ".fasta";
@@ -586,7 +586,16 @@ void SRAssemblerMaster::do_walking() {
 	outFile.close();
 	// Intermediate files are removed here.
 	// Now that we're done, clean up unneccessary temporary files and the link to the tmp_dir
-	string cmd = "rm -rf " + probe_file + ".* " + aux_dir + "/qindex.* " + aux_dir + "/cindex.* " + out_dir + "/" + get_file_name(tmp_dir) + " " + tmp_dir;
+	cmd = "rm -rf " + out_dir + "/" + get_file_name(tmp_dir);
+	logger->debug(cmd);
+	run_shell_command(cmd);
+	// If verbose run, keep all the little files from the temporary directory
+	if (verbose) {
+		cmd = "cp -r " + tmp_dir + " " + out_dir + "/";
+		logger->debug(cmd);
+		run_shell_command(cmd);
+	}
+	cmd = "rm -rf " + probe_file + ".* " + aux_dir + "/qindex.* " + aux_dir + "/cindex.* " + tmp_dir;
 	logger->debug(cmd);
 	run_shell_command(cmd);
 }
@@ -1086,7 +1095,7 @@ void SRAssemblerMaster::create_folders(){
 	// If the run is disrupted, these files will remain until a computer reboot, potentially slowing down the computer.
 	int procID=getpid();
 	broadcast_code(ACTION_MEMDIR, 0, procID, 0);
-	this->tmp_dir = this->tmp_loc + "/SRAssemblermem" + int2str(procID);
+	this->tmp_dir = this->tmp_loc + "/SRAssemblertemp" + int2str(procID);
 	// If a disrupted run left a conflicting file behind, it should be removed first.
 	cmd = "\\rm -rf " + tmp_dir + "; mkdir " + tmp_dir;
 	logger->debug(cmd);

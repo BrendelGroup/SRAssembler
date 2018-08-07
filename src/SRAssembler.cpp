@@ -75,11 +75,11 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 	usage.append("    SRAssembler [options] -q query_file -p parameter_file\n");
 	usage.append("                [-l library_file OR -1 reads_file1 -2 reads_file2]\n");
 	usage.append("\n");
-	usage.append("-q: Required; FASTA-formatted query file.\n");
+	usage.append("-q: Required unless pre-processing only; FASTA-formatted query file.\n");
 	usage.append("-t: Query file type; options: 'protein', 'dna' [Default: " + QUERY_TYPE + "].\n");
 	usage.append("-p: Required unless pre-processing only; SRAssembler parameter configuration file.\n");
 	usage.append("-o: SRAssembler output directory [Default: " + OUT_DIR + "].\n");
-	usage.append("-T: directory for temporary file storage [Default: " + TMP_LOC + "].\n");
+	usage.append("-T: Directory for temporary file storage [Default: " + TMP_LOC + "].\n");
 	usage.append("\n");
 	usage.append("-l: Required if the -1 option is not used; sequencing reads library file.\n");
 	usage.append("-1: Required if the -l option is not used; use this option to specify the single-end reads file\n");
@@ -90,7 +90,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 	usage.append("-r: Directory in which to store or from which to retrieve the pre-processed reads [Default: output_directory/" + READS_DATA + "].\n");
 	usage.append("-P: Run the read pre-processing step only, then terminate SRAssembler.\n");
 	usage.append("\n");
-	usage.append("-A: Assembler program choice; options: 0=>SOAPdenovo2, 1=>ABySS [Default: " + int2str(ASSEMBLER_PROGRAM) + "].\n");
+	usage.append("-A: Contig assembler program choice; options: 0=>SOAPdenovo2, 1=>ABySS [Default: " + int2str(ASSEMBLER_PROGRAM) + "].\n");
 	usage.append("-k: Specifies the k-mer set to be used by the assembler; format: start_k:interval:end_k.\n");
 	usage.append("    Start_k and end_k must be odd integers, and interval must be an even integer, similar to the following example:\n");
 	usage.append("    '15:10:45' specifies that k-mer values 15, 25, 35, 45 will be tested.[Default: " + int2str(START_K) + ":" + int2str(STEP_K) + ":" + int2str(END_K) + "].\n");
@@ -113,8 +113,9 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 	usage.append("-d: The minimum number of assembled contigs to automatically trigger removal of unrelated contigs and reads.\n");
 	usage.append("    If set to '0', do not remove unrelated contigs and reads except as scheduled by '-b' option. [Default: " + int2str(CONTIG_LIMIT) + "].\n");
 	usage.append("\n");
-	usage.append("-w: Forgo spliced alignment check after intermediate assembly rounds [SRAssembler will continue for the -n specified number of rounds].\n");
-	usage.append("-y: Disable SRAssembler resumption from previous checkpoint [will overwrite existing output].\n");
+	usage.append("-w: Forgo spliced alignment check after intermediate assembly rounds.\n");
+	usage.append("    SRAssembler will continue for the -n specified number of rounds.\n");
+	usage.append("-y: Disable SRAssembler resumption from previous checkpoint (will overwrite existing output).\n");
 	usage.append("-x: The round in which to start masking the center of query contigs when searching for new reads.\n");
 	usage.append("    If set to '0', do not mask center of query contigs. [Default: " + int2str(END_SEARCH_ROUND) + "].\n");
 	usage.append("-X: Length of contig ends to leave unmasked as queries to find new reads.\n");
