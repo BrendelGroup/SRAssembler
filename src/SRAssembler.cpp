@@ -63,7 +63,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 	bool k_format = true;
 	this->rank = rank;
 	this->mpiSize = mpiSize;
-	unsigned int insert_size = INSERT_SIZE;
+	unsigned int insert_size = 0;
 	string left_read = "";
 	string right_read = "";
 	// Parse command line options.
@@ -85,9 +85,9 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 	usage.append("-1: Required if the -l option is not used; use this option to specify the single-end reads file\n");
 	usage.append("    or the left-end reads file for paired-end reads.\n");
 	usage.append("-2: Right-end reads file for paired-end reads.\n");
-	usage.append("-Z: Insert size of the paired-end reads [Default: " + int2str(INSERT_SIZE) + "].\n");
+	usage.append("-Z: Insert size of the paired-end reads. Required if the -2 option is used.\n");
 	usage.append("-R: Number of reads per pre-preprocessed reads file [Default: " + int2str(READS_PER_FILE) + "].\n");
-	usage.append("-r: Directory in which to store or from which to retrieve the pre-processed reads [Default: output_directory/" + READS_DATA + "].\n");
+	usage.append("-r: Directory in which to store or from which to retrieve processed reads [Default: output_directory/" + READS_DATA + "].\n");
 	usage.append("-P: Run the read pre-processing step only, then terminate SRAssembler.\n");
 	usage.append("\n");
 	usage.append("-A: Contig assembler program choice; options: 0=>SOAPdenovo2, 1=>ABySS [Default: " + int2str(ASSEMBLER_PROGRAM) + "].\n");
@@ -320,6 +320,10 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 		lib.set_left_read(left_read);
 		lib.set_library_name(get_file_base_name(lib.get_left_read()) + "library");
 		if (right_read != ""){
+			if (insert_size < 1) {
+				logger->error("Paired end reads require an insert size");
+				return -1;
+			}
 			lib.set_paired_end(true);
 			lib.set_right_read(right_read);
 			lib.set_insert_size(insert_size);

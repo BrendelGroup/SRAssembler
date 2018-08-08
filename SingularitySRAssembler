@@ -8,8 +8,6 @@ From: fedora:27
     To run single-threaded, use `singularity run SRAssembler.img` with appropriate arguments.
     To run multi-threaded, you must have openmpi installed.
     Use `mpirun -np $processornumber singularity run --app mpi SRAssembler.img` with appropriate arguments.
-    You can even do `alias SRAssembler="singularity run /path/to/SRAssembler.img"` and `alias SRAssembler_MPI="singularity run --app mpi /path/to/SRAssembler.img"` if you want.
-
 
 %post
     dnf -y update
@@ -100,7 +98,7 @@ From: fedora:27
     #### Prerequisites
     #### Install
     cd /opt
-    git clone https://github.com/twmccart/SRAssembler.git
+    git clone https://github.com/BrendelGroup/SRAssembler.git
     cd SRAssembler/src
     make
     make clean

@@ -7,7 +7,7 @@ echo "==========================================================================
 out=testout1
 rm -rf $out
 rm -rf processed_reads
-../bin/SRAssembler -q input/LOC_Os06g04560.pep -p SRAssembler.conf -1 input/reads1_200.fq -2 input/reads2_200.fq -Z 200 -r ./processed_reads -R 15000 -o $out
+../bin/SRAssembler -q input/LOC_Os06g04560.pep -p params.conf -1 input/reads1_200.fq -2 input/reads2_200.fq -Z 200 -r ./processed_reads -R 15000 -o $out
 echo "Checking results against standards..."
 diff -qs standards/${out}.html ${out}/results/summary.html
 
@@ -17,16 +17,16 @@ echo "==========================================================================
 out=testout2
 rm -rf $out
 # Because we have existing pre-processed reads, we do not need to specify the number of reads per split file with -R.
-../bin/SRAssembler -q input/AT1G01950.cdna -t dna -p SRAssembler.conf -l libraries_200bp.conf -r ./processed_reads -o $out
+../bin/SRAssembler -q input/AT1G01950.cdna -t dna -p params.conf -l libraries_200bp.conf -r ./processed_reads -o $out
 echo "Checking results against standards..."
 diff -qs standards/${out}.html ${out}/results/summary.html
 
 echo "============================================================================================================"
-echo " Test3: Use two libraries. Only the second library still needs to be processed."
+echo " Test3: Use two libraries with a library definition file. Only the second library still needs to be processed."
 echo "============================================================================================================"
 out=testout3
 rm -rf $out
-../bin/SRAssembler -q input/LOC_Os06g04560.pep -p SRAssembler.conf -l libraries_200bp_1kb.conf -r ./processed_reads -R 15000 -o $out
+../bin/SRAssembler -q input/LOC_Os06g04560.pep -p params.conf -l libraries_200bp_1kb.conf -r ./processed_reads -R 15000 -o $out
 echo "Checking results against standards..."
 diff -qs standards/${out}.html ${out}/results/summary.html
 
@@ -35,7 +35,7 @@ echo " Test4: Previous example, but using the MPI implementation and force a ful
 echo "============================================================================================================"
 out=testout4
 rm -rf $out
-mpirun -n 4 ../bin/SRAssembler_MPI -q input/LOC_Os06g04560.pep -p SRAssembler.conf -l libraries_200bp_1kb.conf -r ./processed_reads -o $out -n 3 -w
+mpirun -np 4 ../bin/SRAssembler_MPI -q input/LOC_Os06g04560.pep -p params.conf -l libraries_200bp_1kb.conf -r ./processed_reads -o $out -n 3 -w
 echo "Checking results against standards..."
 diff -qs standards/${out}.html ${out}/results/summary.html
 
@@ -44,7 +44,7 @@ echo " Test5.1: Stop after 3 rounds of assembly. Then continue the current assem
 echo "============================================================================================================"
 out=testout5.1
 rm -rf testout5 testout5.1 testout5.2 testout5.3
-../bin/SRAssembler -q input/LOC_Os06g04560.pep -p SRAssembler.conf -l libraries_200bp.conf -r ./processed_reads -o testout5 -n 3
+../bin/SRAssembler -q input/LOC_Os06g04560.pep -p params.conf -l libraries_200bp.conf -r ./processed_reads -o testout5 -n 3
 cp -r testout5 $out
 echo "Checking results against standards..."
 diff -qs standards/${out}.html ${out}/results/summary.html
@@ -53,7 +53,7 @@ echo "==========================================================================
 echo " Test5.2: Re-run the previous command, but set -n to 7. The assembly will start with round 4."
 echo "============================================================================================================"
 out=testout5.2
-../bin/SRAssembler -q input/LOC_Os06g04560.pep -p SRAssembler.conf -l libraries_200bp.conf -r ./processed_reads -o testout5 -n 7
+../bin/SRAssembler -q input/LOC_Os06g04560.pep -p params.conf -l libraries_200bp.conf -r ./processed_reads -o testout5 -n 7
 cp -r testout5 $out
 echo "Checking results against standards..."
 diff -qs standards/${out}.html ${out}/results/summary.html
@@ -62,7 +62,7 @@ echo "==========================================================================
 echo " Test5.3: Re-run the previous command, but use -y to force SRAssembler to start from scratch."
 echo "============================================================================================================"
 out=testout5.3
-../bin/SRAssembler -q input/LOC_Os06g04560.pep -p SRAssembler.conf -l libraries_200bp.conf -r ./processed_reads -o testout5 -n 7 -y
+../bin/SRAssembler -q input/LOC_Os06g04560.pep -p params.conf -l libraries_200bp.conf -r ./processed_reads -o testout5 -n 7 -y
 mv testout5 $out
 echo "Checking results against standards..."
 diff -qs standards/${out}.html ${out}/results/summary.html
@@ -72,7 +72,7 @@ echo " Test6: Use GeneSeqer as the spliced alignment program (-S 0)."
 echo "============================================================================================================"
 out=testout6
 rm -rf $out
-../bin/SRAssembler -q input/LOC_Os06g04560.pep -p SRAssembler.conf -l libraries_200bp.conf -r ./processed_reads -o $out -S 0
+../bin/SRAssembler -q input/LOC_Os06g04560.pep -p params.conf -l libraries_200bp.conf -r ./processed_reads -o $out -S 0
 echo "Checking results against standards..."
 diff -qs standards/${out}.html ${out}/results/summary.html
 
@@ -81,28 +81,28 @@ echo " Test7: Use Abyss as the assembly program (-A 1)."
 echo "============================================================================================================"
 out=testout7
 rm -rf $out
-../bin/SRAssembler -q input/LOC_Os06g04560.pep -p SRAssembler.conf -l libraries_200bp_1kb.conf -r ./processed_reads -o $out -A 1
+../bin/SRAssembler -q input/LOC_Os06g04560.pep -p params.conf -l libraries_200bp_1kb.conf -r ./processed_reads -o $out -A 1
 echo "Checking results against standards..."
 diff -qs standards/${out}.html ${out}/results/summary.html
 
 echo "============================================================================================================"
-echo " Test8: Previous example, but using the MPI implementation."
+echo " Test8: Use Abyss as the assembly program with the MPI implementation."
 echo "============================================================================================================"
 out=testout8
 rm -rf $out
-mpirun -n 4 ../bin/SRAssembler_MPI -q input/LOC_Os06g04560.pep -p SRAssembler.conf -l libraries_200bp_1kb.conf -r ./processed_reads -o $out -A 1
+mpirun -np 4 ../bin/SRAssembler_MPI -q input/LOC_Os06g04560.pep -p params.conf -l libraries_200bp_1kb.conf -r ./processed_reads -o $out -A 1
 echo "Checking results against standards..."
 diff -qs standards/${out}.html ${out}/results/summary.html
 
 echo "============================================================================================================"
 echo " Test9: Looking for potentially better alignments ..."
 echo "         Use higher score (-e 0.6) and coverage (-c 0.9) values to declare spliced alignment hits."
-echo "         Only report contigs of at least 7000 nucleotides."
+echo "         Only report contigs of at least 7000 nucleotides (-m 7000)."
 echo "         Run the Snap ab initio gene prediction program on the final contigs (-G 1)."
 echo "============================================================================================================"
 out=testout9
 rm -rf $out
-../bin/SRAssembler -q input/LOC_Os06g04560.pep -p SRAssembler.conf -l libraries_200bp.conf -r ./processed_reads -o $out -e 0.6 -c 0.9 -m 7000 -G 1
+../bin/SRAssembler -q input/LOC_Os06g04560.pep -p params.conf -l libraries_200bp.conf -r ./processed_reads -o $out -e 0.6 -c 0.9 -m 7000 -G 1
 echo "Checking results against standards..."
 diff -qs standards/${out}.html ${out}/results/summary.html
 diff -q standards/${out}.ano ${out}/results/output.ano
@@ -112,7 +112,7 @@ echo " Test10: Remove unrelated contigs and reads every 2 rounds (-b 2)."
 echo "============================================================================================================"
 out=testout10
 rm -rf $out
-../bin/SRAssembler -q input/LOC_Os06g04560.pep -p SRAssembler.conf -l libraries_200bp.conf -r ./processed_reads -o $out -b 2
+../bin/SRAssembler -q input/LOC_Os06g04560.pep -p params.conf -l libraries_200bp.conf -r ./processed_reads -o $out -b 2
 echo "Checking results against standards..."
 diff -qs standards/${out}.html ${out}/results/summary.html
 
@@ -121,7 +121,7 @@ echo " Test11: Assemble contigs only from round 3 onward (-a 3)."
 echo "============================================================================================================"
 out=testout11
 rm -rf $out
-../bin/SRAssembler -q input/LOC_Os06g04560.pep -p SRAssembler.conf -l libraries_200bp.conf -r ./processed_reads -o $out -a 3
+../bin/SRAssembler -q input/LOC_Os06g04560.pep -p params.conf -l libraries_200bp.conf -r ./processed_reads -o $out -a 3
 echo "Checking results against standards..."
 diff -qs standards/${out}.html ${out}/results/summary.html
 
@@ -131,7 +131,7 @@ echo "==========================================================================
 out=testout12
 rm -rf $out
 # Here we specify that SRAssembler should continue for 13 rounds because it causes it to hit the default maximum contig length (10000 bp).
-../bin/SRAssembler -q input/LOC_Os06g04560.pep -p SRAssembler.conf -l libraries_200bp.conf -r ./processed_reads -o $out -n 13 -w -M 10000
+../bin/SRAssembler -q input/LOC_Os06g04560.pep -p params.conf -l libraries_200bp.conf -r ./processed_reads -o $out -n 13 -w -M 10000
 echo "Checking results against standards..."
 diff -qs standards/${out}.html ${out}/results/summary.html
 
