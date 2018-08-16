@@ -105,7 +105,7 @@ Defaults to "0.8".
 Defaults to "10".
 
 **-E** *extra_rounds* : Number of additional rounds of recursion to perform once a hit contig is found.
-This option may be used when automating many SRAssembler runs in which extending the contig beyond the bounds of the query (e.g., into the UTRs surrounding a CDS) is desirable, but the number of rounds necessary is unpredictable.
+This option may be used when automating many SRAssembler runs in which extending the contig beyond the bounds of the query (e.g., into the UTRs surrounding a CDS) is desirable, but the number of rounds necessary is unpredictable. Defaults to "0".
 
 **-a** *assemble_round* : The round in which to start read assembly, defaults to "1".
 If read coverage depth is good, starting in round 1 is fine. In some cases, however, using the reads found in round 1 as queries to find additional reads before doing contig assembly can lead to better results.
