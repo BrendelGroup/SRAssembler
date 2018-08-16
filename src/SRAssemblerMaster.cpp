@@ -54,6 +54,7 @@ void SRAssemblerMaster::get_query_list(){
 		while (getline(probe_file, line)){
 			if (line.substr(0,1) == ">"){
 				vector<string> tokens;
+				// This tokenizes by space OR tab.
 				tokenize(line.substr(1), tokens, " 	");
 				query_list.push_back(tokens[0]);
 			}
@@ -312,30 +313,32 @@ int SRAssemblerMaster::get_start_round(){
 }
 
 void SRAssemblerMaster::do_walking() {
-	string cmd;
 	if (preprocessing_only) {
 		logger->info("Do pre-processing of reads only. The chromosome walking is skipped.");
 		broadcast_code(ACTION_EXIT, 0, 0, 0);
 		return;
 	}
 
-	logger->info("Begin chromosome walking ...");
-	logger->info("Total processors: " + int2str(mpiSize));
+	string cmd;
+	bool assembled;
+	// If this is a continuation of a previous run, cleaning may not happen on the same schedule as it would if the round were restarted.
+	int rounds_since_cleaning = 0;
 	int source;
 	int read_part = 0;
 	long long code_value;
 	mpi_code code;
 	int round = this->start_round;
+
 	if (round > this->num_rounds){
 		logger->info("The previous assembly has been completed");
 		broadcast_code(ACTION_EXIT, 0, 0, 0);
 		return;
 	}
+	logger->info("Total processors: " + int2str(mpiSize));
 	output_summary_header();
-	bool assembled;
-	// If this is a continuation of a previous run, cleaning may not happen on the same schedule as it would if the round were restarted.
-	int rounds_since_cleaning = 0;
+
 	// Walking begins.
+	logger->info("Begin chromosome walking ...");
 	while(true){
 		logger->info("Starting round " + int2str(round) + " ...");
 		int new_reads_count = 0;
@@ -503,11 +506,13 @@ void SRAssemblerMaster::do_walking() {
 					}
 				}
 				save_query_list();
-				if (query_list.size() == 0){
+				// Use the decrement operator to first check if no extra_rounds are left, then lower it by one.
+				if (query_list.size() == 0 && extra_rounds-- < 1){
 					logger->info("The walking is terminated: All homologous sequences have been assembled.");
 					break;
 				}
-				if (contig_list.size() > 0) {
+				// This will not happen unless using multiple probe sequences is instantiated again.
+				if (contig_list.size() > 0 && extra_rounds < 0) {
 					remove_hit_contigs(contig_list, round);
 					if (get_file_size(get_contig_file_name(round)) == 0){
 						logger->info("The walking is terminated: All contigs have enough coverage and score.");

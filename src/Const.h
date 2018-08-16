@@ -35,6 +35,7 @@ static const std::string TYPE_DNA = "dna";
 
 // Default parameters.
 static const int CLEAN_ROUND=4;
+static const int EXTRA_ROUNDS=0;
 static const int CONTIG_LIMIT=500;
 static const int SPLICED_ALIGNMENT_PROGRAM = 1;
 static const int ASSEMBLER_PROGRAM = 0;

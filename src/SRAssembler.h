@@ -94,6 +94,7 @@ protected:
 	bool preprocessing_only;
 	int assembly_round;
 	int clean_round;
+	int extra_rounds;
 	int contig_limit;
 	bool over_write;
 	bool check_gene_assembled;

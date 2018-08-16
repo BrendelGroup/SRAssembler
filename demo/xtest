@@ -31,11 +31,11 @@ echo "Checking results against standards..."
 diff -qs standards/${out}.html ${out}/results/summary.html
 
 echo "============================================================================================================"
-echo " Test4: Previous example, but using the MPI implementation and force a full 3 rounds of assembly."
+echo " Test4: Previous example, but using the MPI implementation and require an extra 2 rounds of assembly."
 echo "============================================================================================================"
 out=testout4
 rm -rf $out
-mpirun -np 4 ../bin/SRAssembler_MPI -q input/LOC_Os06g04560.pep -p params.conf -l libraries_200bp_1kb.conf -r ./processed_reads -o $out -n 3 -w
+mpirun -np 4 ../bin/SRAssembler_MPI -q input/LOC_Os06g04560.pep -p params.conf -l libraries_200bp_1kb.conf -r ./processed_reads -o $out -E 2
 echo "Checking results against standards..."
 diff -qs standards/${out}.html ${out}/results/summary.html
 
@@ -126,12 +126,12 @@ echo "Checking results against standards..."
 diff -qs standards/${out}.html ${out}/results/summary.html
 
 echo "============================================================================================================"
-echo " Test12: Do not check if the query genes are assembled until the last round (-w)."
+echo " Test12: Do not check if the query genes are assembled until the last round (-f)."
 echo "============================================================================================================"
 out=testout12
 rm -rf $out
 # Here we specify that SRAssembler should continue for 13 rounds because it causes it to hit the default maximum contig length (10000 bp).
-../bin/SRAssembler -q input/LOC_Os06g04560.pep -p params.conf -l libraries_200bp.conf -r ./processed_reads -o $out -n 13 -w -M 10000
+../bin/SRAssembler -q input/LOC_Os06g04560.pep -p params.conf -l libraries_200bp.conf -r ./processed_reads -o $out -n 13 -f -M 10000
 echo "Checking results against standards..."
 diff -qs standards/${out}.html ${out}/results/summary.html
 

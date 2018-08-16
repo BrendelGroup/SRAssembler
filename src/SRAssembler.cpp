@@ -60,6 +60,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 	masking_round = MASKING_ROUND;
 	end_search_length = END_SEARCH_LENGTH;
 	end_search_round = END_SEARCH_ROUND;
+	extra_rounds = EXTRA_ROUNDS;
 	bool k_format = true;
 	this->rank = rank;
 	this->mpiSize = mpiSize;
@@ -109,12 +110,12 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 	usage.append("-n: Maximum number of rounds for chromosome walking [Default: " + int2str(NUM_ROUNDS) + "].\n");
 	usage.append("-a: The round in which to start read assembly [Default: " + int2str(ASSEMBLY_ROUND) + "].\n");
 	usage.append("-b: The frequency with which to periodically remove unrelated contigs and reads. For example, '-b 3' \n");
-	usage.append("    specifies that SRAssembler will remove unrelated contigs and reads after two rounds of not doing so. [Default: " + int2str(CLEAN_ROUND) + "].\n");
+	usage.append("    specifies that SRAssembler will purge after two rounds of not doing so. [Default: " + int2str(CLEAN_ROUND) + "].\n");
 	usage.append("-d: The minimum number of assembled contigs to automatically trigger removal of unrelated contigs and reads.\n");
 	usage.append("    If set to '0', do not remove unrelated contigs and reads except as scheduled by '-b' option. [Default: " + int2str(CONTIG_LIMIT) + "].\n");
 	usage.append("\n");
-	usage.append("-w: Forgo spliced alignment check after intermediate assembly rounds.\n");
-	usage.append("    SRAssembler will continue for the -n specified number of rounds.\n");
+	usage.append("-f: Forgo spliced alignment check after intermediate assembly rounds.\n");
+	usage.append("    SRAssembler is forced to continue for the -n specified number of rounds.\n");
 	usage.append("-y: Disable SRAssembler resumption from previous checkpoint (will overwrite existing output).\n");
 	usage.append("-x: The round in which to start masking the center of query contigs when searching for new reads.\n");
 	usage.append("    If set to '0', do not mask center of query contigs. [Default: " + int2str(END_SEARCH_ROUND) + "].\n");
@@ -128,7 +129,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 
 
 	char c;
-	while((c = getopt(argc, argv, "1:2:a:A:b:c:d:e:G:hi:k:l:m:M:n:o:p:Pq:r:R:s:S:t:T:vwx:X:yz:Z:")) != -1) {
+	while((c = getopt(argc, argv, "1:2:a:A:b:c:d:e:E:fG:hi:k:l:m:M:n:o:p:Pq:r:R:s:S:t:T:vx:X:yz:Z:")) != -1) {
 		switch (c){
 			case '1':
 				left_read = optarg;
@@ -158,6 +159,12 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 				break;
 			case 'e':
 				min_score = str2double(optarg);
+				break;
+			case 'E':
+				extra_rounds = str2int(optarg);
+				break;
+			case 'f':
+				check_gene_assembled = false;
 				break;
 			case 'G':
 				gene_finding_program = str2int(optarg);
@@ -240,9 +247,6 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 				break;
 			case 'v':
 				verbose = true;
-				break;
-			case 'w':
-				check_gene_assembled = false;
 				break;
 			case 'x':
 				end_search_round = str2int(optarg);
