@@ -20,7 +20,6 @@ which must be pre-installed on your system.
 
 - string matching and read mapping:
   [Vmatch](http://www.vmatch.de)
-  [Bowtie](http://bowtie-bio.sourceforge.net/index.html)
 
 - at least one short read assembler:
   [SOAPdenovo2](http://soap.genomics.org.cn/soapdenovo.html)
@@ -179,5 +178,4 @@ make mpi with-boost=boost_path
 ```
 
 ## Finally
-go to the _demo_ directory and study and execute the various _xtest*_ scripts
-(_A_ for Abyss, _S_ for SOAPdenovo2, _C_ for cDNA).
+go to the _demo_ directory and study and execute the _xtest_ script.
