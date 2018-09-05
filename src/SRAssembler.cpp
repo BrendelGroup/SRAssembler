@@ -303,7 +303,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 	}
 
 	if (reads_per_file <= 1000){
-		logger->error("-x value is not valid or too small");
+		logger->error("-R value is not valid or too small");
 		return -1;
 	}
 
