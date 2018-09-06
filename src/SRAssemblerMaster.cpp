@@ -182,14 +182,14 @@ void SRAssemblerMaster::do_preprocessing(){
 	logger->debug("Checking the existence of split reads data ...");
 	for (unsigned lib_index=0;lib_index<this->libraries.size();lib_index++) {
 		Library* lib = &this->libraries[lib_index];
-		lib->set_num_parts(1);
+		lib->set_num_chunks(1);
 		// Test if split files have been generated.
 		if (file_exists(lib->get_split_file_name(1, LEFT_READ))){
-			lib->set_num_parts(get_file_count(lib->get_split_read_prefix(lib->get_left_read()) + "*.fasta"));
+			lib->set_num_chunks(get_file_count(lib->get_split_read_prefix(lib->get_left_read()) + "*.fasta"));
 			// Test if split reads have been indexed by looking for the final index file that we expect to exist from the left reads.
-			if (file_exists(lib->get_read_part_index_name(lib->get_num_parts(), LEFT_READ) + ".skp")){
+			if (file_exists(lib->get_read_chunk_index_name(lib->get_num_chunks(), LEFT_READ) + ".skp")){
 				logger->info("Using previously split files for read library " + int2str(lib_index+1));
-				broadcast_code(ACTION_TOTAL_PARTS, lib_index, lib->get_num_parts(), 0);
+				broadcast_code(ACTION_TOTAL_CHUNKS, lib_index, lib->get_num_chunks(), 0);
 				continue;
 			}
 		}
@@ -200,7 +200,7 @@ void SRAssemblerMaster::do_preprocessing(){
 		run_shell_command(cmd);
 		// 'source' variable is for identifying where an MPI message came from.
 		int source;
-		int part = 0;
+		int chunk = 0;
 		long long code_value;
 		mpi_code code;
 		// File splitting is handled by the Library.
@@ -215,35 +215,35 @@ void SRAssemblerMaster::do_preprocessing(){
 			if (lib->get_paired_end())
 				lib->do_split_files(RIGHT_READ, this->reads_per_file);
 		}
-		lib->set_num_parts(get_file_count(lib->get_split_read_prefix(lib->get_left_read()) + "*.fasta"));
-		logger->info("Library " + int2str(lib_index+1) + " has " + int2str(lib->get_num_parts()) +" split files");
-		broadcast_code(ACTION_TOTAL_PARTS, lib_index, lib->get_num_parts(), 0);
+		lib->set_num_chunks(get_file_count(lib->get_split_read_prefix(lib->get_left_read()) + "*.fasta"));
+		logger->info("Library " + int2str(lib_index+1) + " has " + int2str(lib->get_num_chunks()) +" split files");
+		broadcast_code(ACTION_TOTAL_CHUNKS, lib_index, lib->get_num_chunks(), 0);
 		int completed = 0;
 
 		if (mpiSize == 1){
-			for (part=1; part<=lib->get_num_parts(); part++)
-				SRAssembler::preprocess_read_part(lib_index, part);
+			for (chunk=1; chunk<=lib->get_num_chunks(); chunk++)
+				SRAssembler::preprocess_read_chunk(lib_index, chunk);
 		} else {
-			if (lib->get_num_parts() < mpiSize){
-				for (part=1; part<=lib->get_num_parts(); part++){
-					send_code(part, ACTION_PRE_PROCESSING, lib_index, part, 0);
+			if (lib->get_num_chunks() < mpiSize){
+				for (chunk=1; chunk<=lib->get_num_chunks(); chunk++){
+					send_code(chunk, ACTION_PRE_PROCESSING, lib_index, chunk, 0);
 				}
-				while(completed < lib->get_num_parts()){
+				while(completed < lib->get_num_chunks()){
 					mpi_receive(code_value, source);
 					completed++;
 				}
 			}
 			else {
-				for (part=1;part<mpiSize;part++){
-					send_code(part, ACTION_PRE_PROCESSING, lib_index, part, 0);
+				for (chunk=1;chunk<mpiSize;chunk++){
+					send_code(chunk, ACTION_PRE_PROCESSING, lib_index, chunk, 0);
 				}
-				while (completed < lib->get_num_parts()){
+				while (completed < lib->get_num_chunks()){
 					mpi_receive(code_value, source);
 					code = get_mpi_code(code_value);
 					completed++;
-					if (part <= lib->get_num_parts()){
-						send_code(source, ACTION_PRE_PROCESSING, lib_index, part, 0);
-						part++;
+					if (chunk <= lib->get_num_chunks()){
+						send_code(source, ACTION_PRE_PROCESSING, lib_index, chunk, 0);
+						chunk++;
 					}
 				}
 			}
@@ -324,7 +324,7 @@ void SRAssemblerMaster::do_walking() {
 	// If this is a continuation of a previous run, cleaning may not happen on the same schedule as it would if the round were restarted.
 	int rounds_since_cleaning = 0;
 	int source;
-	int read_part = 0;
+	int read_chunk = 0;
 	long long code_value;
 	mpi_code code;
 	int round = this->start_round;
@@ -360,16 +360,16 @@ void SRAssemblerMaster::do_walking() {
 			int completed = 0;
 			Library lib = this->libraries[lib_idx];
 			if (mpiSize == 1){
-				for (read_part=1; read_part<=lib.get_num_parts(); read_part++){
-					new_reads_count += do_alignment(round, lib_idx, read_part);
+				for (read_chunk=1; read_chunk<=lib.get_num_chunks(); read_chunk++){
+					new_reads_count += do_alignment(round, lib_idx, read_chunk);
 				}
 			} else {
 				// If there are fewer split read files than processors
-				if (lib.get_num_parts() < mpiSize){
-					for (read_part=1; read_part<=lib.get_num_parts(); read_part++){
-						send_code(read_part, ACTION_ALIGNMENT, round, read_part, lib_idx);
+				if (lib.get_num_chunks() < mpiSize){
+					for (read_chunk=1; read_chunk<=lib.get_num_chunks(); read_chunk++){
+						send_code(read_chunk, ACTION_ALIGNMENT, round, read_chunk, lib_idx);
 					}
-					while(completed < lib.get_num_parts()){
+					while(completed < lib.get_num_chunks()){
 						mpi_receive(code_value, source);
 						code = get_mpi_code(code_value);
 						int found_new_reads = code.value2;
@@ -378,10 +378,10 @@ void SRAssemblerMaster::do_walking() {
 					}
 				// If there are more split read files than processors
 				} else {
-					for (read_part=1;read_part<mpiSize;read_part++){
-						send_code(read_part, ACTION_ALIGNMENT, round, read_part, lib_idx);
+					for (read_chunk=1;read_chunk<mpiSize;read_chunk++){
+						send_code(read_chunk, ACTION_ALIGNMENT, round, read_chunk, lib_idx);
 					}
-					while (completed < lib.get_num_parts()){
+					while (completed < lib.get_num_chunks()){
 						mpi_receive(code_value, source);
 						code = get_mpi_code(code_value);
 						int found_new_reads = code.value2;
@@ -390,7 +390,7 @@ void SRAssemblerMaster::do_walking() {
 						completed++;
 						// As files are completed, new files are sent to slaves to be aligned.
 						int next_file_idx = file_idx + mpiSize - 1;
-						if (next_file_idx <= lib.get_num_parts())
+						if (next_file_idx <= lib.get_num_chunks())
 							send_code(source, ACTION_ALIGNMENT, round, next_file_idx, lib_idx);
 					}
 				}
@@ -611,8 +611,8 @@ void SRAssemblerMaster::clean_tmp_files(int round){
 	// Unless verbose output is set, remove unneccessary files from the finished round:
 	string cmd;
 	logger->debug("Clean tmp files from round " + int2str(round));
-	cmd = "rm -f " + aux_dir + "/matched_reads_left_" + "r" + int2str(round) + "_part* ";
-	cmd += aux_dir + "/matched_reads_right_" + "r" + int2str(round) + "_part* ";
+	cmd = "rm -f " + aux_dir + "/matched_reads_left_" + "r" + int2str(round) + "_chunk* ";
+	cmd += aux_dir + "/matched_reads_right_" + "r" + int2str(round) + "_chunk* ";
 	cmd += aux_dir + "/matched_reads_" + "r" + int2str(round) + "_* ";
 	cmd += aux_dir + "/query-vs-contig_" + "r" + int2str(round) + ".* ";
 	cmd += aux_dir + "/query-vs-contig_k*" + "r" + int2str(round) + ".aln ";

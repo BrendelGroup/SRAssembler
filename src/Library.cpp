@@ -18,7 +18,7 @@ Library::Library(unsigned int lib_idx, string data_dir, string aux_dir, Logger* 
 	this->format = FORMAT_FASTQ;
 	this->file_extension = "fastq";
 	this->insert_size = INSERT_SIZE;
-	this->num_parts = 0;
+	this->num_chunks = 0;
 	this->paired_end = false;
 	this->logger = logger;
 }
@@ -31,8 +31,8 @@ int Library::get_insert_size(){
 	return this->insert_size;
 }
 
-int Library::get_num_parts(){
-	return this->num_parts;
+int Library::get_num_chunks(){
+	return this->num_chunks;
 }
 
 int Library::get_reversed(){
@@ -67,8 +67,8 @@ void Library::set_insert_size(int insert_size){
 	this->insert_size = insert_size;
 }
 
-void Library::set_num_parts(int num_parts){
-	this->num_parts = num_parts;
+void Library::set_num_chunks(int num_chunks){
+	this->num_chunks = num_chunks;
 }
 
 void Library::set_reversed(int reversed){
@@ -100,8 +100,8 @@ string Library::get_matched_left_reads_filename(int round){
 	return aux_dir + "/matched_reads_left_" + "r" + int2str(round) + "_" + "lib" + int2str(lib_idx+1) + ".fasta";
 }
 
-string Library::get_matched_left_reads_filename(int round, int part){
-	return aux_dir + "/matched_reads_left_" + "r" + int2str(round) + "_" + "lib" + int2str(lib_idx+1) + "_" + "part" + int2str(part) + ".fasta";
+string Library::get_matched_left_reads_filename(int round, int chunk){
+	return aux_dir + "/matched_reads_left_" + "r" + int2str(round) + "_" + "lib" + int2str(lib_idx+1) + "_" + "chunk" + int2str(chunk) + ".fasta";
 }
 
 string Library::get_matched_right_reads_filename(){
@@ -112,31 +112,31 @@ string Library::get_matched_right_reads_filename(int round){
 	return aux_dir + "/matched_reads_right_" + "r" + int2str(round) + "_" + "lib" + int2str(lib_idx+1) + ".fasta";
 }
 
-string Library::get_matched_right_reads_filename(int round, int part){
+string Library::get_matched_right_reads_filename(int round, int chunk){
 	if (paired_end)
-		return aux_dir + "/matched_reads_right_" + "r" + int2str(round) + "_" + "lib" + int2str(lib_idx+1) + "_" + "part" + int2str(part) + ".fasta";
+		return aux_dir + "/matched_reads_right_" + "r" + int2str(round) + "_" + "lib" + int2str(lib_idx+1) + "_" + "chunk" + int2str(chunk) + ".fasta";
 	return "";
 }
 
-string Library::get_split_file_name(int file_part, int read_direction){
+string Library::get_split_file_name(int file_chunk, int read_direction){
 	string read_file = (read_direction == LEFT_READ)? this->left_read:this->right_read;
-	return data_dir + "/lib" + int2str(lib_idx+1) + "/" + get_file_base_name(read_file) + "_" + "part" + int2str(file_part) + ".fasta";
+	return data_dir + "/lib" + int2str(lib_idx+1) + "/" + get_file_base_name(read_file) + "_" + "chunk" + int2str(file_chunk) + ".fasta";
 }
 
-string Library::get_read_part_index_name(int file_part, int read_direction){
+string Library::get_read_chunk_index_name(int file_chunk, int read_direction){
 	string read_file = (read_direction == LEFT_READ)? this->left_read:this->right_read;
-	return data_dir + "/lib" + int2str(lib_idx+1) + "/" + get_file_base_name(read_file) + "_" + "part" + int2str(file_part);
+	return data_dir + "/lib" + int2str(lib_idx+1) + "/" + get_file_base_name(read_file) + "_" + "chunk" + int2str(file_chunk);
 }
 
 string Library::get_split_read_prefix(string src_read){
-	return data_dir + "/lib" + int2str(lib_idx+1) + "/" + get_file_base_name(src_read) + "_" + "part";
+	return data_dir + "/lib" + int2str(lib_idx+1) + "/" + get_file_base_name(src_read) + "_" + "chunk";
 }
 
 void Library::do_split_files(int read_direction, int reads_per_file){
 	string read_file = (read_direction == LEFT_READ)? this->left_read:this->right_read;
 	ifstream in_stream(read_file.c_str());
 	string out_file;
-	int part = 1;
+	int chunk = 1;
 	ofstream out_stream;
 	string line;
 	// Priming line
@@ -144,7 +144,7 @@ void Library::do_split_files(int read_direction, int reads_per_file){
 	// While not at end of input file
 	while(! in_stream.eof()) {
 		int linecount = 0;
-		out_file = get_split_read_prefix(read_file) + int2str(part) + ".fasta";
+		out_file = get_split_read_prefix(read_file) + int2str(chunk) + ".fasta";
 		out_stream.open(out_file.c_str());
 		while( linecount < reads_per_file * 2){
 			// Write the header
@@ -166,7 +166,7 @@ void Library::do_split_files(int read_direction, int reads_per_file){
 			}
 		}
 		out_stream.close();
-		part++;
+		chunk++;
 	}
 	out_stream.close();
 	in_stream.close();

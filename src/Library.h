@@ -18,7 +18,7 @@ public:
 	virtual ~Library();
 	string get_library_name();
 	int get_insert_size();
-	int get_num_parts();
+	int get_num_chunks();
 	int get_reversed();
 	int get_format();
 	bool get_paired_end();
@@ -26,7 +26,7 @@ public:
 	string get_right_read();
 	void set_library_name(string library_name);
 	void set_insert_size(int insert_size);
-	void set_num_parts(int num_parts);
+	void set_num_chunks(int num_chunks);
 	void set_reversed(int reversed);
 	void set_format(int format);
 	void set_paired_end(bool paired_end);
@@ -39,15 +39,15 @@ public:
 	string get_matched_left_reads_filename(int round, int idx);
 	string get_matched_right_reads_filename(int round, int idx);
 	string get_file_extension();
-	string get_split_file_name(int file_part, int read_direction);
-	string get_read_part_index_name(int file_part, int read_direction);
+	string get_split_file_name(int file_chunk, int read_direction);
+	string get_read_chunk_index_name(int file_chunk, int read_direction);
 	string get_split_read_prefix(string src_read);
 	void do_split_files(int read_type, int reads_per_file);
 private:
 	int lib_idx;
 	string library_name;
 	int insert_size;
-	int num_parts;
+	int num_chunks;
 	int reversed;
 	int format;
 	bool paired_end;
