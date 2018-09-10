@@ -49,9 +49,9 @@ void SRAssemblerSlave::process_message(){
 			// Slave stops waiting for messages and process finishes.
 			break;
 		}
-		if (action == ACTION_TOTAL_PARTS){
-			// Slave tells its Libraries how many parts they have.
-			this->libraries[value1].set_num_parts(value2);
+		if (action == ACTION_TOTAL_CHUNKS){
+			// Slave tells its Libraries how many chunks they have.
+			this->libraries[value1].set_num_chunks(value2);
 		}
 		if (action == ACTION_SPLIT){
 			// Slave manages library file splitting process.
@@ -62,8 +62,8 @@ void SRAssemblerSlave::process_message(){
 			send_code(source, ACTION_RETURN, 0, 0, 0);
 		}
 		if (action == ACTION_PRE_PROCESSING){
-			// Slave manages indexing of reads in one library part file.
-			SRAssembler::preprocess_read_part(value1, value2);
+			// Slave manages indexing of reads in one library chunk file.
+			SRAssembler::preprocess_read_chunk(value1, value2);
 			send_code(source, ACTION_RETURN, 0, value2, 0);
 		}
 		if (action == ACTION_ASSEMBLY){
@@ -83,7 +83,7 @@ void SRAssemblerSlave::process_message(){
 		}
 		if (action == ACTION_MEMDIR){
 			// Slaves need to know where the shared directory for storing temporary files is.
-			this->tmp_dir = this->tmp_loc + "/SRAssemblermem" + int2str(value2);
+			this->tmp_dir = this->tmp_loc + "/SRAssemblertemp" + int2str(value2);
 		}
 		if (action == ACTION_SAVE){
 			// Save any reads found by this Slave in case this SRAssembler run is started again.

@@ -23,15 +23,15 @@ VmatchAligner::VmatchAligner(int log_level, string log_file):Aligner(log_level, 
  * Parameters:
  * output_file: the Vmatch alignment report file
  * found_reads: the reads currently found in this node
- * lib_idx: the integer number of the library for this part
- * read_part: the integer count of the split reads file for this part
+ * lib_idx: the integer number of the library for this chunk
+ * read_chunk: the integer count of the split reads file for this chunk
  * left_read_index: the index name of the left reads of this library
  * right_read_index: the index name of the right reads of this library
  * out_left_read: the matched left-end reads file name
  * out_right_read: the matched left-end reads file name
  *
  */
-int VmatchAligner::parse_output(const string& output_file, unordered_set<string>& found_reads, const int lib_idx, const int read_part, const string& left_read_index, const string& right_read_index, const string& out_left_read, const string& out_right_read) {
+int VmatchAligner::parse_output(const string& output_file, unordered_set<string>& found_reads, const int lib_idx, const int read_chunk, const string& left_read_index, const string& right_read_index, const string& out_left_read, const string& out_right_read) {
 	// Parse the output file and get the mapped reads that have not been found yet.
 	bool paired_end = (out_right_read != "");
 	ifstream report_file_stream(output_file.c_str());
@@ -39,7 +39,7 @@ int VmatchAligner::parse_output(const string& output_file, unordered_set<string>
 	int new_read_count = 0;
 	string line;
 	string cmd;
-	string part_string = int2str(read_part);
+	string chunk_string = int2str(read_chunk);
 	string lib_string = int2str(lib_idx);
 	string tmpvseqselectfile = out_left_read + "-tmp";
 	ofstream tmp_file_stream(tmpvseqselectfile.c_str());
@@ -47,7 +47,7 @@ int VmatchAligner::parse_output(const string& output_file, unordered_set<string>
 	while (getline(report_file_stream, line)) {
 		read_found++;
 		string seq_number = line;
-		string seq_id = "lib" + lib_string + ",part" + part_string + ",read" + seq_number;
+		string seq_id = "lib" + lib_string + ",chunk" + chunk_string + ",read" + seq_number;
 		// boost::unordered_set.find() produces past-the-end pointer if a key isn't found.
 		if (found_reads.find(seq_id) == found_reads.end()) {
 			new_read_count += 1;
@@ -55,7 +55,7 @@ int VmatchAligner::parse_output(const string& output_file, unordered_set<string>
 			tmp_file_stream << seq_number << '\n';
 		}
 	}
-	logger->debug("Matched " + int2str(read_found) + " reads and " + int2str(new_read_count) + " new read (pairs) in library " + int2str(lib_idx + 1) + ", part " + part_string);
+	logger->debug("Matched " + int2str(read_found) + " reads and " + int2str(new_read_count) + " new read (pairs) in library " + int2str(lib_idx + 1) + ", chunk " + chunk_string);
 	report_file_stream.close();
 	tmp_file_stream.close();
 	// Use vseqselect to fetch the newly found reads.
@@ -122,7 +122,7 @@ void VmatchAligner::do_alignment(const string& index_name, const string& alignme
 	}
 	string cmd;
 	string tmpvmfile = output_file + "-tmp";
-	/* Vmatch output is appended to the output file so that left and right read searches for one part go into the same output file.
+	/* Vmatch output is appended to the output file so that left and right read searches for one chunk go into the same output file.
 	 * In the DNA searches, the "-d -p" options search both strands.
 	 * AWK selects only the column containing the sequence number. It is column 2 for "proteins" and "reads" because in those cases reads are being used as queries, not subjects.
 	 * The results are sorted and each unique hit reported only once. This is not piped because the output_file may already have left reads in it.

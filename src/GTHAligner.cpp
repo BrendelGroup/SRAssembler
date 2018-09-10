@@ -258,7 +258,7 @@ string GTHAligner::get_program_name(){
 	return "GenomeThreader";
 }
 void GTHAligner::clean_files(const string& file){
-	string cmd = "rm " + file + ".dna.*; rm " + file + ".md5";
+	string cmd = "rm " + file + ".dna.*; rm -f " + file + ".md5";
 	logger->debug(cmd);
 	run_shell_command(cmd);
 }

@@ -67,7 +67,7 @@ protected:
 	std::string get_assembled_scaf_file_name(int round, int k);
 	std::string get_spliced_alignment_file_name(int round, int k);
 	void do_split_files(string read_file);
-	void preprocess_read_part(int lib_idx, int file_part);
+	void preprocess_read_chunk(int lib_idx, int file_chunk);
 	int get_file_count(std::string);
 	int count_preprocessed_reads(int lib_idx);
 	void merge_mapped_files(int round);
@@ -94,6 +94,7 @@ protected:
 	bool preprocessing_only;
 	int assembly_round;
 	int clean_round;
+	int extra_rounds;
 	int contig_limit;
 	bool over_write;
 	bool check_gene_assembled;
@@ -108,8 +109,9 @@ protected:
 	int spliced_alignment_program;
 	int gene_finding_program;
 	int assembler_program;
-	bool masking;
+	int masking_round;
 	int end_search_length;
+	int end_search_round;
 	double min_score;
 	double min_coverage;
 	// A dictionary for tracking the best contigs found between rounds.

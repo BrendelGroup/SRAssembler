@@ -1,0 +1,3 @@
+We used SAMTools' wgsim program to simulate 2 libraries from region 300,000 ~ 400,000 of chromosome 1 of Arabidopsis with insert size 200bp and 1kb. Each library has 50,000 paired reads. The base error rate is 0.002 and the fraction of indels is 0.001.
+AT1G01950.cdna is the transcript sequence for At1g01950.1 from Araport11.
+LOC_Os06g04560.pep is the protein sequence for LOC_Os06g04560.1 from MSU Osa1 Release 7.
