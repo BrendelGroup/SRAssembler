@@ -31,6 +31,7 @@ int SRAssemblerMaster::init(int argc, char * argv[], int rank, int mpiSize) {
 		command.append(argv[i]).append(" ");
 	}
 	logger->info(command);
+	logger->info("Total processors: " + int2str(mpiSize));
 	if (!preprocessing_only){
 		// Add to the msg.log the Parameters file contents for reproducibility.
 		logger->debug("Parameter file contents:");
@@ -334,7 +335,6 @@ void SRAssemblerMaster::do_walking() {
 		broadcast_code(ACTION_EXIT, 0, 0, 0);
 		return;
 	}
-	logger->info("Total processors: " + int2str(mpiSize));
 	output_summary_header();
 
 	// Walking begins.
@@ -1078,6 +1078,7 @@ void SRAssemblerMaster::create_folders(){
 	// Remove pre-existing library symlinks.
 	// Intermediate files are removed here.
 	cmd = "rm -f " + data_dir + "/lib{0..9}*";
+	logger->debug(cmd);
 	run_shell_command(cmd);
 	for (unsigned i=0;i<this->libraries.size();i++){
 		string dir = data_dir + "/" + libraries[i].get_library_name();

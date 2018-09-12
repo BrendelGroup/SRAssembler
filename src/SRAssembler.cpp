@@ -319,6 +319,10 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 			logger->error("-1 or library file is required");
 			return -1;
 		}
+		if (!file_exists(left_read) && !preprocessed_exist){
+				logger->error("file: " + left_read + " does not exist!");
+				return -1;
+		}
 		Library lib(0, this->data_dir, this->aux_dir, this->logger);
 		lib.set_format(FORMAT_FASTQ);
 		lib.set_left_read(left_read);
