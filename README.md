@@ -12,13 +12,13 @@ Hopefully this code will be useful to you if you
 
 ## Installation
 
-Detailed instructions for installation from source are available in the [INSTALL](./INSTALL.md) document. You can also download and use our [Singularity image] directly.
+Detailed instructions for installation from source are available in the [INSTALL](./INSTALL.md) document. You can also download and use our [Singularity image](https://singularity-hub.org/collections/1653) directly.
 
 ## Running SRAssembler
 
 SRAssembler is run at the command line with `path/to/SRAssembler [options]`. It can also take advantage of multiple processors on machines with OpenMPI by using `mpirun -np $number_of_processors path/to/SRAssembler_MPI [options]`.
 
-If you are using the Singularity image instead of compiling the SRAssembler binaries, you can run the SRAssembler program with `singularity run path/to/SRAssembler.img [options]`. To use the Singularity image with OpenMPI, run `mpirun -np $number_of_processors singularity run --app mpi path/to/SRAssembler.img [options]`.
+If you are using the Singularity image instead of compiling the SRAssembler binaries, you can run the SRAssembler program with `singularity run --cleanenv --bind $(pwd) path/to/SRAssembler.simg [options]`. To use the Singularity image with multiple processors, run `singularity exec --cleanenv --bind $(pwd) path/to/SRAssembler.simg mpirun -np $number_of_processors SRAssembler_MPI [options]`.
 
 ### Command-line options
 
@@ -31,7 +31,7 @@ Required unless only pre-processing reads (-P).
 Accepts "protein" or "dna" (default: "protein").
 
 **-p** *parameter_file* : Configuration file for the programs used by SRAssembler.
-SRAssembler allows user to specify the parameters of the programs it controls. The parameter configuration file has sections for each program, marked by a header line in square brackets. In some cases, such as the aligner Vmatch, there are multiple headers for a program, distinguishing different parameters for different usages. The example [parameter file](demo/SRAssembler.conf) contains all of the program sections that SRAssembler recognizes, even though not all of them will be used in any one run of SRAssembler (e.g., GeneSeqer and GenomeThreader are mutually exclusive). The example file also contains comment lines marked with '#' that explain what each section is for. Copying and modifying this example file for your own runs is encouraged. A parameter file is required unless only pre-processing reads (-P).
+SRAssembler allows user to specify the parameters of the programs it controls. The parameter configuration file has sections for each program, marked by a header line in square brackets. In some cases, such as the aligner Vmatch, there are multiple headers for a program, distinguishing different parameters for different usages. The example [parameter file](demo/params.conf) contains all of the program sections that SRAssembler recognizes, even though not all of them will be used in any one run of SRAssembler (e.g., GeneSeqer and GenomeThreader are mutually exclusive). The example file also contains comment lines marked with '#' that explain what each section is for. Copying and modifying this example file for your own runs is encouraged. A parameter file is required unless only pre-processing reads (-P).
 
 **-o** *output\_directory* : Output directory (default: "./SRAssembler_output").
 
@@ -105,7 +105,7 @@ Defaults to "0.8".
 Defaults to "10".
 
 **-E** *extra_rounds* : Number of additional rounds of recursion to perform once a hit contig is found.
-This option may be used when automating many SRAssembler runs in which extending the contig beyond the bounds of the query (e.g., into the UTRs surrounding a CDS) is desirable, but the number of rounds necessary is unpredictable. Defaults to "0".
+This option may be useful when automating many SRAssembler runs in which extending the contig beyond the bounds of the query (e.g., into the UTRs surrounding a CDS) is desirable, but the number of rounds necessary is unpredictable. Will not cause SRAssembler to exceed the number of rounds set by **-n**. Defaults to "0".
 
 **-a** *assemble_round* : The round in which to start read assembly, defaults to "1".
 If read coverage depth is good, starting in round 1 is fine. In some cases, however, using the reads found in round 1 as queries to find additional reads before doing contig assembly can lead to better results.
@@ -125,7 +125,7 @@ If you find SRAssembler to run slowly due to finding excessive numbers of new re
 **-X** *tip\_search\_length* : Length of intermediate contigs to leave unmasked at both ends as queries to find new reads.
 When using this option, it should at minimum be as long as the match length requirements set in the paramaters file input with **-p**. When set to the default of "0", no masking of the center of contigs will occur.
 
-**-w** : Do not check for contigs that meet the completion thresholds.
+**-f** : Do not check for contigs that meet the completion thresholds.
 Continue chromosome walking for the number of rounds specified with **-n**. This is useful if you want to build contigs longer than just the coding region in order to capture promoter regions or nearby elements.
 
 **-y** : Do not resume chromosome walking from existing SRAssembler results in the output directory specified by **-o**.
@@ -163,15 +163,15 @@ This directory is entirely for the temporary storage of many very small files th
 
 ## Testing installation
 
-The [demo/](demo/) directory contains the necessary files to test the functionality of most of SRAssembler's options. The bash script [xtest](demo/xtest) runs SRAssembler several times using various command-line options and compares the results to the summary files in [demo/standards/](demo/standards). The demo/ directory also contains two library configuration files and a sample parameter configuration file. Examining these files is a good way to familiarize yourself with setting up SRAssembler runs.
+The [demo/](demo/) directory contains the necessary files to test the functionality of most of SRAssembler's options. The bash script [xtest](demo/xtest) runs SRAssembler several times using various command-line options and compares the results to the summary files in [demo/standards/](demo/standards). This confirms the installation and functionality of all the SRAssembler dependencies. The bash script xquicktest runs just tests 1 and 4, confirming the basic functionality of the SRAssembler and SRAssembler_MPI executables. The demo/ directory also contains two library configuration files and a sample parameter configuration file. Examining these files is a good way to familiarize yourself with setting up SRAssembler runs.
 
 Within [demo/input/](demo/input/) are two FASTA query files and four FASTQ reads files. The query files are the transcript sequence of At1g01950.1, an *Arabidopsis thaliana* gene located at Chr1:325316-330619, and the amino acid sequence of the homologous rice protein LOC_Os06g04560.1. We used SAMTools' wgsim program to simulate two libraries from region 300,000..400,000 of chromosome 1 of Arabidopsis, with insert sizes 200bp and 1kb. Each library has 50,000 paired reads. The base error rate is 0.002 and the fraction of indels is 0.001.
 
-Running the tests is as simple as executing `bash xtest`. Each test will output progress to standard out, and after each test the script will report whether the test's summary file matches the one in the standards/ directory. At the end of the script, the comparison of all the tests' results to the standards will again be reported for easy viewing.
+Running the tests is as simple as executing `bash xtest`. Each test will output progress to standard out, and after each test the script will report whether the test's summary file matches the one in the standards/ directory. At the end of the script, the comparison of all the tests' results to the standards will again be reported for easy viewing. To test the functionality of the Singularity image, run `singularity exec -e -B $(pwd) path/to/SRAssembler.simg ./xtest defaultpath` from within the demo/ directory. This will bind the demo directory to the Singularity instance, allowing it to read and write, but cause it to use only its internal SRAssembler software to execute the tests.
 
 ## License
 
-The SRAssembler package conforms to our [RAMOSE](https://github.com/BrendelGroup/) philosophy and promise: we made every attempt to make the software such that you can produce **reproducible**, **accurate**, and **meaningful** results; our software is **open** (source), designed to be **scalable**, and **easy** to use (so that a typical genome laboratory should be able to run it).  And, of course, our software should be _ramose_ ("having many branches") - it's yours to use, modify, improve, and enhance under the ... License.
+The SRAssembler package conforms to our [RAMOSE](https://github.com/BrendelGroup/) philosophy and promise: we made every attempt to make the software such that you can produce **reproducible**, **accurate**, and **meaningful** results; our software is **open** (source), designed to be **scalable**, and **easy** to use (so that a typical genome laboratory should be able to run it).  And, of course, our software should be _ramose_ ("having many branches") - it's yours to use, modify, improve, and enhance under the GNU General Public License v3.0.
 
 ## Reference
 
