@@ -55,8 +55,8 @@ void SRAssemblerMaster::get_query_list(){
 		while (getline(probe_file, line)){
 			if (line.substr(0,1) == ">"){
 				vector<string> tokens;
-				// This tokenizes by space OR tab.
-				tokenize(line.substr(1), tokens, " 	");
+				// This tokenizes by space OR tab OR vertical pipe, because some of the sub-programs do not handle those well.
+				tokenize(line.substr(1), tokens, " 	|");
 				query_list.push_back(tokens[0]);
 			}
 		}
