@@ -314,6 +314,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 		}
 		if (!read_library_file())
 			return -1;
+	// If not using a library configuration file, library attributes are identified from the command line.
 	} else {
 		if (left_read == "" && !preprocessed_exist){
 			logger->error("-1 or library file is required");
@@ -444,7 +445,6 @@ Params SRAssembler::get_parameters(string program_name) {
 bool SRAssembler::read_library_file() {
 	ifstream lib_file(this->library_file.c_str());
 	string line;
-	std::regex bad_name("lib[0-9]+");
 	Library* lib = NULL;
 	while (getline(lib_file, line)){
 		line = trim(line);
@@ -468,10 +468,6 @@ bool SRAssembler::read_library_file() {
 				string param = trim(tokens[0]);
 				string value = trim(tokens[1]);
 				if (param == "library_name" && lib != NULL) {
-					if (std::regex_match(value, bad_name)){
-						logger->error("You can't name a library \"lib\" and a number. We're already using that notation.");
-						return false;
-					}
 					lib->set_library_name(value);
 				}
 				if (param == "insert_size" && lib != NULL) {
@@ -531,12 +527,6 @@ bool SRAssembler::read_library_file() {
 int SRAssembler::get_file_count(string search_pattern){
 	string cmd = "ls -l " + search_pattern + " | wc -l";
 	return str2int(run_shell_command_with_return(cmd));
-}
-
-int SRAssembler::count_preprocessed_reads(int lib_idx){
-	// This uses a system call to count the lines in all the fasta files in the split reads directory
-	string cmd = "wc -l " + data_dir + "/lib" + int2str(lib_idx+1) + "/*chunk*.fasta | tail -n 1 | cut -d' ' -f3";
-	return str2int(run_shell_command_with_return(cmd)) / 2;
 }
 
 void SRAssembler::preprocess_read_chunk(int lib_idx, int read_chunk){

@@ -120,16 +120,16 @@ string Library::get_matched_right_reads_filename(int round, int chunk){
 
 string Library::get_split_file_name(int file_chunk, int read_direction){
 	string read_file = (read_direction == LEFT_READ)? this->left_read:this->right_read;
-	return data_dir + "/lib" + int2str(lib_idx+1) + "/" + get_file_base_name(read_file) + "_" + "chunk" + int2str(file_chunk) + ".fasta";
+	return data_dir + "/" + library_name + "/" + get_file_base_name(read_file) + "_" + "chunk" + int2str(file_chunk) + ".fasta";
 }
 
 string Library::get_read_chunk_index_name(int file_chunk, int read_direction){
 	string read_file = (read_direction == LEFT_READ)? this->left_read:this->right_read;
-	return data_dir + "/lib" + int2str(lib_idx+1) + "/" + get_file_base_name(read_file) + "_" + "chunk" + int2str(file_chunk);
+	return data_dir + "/" + library_name + "/" + get_file_base_name(read_file) + "_" + "chunk" + int2str(file_chunk);
 }
 
 string Library::get_split_read_prefix(string src_read){
-	return data_dir + "/lib" + int2str(lib_idx+1) + "/" + get_file_base_name(src_read) + "_" + "chunk";
+	return data_dir + "/" + library_name + "/" + get_file_base_name(src_read) + "_" + "chunk";
 }
 
 void Library::do_split_files(int read_direction, int reads_per_file){
