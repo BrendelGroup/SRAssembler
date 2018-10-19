@@ -3,3 +3,4 @@ demo/processed_reads
 demo/testout*
 src/*.d
 src/*.o
+*.img
