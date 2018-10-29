@@ -105,6 +105,75 @@ From: fedora:27
     make mpi
     make clean
 
+    echo 'Installing bioawk '
+    dnf -y install byacc zlib-devel
+    #### Install
+    cd /opt
+    wget https://github.com/lh3/bioawk/archive/master.zip
+    unzip master.zip 
+    cd bioawk-master
+    make
+    cd ..
+    rm master.zip
+
+    echo 'Installing SAMTOOLS of http://www.htslib.org/ '
+    #### Prerequisites
+    dnf -y install libncurses.so.5
+    #### Install
+    cd /opt
+    git clone git://github.com/samtools/samtools.git samtools
+    cd samtools
+    make && make install
+
+    echo 'Installing BOWTIE2 of http://bowtie-bio.sourceforge.net/bowtie2 '
+    ######
+    cd /opt
+    wget https://sourceforge.net/projects/bowtie-bio/files/bowtie2/2.3.4.3/bowtie2-2.3.4.3-linux-x86_64.zip
+    unzip bowtie2-2.3.4.3-linux-x86_64.zip
+    rm bowtie2-2.3.4.3-linux-x86_64.zip
+
+    echo 'Installing Integrated Genome Viewer '
+    #### Dependencies
+    dnf -y install java-1.8.0-openjdk
+    ####
+    cd /opt
+    wget http://data.broadinstitute.org/igv/projects/downloads/2.4/IGV_2.4.14.zip
+    unzip IGV_2.4.14.zip
+    ln -s IGV_2.4.14/igv.sh /usr/local/bin/igv
+
+    echo 'Installing InterMine Python package '
+    easy_install intermine
+        
+    echo 'Installing R'
+    #### Dependencies
+    dnf -y install udunits2-devel libcurl libcurl-devel geos-devel
+    #### 
+    dnf -y install R-base R-devel
+    R CMD javareconf
+
+    echo 'Installing R packages'
+    #### Dependencies
+    dnf -y install cairo-devel libXt-devel
+    ####
+    echo 'install.packages("R.devices", repos="http://ftp.ussg.iu.edu/CRAN", dependencies=TRUE)' > R2install
+    #### Dependencies
+    dnf -y install openssl-devel mysql-devel postgresql-devel
+    ####
+    echo 'install.packages("dplyr", repos="http://ftp.ussg.iu.edu/CRAN", dependencies=TRUE)' >> R2install
+    echo 'install.packages("ggplot2", repos="http://ftp.ussg.iu.edu/CRAN", dependencies=TRUE)' >> R2install
+    #### Dependencies
+    dnf -y install libjpeg-turbo-devel libxml2-devel ImageMagick-c++-devel
+    ####
+    echo 'install.packages("knitr", repos="http://ftp.ussg.iu.edu/CRAN", dependencies=TRUE)' >> R2install
+    echo 'install.packages("magrittr", repos="http://ftp.ussg.iu.edu/CRAN", dependencies=TRUE)' >> R2install
+    echo 'install.packages("readr", repos="http://ftp.ussg.iu.edu/CRAN", dependencies=TRUE)' >> R2install
+    echo 'source("https://bioconductor.org/biocLite.R")' >> R2install
+    echo 'biocLite(c("GenomicRanges"),ask=FALSE)' >> R2install
+    Rscript R2install
+
+
+
+    
 %environment
     export PATH=$PATH:/opt/VMATCH
     export PATH=$PATH:/opt/SOAPdenovo2
@@ -114,6 +183,9 @@ From: fedora:27
     export PATH=$PATH:/opt/SNAP
     export PATH=$PATH:/opt/abyss/bin
     export PATH=$PATH:/opt/abyss/ABYSS
+    export PATH=$PATH:/opt/bioawk-master
+    export PATH=$PATH:/opt/samtools
+    export PATH=$PATH:/opt/bowtie2-2.3.4.3-linux-x86_64
     export PATH=$PATH:/usr/lib64/openmpi/bin
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64/openmpi/lib
     export BSSMDIR="/opt/GENOMETHREADER/bin/bssm"
