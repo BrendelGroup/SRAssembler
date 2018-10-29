@@ -26,9 +26,9 @@ private:
 	void prepare_final_contigs_file(int round);
 	void remove_hit_contigs(vector<string> &contig_list, int round);
 	void remove_no_hit_contigs(int round);
+	void remove_taboo_reads();
 	int get_start_round();
 	void load_long_contigs();
-	void remove_contigs_no_hits(int round);
 	void remove_unmapped_reads(int round);
 	void clean_tmp_files(int round);
 	void create_folders();

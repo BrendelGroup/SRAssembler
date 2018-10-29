@@ -17,7 +17,7 @@ VmatchAligner::VmatchAligner(int log_level, string log_file):Aligner(log_level, 
 /*
  * Parse Vmatch output file.
  * This function needs to :
- * Add new found reads to the found_reads_list
+ * Add new found reads to the found_reads list
  * Add sequences of found reads to out_left_read and out_right_read
  *
  * Parameters:
@@ -72,7 +72,7 @@ int VmatchAligner::parse_output(const string& output_file, unordered_set<string>
 		logger->debug(cmd);
 		run_shell_command(cmd);
 	}
-	// Intermediate files are removed here.
+	// Auxiliary files are removed here.
 	cmd = "rm -f " + tmpvseqselectfile;
 	run_shell_command(cmd);
 
@@ -181,9 +181,35 @@ void VmatchAligner::align_long_contigs(const string& long_contig_candidate_file,
 		}
 	}
 	vmatch_file_stream.close();
-	// Intermediate files are removed here.
+	// Auxiliary files are removed here.
 	cmd = "rm " + vmatch_out_file + " " + indexname + "*";
 	run_shell_command(cmd);
+}
+
+int VmatchAligner::ignore_output(const string& output_file, unordered_set<string>& found_reads, const int lib_idx, const int read_chunk) {
+	// Parse the output file and get the mapped reads that have not been found yet.
+	ifstream report_file_stream(output_file.c_str());
+	int read_found = 0;
+	int new_read_count = 0;
+	string line;
+	string cmd;
+	string chunk_string = int2str(read_chunk);
+	string lib_string = int2str(lib_idx);
+
+	while (getline(report_file_stream, line)) {
+		read_found++;
+		string seq_number = line;
+		string seq_id = "lib" + lib_string + ",chunk" + chunk_string + ",read" + seq_number;
+		// boost::unordered_set.find() produces past-the-end pointer if a key isn't found.
+		if (found_reads.find(seq_id) == found_reads.end()) {
+			new_read_count += 1;
+			found_reads.insert(seq_id);
+		}
+	}
+	logger->debug("Ignored " + int2str(read_found) + " reads and " + int2str(new_read_count) + " new read (pairs) in library " + int2str(lib_idx + 1) + ", chunk " + chunk_string);
+	report_file_stream.close();
+
+	return new_read_count;
 }
 
 VmatchAligner::~VmatchAligner() {

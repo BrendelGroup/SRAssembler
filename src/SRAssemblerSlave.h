@@ -17,6 +17,7 @@ public:
 	void show_usage();
 	void print_message(const string&);
 	void do_preprocessing();
+	void remove_taboo_reads();
 	void do_walking();
 	virtual ~SRAssemblerSlave();
 private:

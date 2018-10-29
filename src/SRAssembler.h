@@ -40,6 +40,7 @@ public:
 	virtual ~SRAssembler();
 	virtual int init(int argc, char * argv[], int rank, int mpiSize);
 	virtual void do_preprocessing()=0;
+	virtual void remove_taboo_reads()=0;
 	virtual void do_walking()=0;
 	virtual void show_usage()=0;
 	virtual void print_message(const std::string&)=0;
@@ -85,6 +86,7 @@ protected:
 	boost::unordered_map<std::string,Params> read_param_file();
 	Params get_parameters(string program_name);
 	std::string probe_file, species, probe_type, out_dir;
+	std::string taboo_file, taboo_type;
 	int init_match_length;
 	int recur_match_length;
 	int mismatch_allowed;

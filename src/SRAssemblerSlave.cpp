@@ -26,6 +26,10 @@ void SRAssemblerSlave::do_preprocessing(){
 	// SRAssembler Slaves move on to do_walking and then process messages until they get an exit code.
 }
 
+void SRAssemblerSlave::remove_taboo_reads(){
+	// SRAssembler Slaves move on to do_walking and then process messages until they get an exit code.
+}
+
 void SRAssemblerSlave::do_walking(){
 	process_message();
 }
