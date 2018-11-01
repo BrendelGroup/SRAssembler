@@ -116,7 +116,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 	usage.append("-d: The minimum number of assembled contigs to automatically trigger removal of unrelated contigs and reads.\n");
 	usage.append("    If set to '0', do not remove unrelated contigs and reads except as scheduled by '-b' option. [Default: " + int2str(CONTIG_LIMIT) + "].\n");
 	usage.append("-j: FASTA-formatted file containing sequences used to taboo reads and prevent them from being used for assembly.\n");
-	usage.append("-J:  Taboo file type; options: 'protein', 'dna' [Default: " + QUERY_TYPE + "].\n");
+	usage.append("-J: Taboo file type; options: 'protein', 'dna' [Default: " + QUERY_TYPE + "].\n");
 	usage.append("\n");
 	usage.append("-f: Forgo spliced alignment check after intermediate assembly rounds.\n");
 	usage.append("    SRAssembler is forced to continue for the -n specified number of rounds.\n");
@@ -363,6 +363,13 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 	if (!file_exists(probe_file)){
 		logger->error("query file: " + probe_file + " does not exist!");
 		return -1;
+	}
+
+	if (taboo_file != ""){
+		if (!file_exists(taboo_file)){
+			logger->error("Taboo file: " + library_file + " does not exist!");
+			return -1;
+		}
 	}
 
 	if (param_file != ""){
