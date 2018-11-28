@@ -591,7 +591,7 @@ void SRAssemblerMaster::do_walking() {
 	outFile.close();
 	// Intermediate files are removed here.
 	// Now that we're done, clean up unneccessary temporary files and the link to the tmp_dir
-	cmd = "rm -rf " + out_dir + "/" + get_file_name(tmp_dir);
+	cmd = "rm -f " + out_dir + "/" + get_file_name(tmp_dir);
 	logger->debug(cmd);
 	run_shell_command(cmd);
 	// If verbose run, keep all the little files from the temporary directory
@@ -1063,18 +1063,11 @@ void SRAssemblerMaster::prepare_final_contigs_file(int round){
 
 void SRAssemblerMaster::create_folders(){
 	string cmd;
-	if (file_exists(aux_dir)){
-		cmd = "rm -rf " + aux_dir;
-		run_shell_command(cmd);
-	}
-	if (file_exists(results_dir)){
-		cmd = "rm -rf " + results_dir;
-		run_shell_command(cmd);
-	}
-	if (file_exists(intermediate_dir)){
-		cmd = "rm -rf " + intermediate_dir;
-		run_shell_command(cmd);
-	}
+	// Remove any pre-existing output directories or files.
+	cmd = "rm -rf " + aux_dir + "/* " + intermediate_dir + "/* " + log_file + " " + spliced_alignment_output_file + " " + gene_finding_output_file + " " + gene_finding_output_protein_file + " " + final_contigs_file + " " + summary_file + " " + hit_contigs_file;
+	run_shell_command(cmd);
+	logger->debug(cmd);
+
 	for (unsigned i=0;i<this->libraries.size();i++){
 		string dir = data_dir + "/" + libraries[i].get_library_name();
 		cmd = "mkdir -p " + dir;
@@ -1082,11 +1075,10 @@ void SRAssemblerMaster::create_folders(){
 	}
 	// If pre-processing only, don't bother making useless directories.
 	if (preprocessing_only){
-		run_shell_command("mkdir " + results_dir);
 		return;
 	}
 
-	cmd = "mkdir " + results_dir + " " + intermediate_dir + " " + aux_dir;
+	cmd = "mkdir -p " + intermediate_dir + " " + aux_dir;
 	run_shell_command(cmd);
 
 	// Set unique directory for temporary files, ideally stored in RAM (/dev/shm).
@@ -1095,7 +1087,7 @@ void SRAssemblerMaster::create_folders(){
 	broadcast_code(ACTION_MEMDIR, 0, procID, 0);
 	this->tmp_dir = this->tmp_loc + "/SRAssemblertemp" + int2str(procID);
 	// If a disrupted run left a conflicting file behind, it should be removed first.
-	cmd = "\\rm -rf " + tmp_dir + "; mkdir " + tmp_dir;
+	cmd = "rm -rf " + tmp_dir + "; mkdir " + tmp_dir;
 	logger->debug(cmd);
 	run_shell_command(cmd);
 	// Make sure that the existence of the tmp_dir is obvious in case of disrupted run.
