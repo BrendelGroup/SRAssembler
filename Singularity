@@ -147,6 +147,15 @@ From: fedora:27
     printf '#!/bin/sh\n(Xvfb :10 &) && DISPLAY=:10 java -Xmx4000m -Dapple.laf.useScreenMenuBar=true -Djava.net.preferIPv4Stack=true -jar /opt/IGV_2.4.14/lib/igv.jar "$@" && pkill Xvfb\n' > /usr/local/bin/igv
     chmod 777 /usr/local/bin/igv
 
+    echo 'Installing MUSCLE aligner'
+    #### Dependencies
+    ####
+    cd /opt
+    wget https://www.drive5.com/muscle/downloads3.8.31/muscle3.8.31_i86linux64.tar.gz
+    tar -xf muscle3.8.31_i86linux64.tar.gz
+    rm muscle3.8.31_i86linux64.tar.gz
+    ln -s muscle3.8.31_i86linux64 muscle
+
     echo 'Installing InterMine Python package '
     easy_install intermine
         
@@ -193,6 +202,7 @@ From: fedora:27
     export PATH=$PATH:/opt/samtools
     export PATH=$PATH:/opt/bowtie2-2.3.4.3-linux-x86_64
     export PATH=$PATH:/usr/lib64/openmpi/bin
+    export PATH=$PATH:/opt
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64/openmpi/lib
     export BSSMDIR="/opt/GENOMETHREADER/bin/bssm"
     export GTHDATADIR="/opt/GENOMETHREADER/bin/gthdata"
