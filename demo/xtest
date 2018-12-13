@@ -150,9 +150,27 @@ echo "Checking results against standards..."
 diff -qs standards/${out}.html ${out}/summary.html
 
 echo "============================================================================================================"
-echo " Test13: Pre-process reads only (-P)."
+echo " Test13: Use a DNA taboo sequence to restrict certain reads from being collected or used."
 echo "============================================================================================================"
 out=testout13
+rm -rf $out
+${bindir}SRAssembler -q input/AT1G01950.cdna -t dna -p params.conf -l libraries_200bp.conf -r ./processed_reads -R 15000 -j input/taboo.dna -J dna -o $out
+echo "Checking results against standards..."
+diff -qs standards/${out}.html ${out}/summary.html
+
+echo "============================================================================================================"
+echo " Test14: Use a peptide taboo sequence to restrict certain reads from being collected or used."
+echo "============================================================================================================"
+out=testout14
+rm -rf $out
+${bindir}SRAssembler -q input/LOC_Os06g04560.pep -p params.conf -l libraries_200bp.conf -r ./processed_reads -R 15000 -j input/taboo.pep -J protein -o $out
+echo "Checking results against standards..."
+diff -qs standards/${out}.html ${out}/summary.html
+
+echo "============================================================================================================"
+echo " Test15: Pre-process reads only (-P)."
+echo "============================================================================================================"
+out=testout15
 rm -rf $out
 rm -rf processed_reads
 ${bindir}SRAssembler -l libraries_200bp_1kb.conf -r ./processed_reads -R 15000 -o $out -P
@@ -164,12 +182,15 @@ fi
 echo "============================================================================================================"
 echo " Confirm results of all tests."
 echo "============================================================================================================"
-for file in testout{1,2,3,4,5.1,5.2,5.3,6,7,8,9,10,11,12}; do
+for file in testout{1,2,3,4,5.1,5.2,5.3,6,7,8,9,10,11,12,13,14}; do
 	diff -qs standards/${file}.html ${file}/summary.html
 	if [[ "$file" = "testout9" ]]; then
 		diff -q standards/${file}.ano ${file}/output.ano
 	fi
 done
 if [[ -e processed_reads/reads1_200library/reads2_200_chunk4.skp && -e processed_reads/1kb_lib/reads2_1000_chunk4.skp ]]; then
-	printf "Test13 successful.\n"
+	printf "Preprocessing-only test successful.\n"
+else
+	printf "Preprocessing-only test unsuccessful.\n"
 fi
+
