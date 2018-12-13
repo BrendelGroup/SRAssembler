@@ -542,7 +542,7 @@ bool SRAssembler::read_library_file() {
 }
 
 int SRAssembler::get_file_count(string search_pattern){
-	string cmd = "ls -l " + search_pattern + " | wc -l";
+	string cmd = "ls -U1dq " + search_pattern + " | wc -l";
 	return str2int(run_shell_command_with_return(cmd));
 }
 
