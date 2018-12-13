@@ -23,7 +23,7 @@ rm -rf $out
 rm -rf processed_reads
 ${bindir}SRAssembler -q input/LOC_Os06g04560.pep -p params.conf -1 input/reads1_200.fq -2 input/reads2_200.fq -Z 200 -r ./processed_reads -R 15000 -o $out
 echo "Checking results against standards..."
-diff -qs standards/${out}.html ${out}/results/summary.html
+diff -qs standards/${out}.html ${out}/summary.html
 
 echo "============================================================================================================"
 echo ' Test "4": Use the MPI implementation, read library specifications from conf file (only the second, new'
@@ -34,12 +34,12 @@ out=testout4
 rm -rf $out
 mpirun -n 4 ${bindir}SRAssembler_MPI -q input/LOC_Os06g04560.pep -p params.conf -l libraries_200bp_1kb.conf -r ./processed_reads -R 15000 -o $out -E 2
 echo "Checking results against standards..."
-diff -qs standards/${out}.html ${out}/results/summary.html
+diff -qs standards/${out}.html ${out}/summary.html
 
 echo "============================================================================================================"
 echo " Confirm results of tests."
 echo "============================================================================================================"
 for file in testout{1,4}; do
-    diff -qs standards/${file}.html ${file}/results/summary.html
+    diff -qs standards/${file}.html ${file}/summary.html
 done
 

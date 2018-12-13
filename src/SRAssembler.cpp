@@ -284,19 +284,19 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 		show_usage();
 		return -1;
 	}
+	// Establish the output directories.
 	aux_dir = out_dir + "/aux";
 	if (data_dir == "")
 		data_dir = out_dir + "/" + READS_DATA;
 	preprocessed_exist = file_exists(data_dir);
-	results_dir = out_dir + "/results";
-	intermediate_dir = results_dir + "/intermediates";
-	log_file = results_dir + "/msg.log";
-	spliced_alignment_output_file = results_dir + "/output.aln";
-	gene_finding_output_file = results_dir + "/output.ano";
-	gene_finding_output_protein_file = results_dir + "/snap.predicted.prot";
-	final_contigs_file = results_dir + "/all_contigs.fasta";
-	summary_file = results_dir + "/summary.html";
-	hit_contigs_file = results_dir + "/hit_contigs.fasta";
+	intermediate_dir = out_dir + "/intermediates";
+	log_file = out_dir + "/msg.log";
+	spliced_alignment_output_file = out_dir + "/output.aln";
+	gene_finding_output_file = out_dir + "/output.ano";
+	gene_finding_output_protein_file = out_dir + "/snap.predicted.prot";
+	final_contigs_file = out_dir + "/all_contigs.fasta";
+	summary_file = out_dir + "/summary.html";
+	hit_contigs_file = out_dir + "/hit_contigs.fasta";
 
 	int level = Logger::LEVEL_INFO;
 	if (verbose)

@@ -128,7 +128,6 @@ protected:
 	std::string tmp_loc;
 	std::string intermediate_dir;
 	std::string data_dir;
-	std::string results_dir;
 	std::string log_file;
 	std::string param_file;
 	std::string spliced_alignment_output_file;

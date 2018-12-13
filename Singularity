@@ -13,7 +13,7 @@ From: fedora:27
     dnf -y update
     dnf -y install @development-tools
     dnf -y install gcc-c++
-    dnf -y install bc git tcsh tzdata unzip zip wget which
+    dnf -y install bc git tcsh tzdata unzip zip wget which bzip2
     dnf -y install nano
 
     echo 'Installing Abyss assembler '
@@ -118,11 +118,14 @@ From: fedora:27
 
     echo 'Installing SAMTOOLS of http://www.htslib.org/ '
     #### Prerequisites
-    dnf -y install libncurses.so.5
+    dnf -y install libncurses.so.5 ncurses ncurses-devel bzip2-devel xz-devel
     #### Install
     cd /opt
-    git clone git://github.com/samtools/samtools.git samtools
-    cd samtools
+    wget https://github.com/samtools/samtools/releases/download/1.9/samtools-1.9.tar.bz2
+    tar -xf samtools-1.9.tar.bz2
+    rm samtools-1.9.tar.bz2
+    cd samtools-1.9
+    ./configure
     make && make install
 
     echo 'Installing BOWTIE2 of http://bowtie-bio.sourceforge.net/bowtie2 '
@@ -134,12 +137,24 @@ From: fedora:27
 
     echo 'Installing Integrated Genome Viewer '
     #### Dependencies
-    dnf -y install java-1.8.0-openjdk
+    dnf -y install java-1.8.0-openjdk xorg-x11-server-Xvfb
     ####
     cd /opt
     wget http://data.broadinstitute.org/igv/projects/downloads/2.4/IGV_2.4.14.zip
     unzip IGV_2.4.14.zip
-    ln -s IGV_2.4.14/igv.sh /usr/local/bin/igv
+    rm IGV_2.4.14.zip
+    # Patch the igv script to run headless. No need for X display.
+    printf '#!/bin/sh\n(Xvfb :10 &) && DISPLAY=:10 java -Xmx4000m -Dapple.laf.useScreenMenuBar=true -Djava.net.preferIPv4Stack=true -jar /opt/IGV_2.4.14/lib/igv.jar "$@" && pkill Xvfb\n' > /usr/local/bin/igv
+    chmod 777 /usr/local/bin/igv
+
+    echo 'Installing MUSCLE aligner'
+    #### Dependencies
+    ####
+    cd /opt
+    wget https://www.drive5.com/muscle/downloads3.8.31/muscle3.8.31_i86linux64.tar.gz
+    tar -xf muscle3.8.31_i86linux64.tar.gz
+    rm muscle3.8.31_i86linux64.tar.gz
+    ln -s muscle3.8.31_i86linux64 muscle
 
     echo 'Installing InterMine Python package '
     easy_install intermine
@@ -187,6 +202,7 @@ From: fedora:27
     export PATH=$PATH:/opt/samtools
     export PATH=$PATH:/opt/bowtie2-2.3.4.3-linux-x86_64
     export PATH=$PATH:/usr/lib64/openmpi/bin
+    export PATH=$PATH:/opt
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64/openmpi/lib
     export BSSMDIR="/opt/GENOMETHREADER/bin/bssm"
     export GTHDATADIR="/opt/GENOMETHREADER/bin/gthdata"
