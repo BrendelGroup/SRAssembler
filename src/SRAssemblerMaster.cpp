@@ -554,6 +554,7 @@ void SRAssemblerMaster::do_walking() {
 		round++;
 	}
 	// Walking ends.
+	logger->debug("Final round is\t" + int2str(round));
 	// Intermediate files are removed here.
 	clean_tmp_files(round-1);
 	// If this round has not been assembled yet, do assembling.
