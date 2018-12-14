@@ -63,10 +63,10 @@ void tokenize(const string& line, vector<string>& tokens, const string& delimite
 	}
 }
 
-void run_shell_command(const string& cmd) {
+int run_shell_command(const string& cmd) {
 	char c[2048];
 	strcpy(c,cmd.c_str());
-	system(c);
+	return system(c);
 }
 
 string run_shell_command_with_return(const string& cmd)
@@ -221,26 +221,24 @@ void copy_file(string &sourcefile, string &destfile) {
     dest.close();
 }
 
-void standardize_contigs(string filename) {
+void standardize_fasta_headers(string filename, string type) {
+//Take a fasta file and rename all the sequence headers with information about the length.
 	int i = 0;
-	string header;
-	string old_header;
-	string sequence;
-	string line;
+	string header, old_header, sequence, line;
 	string temp = filename + "-tmp";
 	copy_file(filename, temp);
-	ifstream old_contig_fs(temp.c_str());
-	ofstream standard_contig_fs(filename.c_str());
-	while (getline(old_contig_fs, line)) {
+	ifstream old_fasta_fs(temp.c_str());
+	ofstream standardized_fasta_fs(filename.c_str());
+	while (getline(old_fasta_fs, line)) {
 		if (line.substr(0,1) == ">"){
 			// If we have seen a sequence, output it.
 			if (i > 0) {
 				header += " length " + int2str(sequence.length()) + " | " + old_header;
-				standard_contig_fs << header << '\n' << sequence << '\n';
+				standardized_fasta_fs << header << '\n' << sequence << '\n';
 			}
 			// Start a new sequence.
 			i++;
-			header = ">contig" + int2str(i);
+			header = ">" + type + int2str(i);
 			// Capture the old header in case it has useful information.
 			old_header = line.substr(1, line.length() - 1);
 			sequence = "";
@@ -251,8 +249,16 @@ void standardize_contigs(string filename) {
 	// Output the final sequence, if it exists.
 	if (i > 0) {
 		header += " length " + int2str(sequence.length()) + " | " + old_header;
-		standard_contig_fs << header << '\n' << sequence << '\n';
+		standardized_fasta_fs << header << '\n' << sequence << '\n';
 	}
-	old_contig_fs.close();
-	standard_contig_fs.close();
+	old_fasta_fs.close();
+	standardized_fasta_fs.close();
+}
+
+void standardize_contig_headers(string filename) {
+	standardize_fasta_headers(filename, "contig");
+}
+
+void standardize_scaffold_headers(string filename) {
+	standardize_fasta_headers(filename, "scaffold");
 }

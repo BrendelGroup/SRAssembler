@@ -43,7 +43,7 @@ void GTHAligner::do_spliced_alignment(const string& genomic_file, const string& 
 		type_str = "protein";
 	string cmd = "gth -genomic " + genomic_file + " -" + type_str + " " + query_file + " -species " + species + param_list + " > " + output_file;
 	logger->debug(cmd);
-	run_shell_command(cmd);
+	logger->safe_run_shell_command(cmd);
 }
 
 
@@ -258,7 +258,7 @@ string GTHAligner::get_program_name(){
 	return "GenomeThreader";
 }
 void GTHAligner::clean_files(const string& file){
-	string cmd = "rm " + file + ".dna.*; rm -f " + file + ".md5";
+	string cmd = "rm -f " + file + ".dna.*; rm -f " + file + ".md5";
 	logger->debug(cmd);
-	run_shell_command(cmd);
+	logger->fragile_run_shell_command(cmd);
 }

@@ -65,16 +65,16 @@ int VmatchAligner::parse_output(const string& output_file, unordered_set<string>
 	// Append the found reads to the found read file.
 	cmd += " >> " + out_left_read;
 	logger->debug(cmd);
-	run_shell_command(cmd);
+	logger->safe_run_shell_command(cmd);
 	if (paired_end) {
 		// Same as with the left reads, but one line.
 		cmd = "vseqselect -seqnum " + tmpvseqselectfile + " " + right_read_index + " | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' >> " + out_right_read;
 		logger->debug(cmd);
-		run_shell_command(cmd);
+		logger->safe_run_shell_command(cmd);
 	}
 	// Auxiliary files are removed here.
 	cmd = "rm -f " + tmpvseqselectfile;
-	run_shell_command(cmd);
+	logger->fragile_run_shell_command(cmd);
 
 	// We are catching two new reads if the library is paired end
 	if (paired_end) {
@@ -86,7 +86,7 @@ int VmatchAligner::parse_output(const string& output_file, unordered_set<string>
 void VmatchAligner::create_index(const string& index_name, const string& db_type, const string& fasta_file) {
 	string cmd = "mkvtree -" + db_type + " -db " + fasta_file + " -pl -indexname " + index_name + " -allout >> " + logger->get_log_file();
 	logger->debug(cmd);
-	run_shell_command(cmd);
+	logger->safe_run_shell_command(cmd);
 }
 
 /* This function APPENDS the sequence numbers of hits (usually reads) to the output_file.
@@ -135,7 +135,7 @@ void VmatchAligner::do_alignment(const string& index_name, const string& alignme
 		cmd = "vmatch -q " + query_file + " -d -p" + l_option + e_option + " " + param_list + " -nodist -noevalue -noscore -noidentity " + index_name + " | awk '$0 !~ /^#.*/ {print $6}' >> " + output_file + "; sort -nu " + output_file + " > " + tmpvmfile + "; \\mv " + tmpvmfile + " " + output_file;
 	}
 	logger->debug(cmd);
-	run_shell_command(cmd);
+	logger->fragile_run_shell_command(cmd);
 }
 
 int VmatchAligner::get_format() {
@@ -163,10 +163,10 @@ void VmatchAligner::align_long_contigs(const string& long_contig_candidate_file,
 	string vmatch_out_file = aux_dir + "/long_contigs_candidates.vmatch";
 	string cmd = "mkvtree -dna -db " + contig_file + " -pl -indexname " + indexname + " -allout >> " + logger->get_log_file();
 	logger->debug(cmd);
-	run_shell_command(cmd);
+	logger->safe_run_shell_command(cmd);
 	cmd = "vmatch -q " + long_contig_candidate_file + " -d -p" + " -l " + int2str(max_contig_size) + " -showdesc 0 -nodist -noevalue -noscore -noidentity " + indexname + " | awk '{print $1,$2,$3,$4,$5,$6}' | uniq -f5 > " + vmatch_out_file;
 	logger->debug(cmd);
-	run_shell_command(cmd);
+	logger->safe_run_shell_command(cmd);
 	ifstream vmatch_file_stream(vmatch_out_file.c_str());
 	// Parse the output file and remove the long contigs and associated reads.
 	string line;
@@ -183,7 +183,7 @@ void VmatchAligner::align_long_contigs(const string& long_contig_candidate_file,
 	vmatch_file_stream.close();
 	// Auxiliary files are removed here.
 	cmd = "rm " + vmatch_out_file + " " + indexname + "*";
-	run_shell_command(cmd);
+	logger->fragile_run_shell_command(cmd);
 }
 
 int VmatchAligner::ignore_output(const string& output_file, unordered_set<string>& found_reads, const int lib_idx, const int read_chunk) {

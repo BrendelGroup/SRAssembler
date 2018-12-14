@@ -48,7 +48,7 @@ void GSQAligner::do_spliced_alignment(const string& genomic_file, const string& 
 		type_str = "Q";
 	string cmd = "GeneSeqer -L " + genomic_file + " -" + type_str + " " + query_file + " -species " + species_str + " " + param_list + " -o " + output_file + " >> /dev/null 2>> " + logger->get_log_file();
 	logger->debug(cmd);
-	run_shell_command(cmd);
+	logger->safe_run_shell_command(cmd);
 }
 
 // This is for each round, to see if the ending criteria have been met.

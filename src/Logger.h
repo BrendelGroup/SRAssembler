@@ -32,6 +32,8 @@ public:
 	void fatal(const string& msg);
 	string get_log_file();
 	int get_log_level();
+	void safe_run_shell_command(const string& cmd);
+	void fragile_run_shell_command(const string& cmd);
 private:
 	static Logger* logger;
 	int log_level;

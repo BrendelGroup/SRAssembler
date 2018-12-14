@@ -65,7 +65,7 @@ protected:
 	int get_match_length(int round);
 	int get_mismatch_allowed(int round);
 	std::string get_assembly_file_name(int round, int k);
-	std::string get_assembled_scaf_file_name(int round, int k);
+	std::string get_assembled_scaffold_file_name(int round, int k);
 	std::string get_spliced_alignment_file_name(int round, int k);
 	void do_split_files(string read_file);
 	void preprocess_read_chunk(int lib_idx, int file_chunk);

@@ -625,7 +625,7 @@ void SRAssembler::mask_contigs(int round){
 	}
 	cmd += "> " + masked_file;
 	logger->debug(cmd);
-	run_shell_command(cmd);
+	logger->fragile_run_shell_command(cmd);
 }
 
 string SRAssembler:: get_query_fasta_file_name_masked(int round){
@@ -771,7 +771,7 @@ string SRAssembler::get_assembly_file_name(int round, int k){
 	return get_assembler()->get_output_contig_file_name(aux_dir + "/assembly_" + "k" + int2str(k) + "_" + "r" + int2str(round));
 }
 
-string SRAssembler::get_assembled_scaf_file_name(int round, int k){
+string SRAssembler::get_assembled_scaffold_file_name(int round, int k){
 	return get_assembler()->get_output_scaffold_file_name(aux_dir + "/assembly_" + "k" + int2str(k) + "_" + "r" + int2str(round));
 }
 
@@ -836,30 +836,30 @@ void SRAssembler::merge_mapped_files(int round){
 		string left_files = aux_dir + "/matched_reads_left_" + "r" + int2str(round) + "_" + "lib" + int2str(lib_idx + 1) + "_chunk*";
 		string cmd = "cat " + left_files + " >> " + lib.get_matched_left_reads_filename();
 		logger->debug(cmd);
-		run_shell_command(cmd);
+		logger->fragile_run_shell_command(cmd);
 		// Auxiliary files are removed here.
 		cmd = "rm -f " + left_files;
 		logger->debug(cmd);
-		run_shell_command(cmd);
+		logger->fragile_run_shell_command(cmd);
 
 		if (lib.get_paired_end()) {
 			string right_files = aux_dir + "/matched_reads_right_" + "r" + int2str(round) + "_" + "lib" + int2str(lib_idx + 1) + "_chunk*";
 			cmd = "cat " + right_files + " >> " + lib.get_matched_right_reads_filename();
 			logger->debug(cmd);
-			run_shell_command(cmd);
+			logger->fragile_run_shell_command(cmd);
 			// Auxiliary files are removed here.
 			cmd = "rm -f " + right_files;
 			logger->debug(cmd);
-			run_shell_command(cmd);
+			logger->fragile_run_shell_command(cmd);
 		}
-		run_shell_command("cp " + lib.get_matched_left_reads_filename() + " " + lib.get_matched_left_reads_filename(round));
+		logger->fragile_run_shell_command("cp " + lib.get_matched_left_reads_filename() + " " + lib.get_matched_left_reads_filename(round));
 		if (lib.get_paired_end())
-			run_shell_command("cp " + lib.get_matched_right_reads_filename() + " " + lib.get_matched_right_reads_filename(round));
+			logger->fragile_run_shell_command("cp " + lib.get_matched_right_reads_filename() + " " + lib.get_matched_right_reads_filename(round));
 	}
 	// Auxiliary files are removed here.
 	string cmd = "rm -f " + get_contigs_index_name(round) + ".*";;
 	logger->debug(cmd);
-	run_shell_command(cmd);
+	logger->fragile_run_shell_command(cmd);
 }
 
 long SRAssembler::get_total_read_count(int round){
@@ -995,22 +995,22 @@ void SRAssembler::remove_unmapped_reads(unsigned int lib_idx, int round){
 	logger->debug("Removing reads in library " + int2str(lib_idx + 1) + " without hits against contigs in round " + int2str(round));
 	cmd = "vseqselect -seqnum " + vmatch_outfile + " " + left_reads_index + " | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' > " + left_matched_reads;
 	logger->debug(cmd);
-	run_shell_command(cmd);
+	logger->safe_run_shell_command(cmd);
 	cmd = "cp " + left_matched_reads + " " + lib.get_matched_left_reads_filename(round);
-	run_shell_command(cmd);
+	logger->safe_run_shell_command(cmd);
 	if (lib.get_paired_end()) {
 		cmd = "vseqselect -seqnum " + vmatch_outfile + " " + right_reads_index + " | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' > " + right_matched_reads;
 		logger->debug(cmd);
-		run_shell_command(cmd);
+		logger->safe_run_shell_command(cmd);
 		cmd = "cp " + right_matched_reads + " " + lib.get_matched_right_reads_filename(round);
-		run_shell_command(cmd);
+		logger->safe_run_shell_command(cmd);
 	}
 	// Auxiliary files are removed here.
 	cmd = "rm -f " + vmatch_outfile + " " + left_reads_index + "*";
-	run_shell_command(cmd);
+	logger->fragile_run_shell_command(cmd);
 	if (lib.get_paired_end()) {
 		cmd = "rm -f " + right_reads_index + "*";
-		run_shell_command(cmd);
+		logger->fragile_run_shell_command(cmd);
 	}
 }
 
