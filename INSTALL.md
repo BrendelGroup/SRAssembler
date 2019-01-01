@@ -53,23 +53,6 @@ The following is an executable record of installation on an Ubuntu system that s
 #ABYSS
 	apt-get install abyss
 
-#BOWTIE
-	git clone https://github.com/BenLangmead/bowtie.git
-	cd bowtie
-	make
-	\cp bowtie bowtie-align-l bowtie-align-s bowtie-build bowtie-build-l bowtie-build-s bowtie-inspect bowtie-inspect-l bowtie-inspect-s /usr/local/bin/
-	cd ..
-
-#EXONERATE
-	mkdir EXONERATE
-	cd EXONERATE
-	wget http://ftp.ebi.ac.uk/pub/software/vertebrategenomics/exonerate/exonerate-2.2.0-x86_64.tar.gz
-	tar -xzf exonerate-2.2.0-x86_64.tar.gz
-	cd exonerate-2.2.0-x86_64
-	cd bin
-	cp * /usr/local/bin
-	cd ../../..
-
 #GENESEQER
 	mkdir GENESEQER
 	cd GENESEQER
