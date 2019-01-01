@@ -13,7 +13,7 @@ From: fedora:27
     dnf -y update
     dnf -y install @development-tools
     dnf -y install gcc-c++
-    dnf -y install bc git tcsh tzdata unzip zip wget which
+    dnf -y install bc git tcsh tzdata unzip zip wget which bzip2
     dnf -y install nano
 
     echo 'Installing Abyss assembler '
@@ -105,6 +105,90 @@ From: fedora:27
     make mpi
     make clean
 
+    echo 'Installing bioawk '
+    dnf -y install byacc zlib-devel
+    #### Install
+    cd /opt
+    wget https://github.com/lh3/bioawk/archive/master.zip
+    unzip master.zip 
+    cd bioawk-master
+    make
+    cd ..
+    rm master.zip
+
+    echo 'Installing SAMTOOLS of http://www.htslib.org/ '
+    #### Prerequisites
+    dnf -y install libncurses.so.5 ncurses ncurses-devel bzip2-devel xz-devel
+    #### Install
+    cd /opt
+    wget https://github.com/samtools/samtools/releases/download/1.9/samtools-1.9.tar.bz2
+    tar -xf samtools-1.9.tar.bz2
+    rm samtools-1.9.tar.bz2
+    cd samtools-1.9
+    ./configure
+    make && make install
+
+    echo 'Installing BOWTIE2 of http://bowtie-bio.sourceforge.net/bowtie2 '
+    ######
+    cd /opt
+    wget https://sourceforge.net/projects/bowtie-bio/files/bowtie2/2.3.4.3/bowtie2-2.3.4.3-linux-x86_64.zip
+    unzip bowtie2-2.3.4.3-linux-x86_64.zip
+    rm bowtie2-2.3.4.3-linux-x86_64.zip
+
+    echo 'Installing Integrated Genome Viewer '
+    #### Dependencies
+    dnf -y install java-1.8.0-openjdk xorg-x11-server-Xvfb
+    ####
+    cd /opt
+    wget http://data.broadinstitute.org/igv/projects/downloads/2.4/IGV_2.4.14.zip
+    unzip IGV_2.4.14.zip
+    rm IGV_2.4.14.zip
+    # Patch the igv script to run headless. No need for X display.
+    printf '#!/bin/sh\n(Xvfb :10 &) && DISPLAY=:10 java -Xmx4000m -Dapple.laf.useScreenMenuBar=true -Djava.net.preferIPv4Stack=true -jar /opt/IGV_2.4.14/lib/igv.jar "$@" && pkill Xvfb\n' > /usr/local/bin/igv
+    chmod 777 /usr/local/bin/igv
+
+    echo 'Installing MUSCLE aligner'
+    #### Dependencies
+    ####
+    cd /opt
+    wget https://www.drive5.com/muscle/downloads3.8.31/muscle3.8.31_i86linux64.tar.gz
+    tar -xf muscle3.8.31_i86linux64.tar.gz
+    rm muscle3.8.31_i86linux64.tar.gz
+    ln -s muscle3.8.31_i86linux64 muscle
+
+    echo 'Installing InterMine Python package '
+    easy_install intermine
+        
+    echo 'Installing R'
+    #### Dependencies
+    dnf -y install udunits2-devel libcurl libcurl-devel geos-devel
+    #### 
+    dnf -y install R-base R-devel
+    R CMD javareconf
+
+    echo 'Installing R packages'
+    #### Dependencies
+    dnf -y install cairo-devel libXt-devel
+    ####
+    echo 'install.packages("R.devices", repos="http://ftp.ussg.iu.edu/CRAN", dependencies=TRUE)' > R2install
+    #### Dependencies
+    dnf -y install openssl-devel mysql-devel postgresql-devel
+    ####
+    echo 'install.packages("dplyr", repos="http://ftp.ussg.iu.edu/CRAN", dependencies=TRUE)' >> R2install
+    echo 'install.packages("ggplot2", repos="http://ftp.ussg.iu.edu/CRAN", dependencies=TRUE)' >> R2install
+    #### Dependencies
+    dnf -y install libjpeg-turbo-devel libxml2-devel ImageMagick-c++-devel
+    ####
+    echo 'install.packages("knitr", repos="http://ftp.ussg.iu.edu/CRAN", dependencies=TRUE)' >> R2install
+    echo 'install.packages("magrittr", repos="http://ftp.ussg.iu.edu/CRAN", dependencies=TRUE)' >> R2install
+    echo 'install.packages("readr", repos="http://ftp.ussg.iu.edu/CRAN", dependencies=TRUE)' >> R2install
+    echo 'source("https://bioconductor.org/biocLite.R")' >> R2install
+    echo 'biocLite(c("GenomicRanges"),ask=FALSE)' >> R2install
+    Rscript R2install
+
+
+
+    
 %environment
     export PATH=$PATH:/opt/VMATCH
     export PATH=$PATH:/opt/SOAPdenovo2
@@ -114,7 +198,11 @@ From: fedora:27
     export PATH=$PATH:/opt/SNAP
     export PATH=$PATH:/opt/abyss/bin
     export PATH=$PATH:/opt/abyss/ABYSS
+    export PATH=$PATH:/opt/bioawk-master
+    export PATH=$PATH:/opt/samtools
+    export PATH=$PATH:/opt/bowtie2-2.3.4.3-linux-x86_64
     export PATH=$PATH:/usr/lib64/openmpi/bin
+    export PATH=$PATH:/opt
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64/openmpi/lib
     export BSSMDIR="/opt/GENOMETHREADER/bin/bssm"
     export GTHDATADIR="/opt/GENOMETHREADER/bin/gthdata"

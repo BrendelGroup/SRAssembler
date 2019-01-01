@@ -40,6 +40,7 @@ public:
 	virtual ~SRAssembler();
 	virtual int init(int argc, char * argv[], int rank, int mpiSize);
 	virtual void do_preprocessing()=0;
+	virtual void remove_taboo_reads()=0;
 	virtual void do_walking()=0;
 	virtual void show_usage()=0;
 	virtual void print_message(const std::string&)=0;
@@ -64,7 +65,7 @@ protected:
 	int get_match_length(int round);
 	int get_mismatch_allowed(int round);
 	std::string get_assembly_file_name(int round, int k);
-	std::string get_assembled_scaf_file_name(int round, int k);
+	std::string get_assembled_scaffold_file_name(int round, int k);
 	std::string get_spliced_alignment_file_name(int round, int k);
 	void do_split_files(string read_file);
 	void preprocess_read_chunk(int lib_idx, int file_chunk);
@@ -85,6 +86,7 @@ protected:
 	boost::unordered_map<std::string,Params> read_param_file();
 	Params get_parameters(string program_name);
 	std::string probe_file, species, probe_type, out_dir;
+	std::string taboo_file, taboo_type;
 	int init_match_length;
 	int recur_match_length;
 	int mismatch_allowed;
@@ -126,7 +128,6 @@ protected:
 	std::string tmp_loc;
 	std::string intermediate_dir;
 	std::string data_dir;
-	std::string results_dir;
 	std::string log_file;
 	std::string param_file;
 	std::string spliced_alignment_output_file;

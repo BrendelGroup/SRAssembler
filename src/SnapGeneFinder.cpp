@@ -25,7 +25,7 @@ void SnapGeneFinder::do_gene_finding(const string& genomic_file, const string& s
 	}
 	string cmd = "snap " + hmm + " " + genomic_file + " -aa " + protein_output_file + " > " + output_file + " 2>&1";
 	logger->debug(cmd);
-	run_shell_command(cmd);
+	logger->safe_run_shell_command(cmd);
 
 }
 

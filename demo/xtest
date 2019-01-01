@@ -23,7 +23,7 @@ rm -rf $out
 rm -rf processed_reads
 ${bindir}SRAssembler -q input/LOC_Os06g04560.pep -p params.conf -1 input/reads1_200.fq -2 input/reads2_200.fq -Z 200 -r ./processed_reads -R 15000 -o $out
 echo "Checking results against standards..."
-diff -qs standards/${out}.html ${out}/results/summary.html
+diff -qs standards/${out}.html ${out}/summary.html
 
 echo "============================================================================================================"
 echo " Test2: Use a cDNA sequence as query input."
@@ -33,7 +33,7 @@ rm -rf $out
 # Because we have existing pre-processed reads, we do not need to specify the number of reads per split file with -R.
 ${bindir}SRAssembler -q input/AT1G01950.cdna -t dna -p params.conf -l libraries_200bp.conf -r ./processed_reads -o $out
 echo "Checking results against standards..."
-diff -qs standards/${out}.html ${out}/results/summary.html
+diff -qs standards/${out}.html ${out}/summary.html
 
 echo "============================================================================================================"
 echo " Test3: Use two libraries with a library definition file. Only the second library still needs to be processed."
@@ -42,7 +42,7 @@ out=testout3
 rm -rf $out
 ${bindir}SRAssembler -q input/LOC_Os06g04560.pep -p params.conf -l libraries_200bp_1kb.conf -r ./processed_reads -R 15000 -o $out
 echo "Checking results against standards..."
-diff -qs standards/${out}.html ${out}/results/summary.html
+diff -qs standards/${out}.html ${out}/summary.html
 
 echo "============================================================================================================"
 echo " Test4: Previous example, but using the MPI implementation and require an extra 2 rounds of assembly."
@@ -51,7 +51,7 @@ out=testout4
 rm -rf $out
 mpirun -np 4 ${bindir}SRAssembler_MPI -q input/LOC_Os06g04560.pep -p params.conf -l libraries_200bp_1kb.conf -r ./processed_reads -o $out -E 2
 echo "Checking results against standards..."
-diff -qs standards/${out}.html ${out}/results/summary.html
+diff -qs standards/${out}.html ${out}/summary.html
 
 echo "============================================================================================================"
 echo " Test5.1: Stop after 3 rounds of assembly. Then continue the current assembly with a new SRAssembler run."
@@ -61,7 +61,7 @@ rm -rf testout5 testout5.1 testout5.2 testout5.3
 ${bindir}SRAssembler -q input/LOC_Os06g04560.pep -p params.conf -l libraries_200bp.conf -r ./processed_reads -o testout5 -n 3
 cp -r testout5 $out
 echo "Checking results against standards..."
-diff -qs standards/${out}.html ${out}/results/summary.html
+diff -qs standards/${out}.html ${out}/summary.html
 
 echo "============================================================================================================"
 echo " Test5.2: Re-run the previous command, but set -n to 7. The assembly will start with round 4."
@@ -70,7 +70,7 @@ out=testout5.2
 ${bindir}SRAssembler -q input/LOC_Os06g04560.pep -p params.conf -l libraries_200bp.conf -r ./processed_reads -o testout5 -n 7
 cp -r testout5 $out
 echo "Checking results against standards..."
-diff -qs standards/${out}.html ${out}/results/summary.html
+diff -qs standards/${out}.html ${out}/summary.html
 
 echo "============================================================================================================"
 echo " Test5.3: Re-run the previous command, but use -y to force SRAssembler to start from scratch."
@@ -79,7 +79,7 @@ out=testout5.3
 ${bindir}SRAssembler -q input/LOC_Os06g04560.pep -p params.conf -l libraries_200bp.conf -r ./processed_reads -o testout5 -n 7 -y
 mv testout5 $out
 echo "Checking results against standards..."
-diff -qs standards/${out}.html ${out}/results/summary.html
+diff -qs standards/${out}.html ${out}/summary.html
 
 echo "============================================================================================================"
 echo " Test6: Use GeneSeqer as the spliced alignment program (-S 0)."
@@ -88,7 +88,7 @@ out=testout6
 rm -rf $out
 ${bindir}SRAssembler -q input/LOC_Os06g04560.pep -p params.conf -l libraries_200bp.conf -r ./processed_reads -o $out -S 0
 echo "Checking results against standards..."
-diff -qs standards/${out}.html ${out}/results/summary.html
+diff -qs standards/${out}.html ${out}/summary.html
 
 echo "============================================================================================================"
 echo " Test7: Use Abyss as the assembly program (-A 1)."
@@ -97,7 +97,7 @@ out=testout7
 rm -rf $out
 ${bindir}SRAssembler -q input/LOC_Os06g04560.pep -p params.conf -l libraries_200bp_1kb.conf -r ./processed_reads -o $out -A 1
 echo "Checking results against standards..."
-diff -qs standards/${out}.html ${out}/results/summary.html
+diff -qs standards/${out}.html ${out}/summary.html
 
 echo "============================================================================================================"
 echo " Test8: Use Abyss as the assembly program with the MPI implementation."
@@ -106,7 +106,7 @@ out=testout8
 rm -rf $out
 mpirun -np 4 ${bindir}SRAssembler_MPI -q input/LOC_Os06g04560.pep -p params.conf -l libraries_200bp_1kb.conf -r ./processed_reads -o $out -A 1
 echo "Checking results against standards..."
-diff -qs standards/${out}.html ${out}/results/summary.html
+diff -qs standards/${out}.html ${out}/summary.html
 
 echo "============================================================================================================"
 echo " Test9: Looking for potentially better alignments ..."
@@ -118,8 +118,8 @@ out=testout9
 rm -rf $out
 ${bindir}SRAssembler -q input/LOC_Os06g04560.pep -p params.conf -l libraries_200bp.conf -r ./processed_reads -o $out -e 0.6 -c 0.9 -m 7000 -G 1
 echo "Checking results against standards..."
-diff -qs standards/${out}.html ${out}/results/summary.html
-diff -q standards/${out}.ano ${out}/results/output.ano
+diff -qs standards/${out}.html ${out}/summary.html
+diff -q standards/${out}.ano ${out}/output.ano
 
 echo "============================================================================================================"
 echo " Test10: Remove unrelated contigs and reads every 2 rounds (-b 2)."
@@ -128,7 +128,7 @@ out=testout10
 rm -rf $out
 ${bindir}SRAssembler -q input/LOC_Os06g04560.pep -p params.conf -l libraries_200bp.conf -r ./processed_reads -o $out -b 2
 echo "Checking results against standards..."
-diff -qs standards/${out}.html ${out}/results/summary.html
+diff -qs standards/${out}.html ${out}/summary.html
 
 echo "============================================================================================================"
 echo " Test11: Assemble contigs only from round 3 onward (-a 3)."
@@ -137,7 +137,7 @@ out=testout11
 rm -rf $out
 ${bindir}SRAssembler -q input/LOC_Os06g04560.pep -p params.conf -l libraries_200bp.conf -r ./processed_reads -o $out -a 3
 echo "Checking results against standards..."
-diff -qs standards/${out}.html ${out}/results/summary.html
+diff -qs standards/${out}.html ${out}/summary.html
 
 echo "============================================================================================================"
 echo " Test12: Do not check if the query genes are assembled until the last round (-f)."
@@ -147,12 +147,30 @@ rm -rf $out
 # Here we specify that SRAssembler should continue for 13 rounds because it causes it to hit the default maximum contig length (10000 bp).
 ${bindir}SRAssembler -q input/LOC_Os06g04560.pep -p params.conf -l libraries_200bp.conf -r ./processed_reads -o $out -n 13 -f -M 10000
 echo "Checking results against standards..."
-diff -qs standards/${out}.html ${out}/results/summary.html
+diff -qs standards/${out}.html ${out}/summary.html
 
 echo "============================================================================================================"
-echo " Test13: Pre-process reads only (-P)."
+echo " Test13: Use a DNA taboo sequence to restrict certain reads from being collected or used."
 echo "============================================================================================================"
 out=testout13
+rm -rf $out
+${bindir}SRAssembler -q input/AT1G01950.cdna -t dna -p params.conf -l libraries_200bp.conf -r ./processed_reads -R 15000 -j input/taboo.dna -J dna -o $out
+echo "Checking results against standards..."
+diff -qs standards/${out}.html ${out}/summary.html
+
+echo "============================================================================================================"
+echo " Test14: Use a peptide taboo sequence to restrict certain reads from being collected or used."
+echo "============================================================================================================"
+out=testout14
+rm -rf $out
+${bindir}SRAssembler -q input/LOC_Os06g04560.pep -p params.conf -l libraries_200bp.conf -r ./processed_reads -R 15000 -j input/taboo.pep -J protein -o $out
+echo "Checking results against standards..."
+diff -qs standards/${out}.html ${out}/summary.html
+
+echo "============================================================================================================"
+echo " Test15: Pre-process reads only (-P)."
+echo "============================================================================================================"
+out=testout15
 rm -rf $out
 rm -rf processed_reads
 ${bindir}SRAssembler -l libraries_200bp_1kb.conf -r ./processed_reads -R 15000 -o $out -P
@@ -164,12 +182,15 @@ fi
 echo "============================================================================================================"
 echo " Confirm results of all tests."
 echo "============================================================================================================"
-for file in testout{1,2,3,4,5.1,5.2,5.3,6,7,8,9,10,11,12}; do
-	diff -qs standards/${file}.html ${file}/results/summary.html
+for file in testout{1,2,3,4,5.1,5.2,5.3,6,7,8,9,10,11,12,13,14}; do
+	diff -qs standards/${file}.html ${file}/summary.html
 	if [[ "$file" = "testout9" ]]; then
-		diff -q standards/${file}.ano ${file}/results/output.ano
+		diff -q standards/${file}.ano ${file}/output.ano
 	fi
 done
 if [[ -e processed_reads/reads1_200library/reads2_200_chunk4.skp && -e processed_reads/1kb_lib/reads2_1000_chunk4.skp ]]; then
-	printf "Test13 successful.\n"
+	printf "Preprocessing-only test successful.\n"
+else
+	printf "Preprocessing-only test unsuccessful.\n"
 fi
+

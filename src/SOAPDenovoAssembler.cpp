@@ -30,10 +30,8 @@ bool SOAPDenovoAssembler::is_available(){
 	return true;
 }
 void SOAPDenovoAssembler::do_assembly(int kmer, const vector<Library>& libraries, const string& output_file, int threads, boost::unordered_map<std::string,Params> parameters_dict){
-	Params pregraph_params;
-	Params contig_params;
-	string pregraph_param_list = "";
-	string contig_param_list = "";
+	Params pregraph_params, contig_params;
+	string pregraph_param_list, contig_param_list = "";
 	string config_file = output_file + ".conf";
 	ofstream outFile(config_file.c_str());
 	// Prepare the SOAPdenovo configuration file specific for this run.
@@ -69,19 +67,19 @@ void SOAPDenovoAssembler::do_assembly(int kmer, const vector<Library>& libraries
 	string program = "SOAPdenovo-127mer";
 	if (kmer <= 63)
 		program = "SOAPdenovo-63mer";
-	string cmd = program + " pregraph -s " + config_file + " -o " + output_file + " -p " + int2str(threads) + " -K " + int2str(kmer) + pregraph_param_list + " >> " + logger->get_log_file() + " 2>&1";
+	string cmd = program + " pregraph" + " -s " + config_file + " -o " + output_file + " -p " + int2str(threads) + " -K " + int2str(kmer) + pregraph_param_list + " >> " + logger->get_log_file() + " 2>&1";
 	logger->debug(cmd);
-	run_shell_command(cmd);
-	cmd = program + " contig -g " + output_file + contig_param_list + " >> " + logger->get_log_file() + " 2>&1";
+	logger->safe_run_shell_command(cmd);
+	cmd = program + " contig" + " -g " + output_file + " -p " + int2str(threads) + contig_param_list + " >> " + logger->get_log_file() + " 2>&1";
 	logger->debug(cmd);
-	run_shell_command(cmd);
-	standardize_contigs(get_output_contig_file_name(output_file));
+	logger->safe_run_shell_command(cmd);
+	standardize_contig_headers(get_output_contig_file_name(output_file));
 }
 
 void SOAPDenovoAssembler::clean_files(const string& dir){
 	string cmd = "rm -rf " + dir + "/assembly_*";
 	logger->debug(cmd);
-	run_shell_command(cmd);
+	logger->fragile_run_shell_command(cmd);
 }
 
 string SOAPDenovoAssembler::get_output_contig_file_name(string prefix){

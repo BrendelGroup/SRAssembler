@@ -25,6 +25,8 @@ int SRAssemblerMaster::init(int argc, char * argv[], int rank, int mpiSize) {
 	this->start_round = (over_write)?1:get_start_round();
 	if (this->start_round == 1)
 		create_folders();
+	// Make sure the query is indexed for cleaning rounds.
+	SRAssembler::create_index(1);
 	// Start the msg.log with the command used to run SRAsssembler.
 	command = "Command: ";
 	for (int i=0; i<argc;i++){
@@ -37,7 +39,7 @@ int SRAssemblerMaster::init(int argc, char * argv[], int rank, int mpiSize) {
 		logger->debug("Parameter file contents:");
 		cmd = "cat " + param_file + " >> " + logger->get_log_file();
 		logger->debug(cmd);
-		run_shell_command(cmd);
+		logger->fragile_run_shell_command(cmd);
 	}
 	output_header();
 	output_libraries();
@@ -195,10 +197,10 @@ void SRAssemblerMaster::do_preprocessing(){
 			}
 		}
 		logger->running("Splitting read library " + int2str(lib_index+1) + " ...");
-		// Intermediate files are removed here.
+		// Auxiliary files are removed here.
 		// Remove any pre-existing files in case of an incomplete earlier pre-processing.
 		cmd = "rm -f " + data_dir + "/lib" + int2str(lib_index+1) + "/" + get_file_base_name(lib->get_left_read()) + "* " + data_dir + "/lib" + int2str(lib_index+1) + "/" + get_file_base_name(lib->get_right_read()) + "*";
-		run_shell_command(cmd);
+		logger->fragile_run_shell_command(cmd);
 		// 'source' variable is for identifying where an MPI message came from.
 		int source;
 		int chunk = 0;
@@ -258,38 +260,33 @@ int SRAssemblerMaster::get_start_round(){
 	if (file_exists(aux_dir)){
 		// This is counting backwards from the maximum round number until i=2.
 		for (int i=this->num_rounds;i>1;i--) {
-			bool found_previous = true;
+			bool found_previous;
 			int mpiSize = (this->mpiSize == 0)? 1: this->mpiSize;
-				// If reads file and next round index file exist (means assembled), we can continue from here.
-				for (unsigned int lib_idx=0;lib_idx<this->libraries.size();lib_idx++) {
-					Library lib = this->libraries[lib_idx];
-					found_previous = file_exists(get_query_fasta_file_name(i+1));
-				}
+			// If reads file and next round index file exist (means assembled), we can continue from here.
+			found_previous = file_exists(get_query_fasta_file_name(i+1));
 			if (found_previous) {
 				int procID=getpid();
 				broadcast_code(ACTION_MEMDIR, 0, procID, 0);
 				// Make sure there is a tmp_dir.
 				this->tmp_dir = this->tmp_loc + "/SRAssemblertemp" + int2str(procID);
-				string cmd = "\\rm -rf " + tmp_dir + "; mkdir " + tmp_dir;
+				string cmd = "rm -rf " + tmp_dir + "; mkdir " + tmp_dir;
 				logger->debug(cmd);
-				run_shell_command(cmd);
+				logger->fragile_run_shell_command(cmd);
 				// Make sure that the existence of the tmp_dir is obvious in case of disrupted run.
 				cmd = "ln --symbolic --target-directory=" + out_dir + " " + tmp_dir;
 				logger->debug(cmd);
-				run_shell_command(cmd);
-				// Make sure the query is indexed for cleaning rounds.
-				SRAssembler::create_index(1);
+				logger->safe_run_shell_command(cmd);
 				start_round = i+1;
 				if (start_round > this->num_rounds)
 					return start_round;
 				logger->info("Previous results found. SRAssembler starts from round " + int2str(start_round));
 				// Clean the temp results if it is not complete.
-				run_shell_command("find " + aux_dir + " -name \"matched_reads_left_" + "r" + int2str(start_round) + "*\" -o -name \"matched_reads_right_" + "r" + int2str(start_round) + "*\" -delete");
+				logger->safe_run_shell_command("find " + aux_dir + " -name \"matched_reads_left_" + "r" + int2str(start_round) + "*\" -o -name \"matched_reads_right_" + "r" + int2str(start_round) + "*\" -delete");
 				for (unsigned int lib_idx=0;lib_idx<this->libraries.size();lib_idx++) {
 					Library lib = this->libraries[lib_idx];
-					run_shell_command("cp " + lib.get_matched_left_reads_filename(i) + " " + lib.get_matched_left_reads_filename());
+					logger->fragile_run_shell_command("cp " + lib.get_matched_left_reads_filename(i) + " " + lib.get_matched_left_reads_filename());
 					if(lib.get_paired_end()) {
-						run_shell_command("cp " + lib.get_matched_right_reads_filename(i) + " " + lib.get_matched_right_reads_filename());
+						logger->fragile_run_shell_command("cp " + lib.get_matched_right_reads_filename(i) + " " + lib.get_matched_right_reads_filename());
 					}
 				}
 				if (mpiSize > 1) {
@@ -324,7 +321,7 @@ void SRAssemblerMaster::do_walking() {
 	bool assembled;
 	// If this is a continuation of a previous run, cleaning may not happen on the same schedule as it would if the round were restarted.
 	int rounds_since_cleaning = 0;
-	int source;
+	int source; // This integer is used in messages from MPI Slaves.
 	int read_chunk = 0;
 	long long code_value;
 	mpi_code code;
@@ -346,9 +343,7 @@ void SRAssemblerMaster::do_walking() {
 		rounds_since_cleaning += 1;
 
 		// Index the query in round 1 for the dnavsprot vmatch step.
-		if (round == 1) {
-			create_index(1);
-		} else {
+		if (round > 1) {
 			// Mask the previous round's contigs for later searches.
 			if (assembly_round < round) {
 				mask_contigs(round-1);
@@ -414,7 +409,7 @@ void SRAssemblerMaster::do_walking() {
 		}
 		merge_mapped_files(round);
 		long read_count = get_total_read_count(round);
-		logger->info("Found new reads: " + int2str(new_reads_count) + " \tTotal matched reads: " + int2str(read_count));
+		logger->info("Round " + int2str(round) + " \tFound new reads: " + int2str(new_reads_count) + " \tTotal matched reads: " + int2str(read_count));
 
 		// Assemble the reads.
 		if (assembly_round <= round){
@@ -438,7 +433,7 @@ void SRAssemblerMaster::do_walking() {
 					if (contig_count > contig_limit) {
 						logger->info("The walking is terminated: " + int2str(contig_count) + " contigs produced in round " + int2str(round) + ". This is too many to be a good run. Consider adjusting parameters such as Vmatch_protein_vs_contigs or increasing -i initial_contig_min. You can also rerun with the -d 0 argument to ignore contig numbers.");
 						broadcast_code(ACTION_EXIT, 0, 0, 0);
-						// Intermediate files are removed here.
+						// Auxiliary files are removed here.
 						clean_tmp_files(round-1);
 						return;
 					}
@@ -486,7 +481,7 @@ void SRAssemblerMaster::do_walking() {
 			}
 			// If we haven't yet found a contig that meets the required length, we try the next round.
 			if (longest_contig < min_contig_lgth) {
-				// Intermediate files are removed here.
+				// Auxiliary files are removed here.
 				clean_tmp_files(round-1);
 				round++;
 				continue;
@@ -536,11 +531,11 @@ void SRAssemblerMaster::do_walking() {
 				if (libraries[i].get_paired_end()){
 					cmd = "cat " + left_file + " " + right_file + " >> " + joined_file;
 					logger->debug(cmd);
-					run_shell_command(cmd);
+					logger->fragile_run_shell_command(cmd);
 				} else {
 					cmd = "cat " + left_file + " >> " + joined_file;
 					logger->debug(cmd);
-					run_shell_command(cmd);
+					logger->fragile_run_shell_command(cmd);
 				}
 			}
 			logger->info("Round " + int2str(round) + " is finished.");
@@ -549,11 +544,12 @@ void SRAssemblerMaster::do_walking() {
 				break;
 			}
 		}
-		// Intermediate files are removed here.
+		// Auxiliary files are removed here.
 		clean_tmp_files(round-1);
 		round++;
 	}
 	// Walking ends.
+	logger->debug("Final round is\t" + int2str(round));
 	// Intermediate files are removed here.
 	clean_tmp_files(round-1);
 	// If this round has not been assembled yet, do assembling.
@@ -579,7 +575,7 @@ void SRAssemblerMaster::do_walking() {
 	}
 	do_spliced_alignment();
 	do_gene_finding();
-	// Intermediate files are removed here.
+	// Auxiliary files are removed here.
 	this->get_spliced_aligner()->clean_files(this->final_contigs_file);
 	output_summary(round);
 	output_spliced_alignment();
@@ -589,20 +585,20 @@ void SRAssemblerMaster::do_walking() {
 	ofstream outFile(summary_file.c_str());
 	outFile << output_content << endl;
 	outFile.close();
-	// Intermediate files are removed here.
+	// Auxiliary files are removed here.
 	// Now that we're done, clean up unneccessary temporary files and the link to the tmp_dir
-	cmd = "rm -rf " + out_dir + "/" + get_file_name(tmp_dir);
+	cmd = "rm -f " + out_dir + "/" + get_file_name(tmp_dir);
 	logger->debug(cmd);
-	run_shell_command(cmd);
+	logger->safe_run_shell_command(cmd);
 	// If verbose run, keep all the little files from the temporary directory
 	if (verbose) {
 		cmd = "cp -r " + tmp_dir + " " + out_dir + "/";
 		logger->debug(cmd);
-		run_shell_command(cmd);
+		logger-> safe_run_shell_command(cmd);
 	}
 	cmd = "rm -rf " + probe_file + ".* " + aux_dir + "/qindex.* " + aux_dir + "/cindex.* " + tmp_dir;
 	logger->debug(cmd);
-	run_shell_command(cmd);
+	logger->safe_run_shell_command(cmd);
 }
 
 void SRAssemblerMaster::clean_tmp_files(int round){
@@ -619,13 +615,13 @@ void SRAssemblerMaster::clean_tmp_files(int round){
 	cmd += aux_dir + "/hit_contigs_" +"r" + int2str(round) + ".* ";
 	cmd += aux_dir + "/long_contig_candidate_" + "r" + int2str(round) + ".* ";
 	logger->debug(cmd);
-	run_shell_command(cmd);
+	logger->safe_run_shell_command(cmd);
 }
 
 void SRAssemblerMaster::save_query_list(){
 	string fn = aux_dir + "/query_list";
-	// Intermediate files are removed here.
-	run_shell_command("rm -rf " + fn);
+	// Auxiliary files are removed here.
+	logger->safe_run_shell_command("rm -rf " + fn);
 	if (query_list.size() > 0){
 		ofstream fs(fn.c_str());
 		for (unsigned i=0;i<query_list.size();i++)
@@ -650,8 +646,8 @@ void SRAssemblerMaster::load_saved_contigs(){
 	string fn = get_saved_contig_file_name();
 	this->contig_number = 1;
 	if (start_round == 1)
-		// Intermediate files are removed here.
-		run_shell_command("rm -rf " + fn);
+		// Auxiliary files are removed here.
+		logger->safe_run_shell_command("rm -rf " + fn);
 	else {
 		if (file_exists(fn)){
 			ifstream fs(fn.c_str());
@@ -769,7 +765,7 @@ int SRAssemblerMaster::do_assembly(int round) {
 	if (best_k > 0) {
 		process_long_contigs(round, best_k);
 	}
-	// Intermediate files are removed here.
+	// Auxiliary files are removed here.
 	if (!verbose) {
 		get_assembler()->clean_files(aux_dir);
 	}
@@ -953,22 +949,22 @@ void SRAssemblerMaster::process_long_contigs(int round, int k) {
 			logger->debug("Keep reads without hits against long_contigs in round " + int2str(round));
 			cmd = "vseqselect -seqnum " + vmatch_complement + " " + aux_dir + "/left_reads_index | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' > " + left_matched_reads;
 			logger->debug(cmd);
-			run_shell_command(cmd);
+			logger->fragile_run_shell_command(cmd);
 			cmd = "cp " + left_matched_reads + " " + lib.get_matched_left_reads_filename(round);
 			logger->debug(cmd);
-			run_shell_command(cmd);
+			logger->fragile_run_shell_command(cmd);
 			if (lib.get_paired_end()) {
 				cmd = "vseqselect -seqnum " + vmatch_complement + " " + aux_dir + "/right_reads_index | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' > " + right_matched_reads;
 				logger->debug(cmd);
-				run_shell_command(cmd);
+				logger->fragile_run_shell_command(cmd);
 				cmd = "cp " + right_matched_reads + " " + lib.get_matched_right_reads_filename(round);
 				logger->debug(cmd);
-				run_shell_command(cmd);
+				logger->fragile_run_shell_command(cmd);
 			}
 		}
-		// Intermediate files are removed here.
+		// Auxiliary files are removed here.
 		cmd = "rm -f " + aux_dir + "/left_reads_index* " + aux_dir + "/right_reads_index*";
-		run_shell_command(cmd);
+		logger->fragile_run_shell_command(cmd);
 	}
 }
 
@@ -1012,11 +1008,11 @@ void SRAssemblerMaster::remove_hit_contigs(vector<string> &contig_list, int roun
 	tmp_file_stream.close();
 	saved_contig_file.close();
 	string cmd = "cp " + tmp_file + " " + contig_file;
-	run_shell_command(cmd);
-	// Intermediate files are removed here.
+	logger->fragile_run_shell_command(cmd);
+	// Auxiliary files are removed here.
 	if (!verbose) {
 		cmd = "rm " + tmp_file;
-		run_shell_command(cmd);
+		logger->safe_run_shell_command(cmd);
 	}
 }
 
@@ -1063,31 +1059,23 @@ void SRAssemblerMaster::prepare_final_contigs_file(int round){
 
 void SRAssemblerMaster::create_folders(){
 	string cmd;
-	if (file_exists(aux_dir)){
-		cmd = "rm -rf " + aux_dir;
-		run_shell_command(cmd);
-	}
-	if (file_exists(results_dir)){
-		cmd = "rm -rf " + results_dir;
-		run_shell_command(cmd);
-	}
-	if (file_exists(intermediate_dir)){
-		cmd = "rm -rf " + intermediate_dir;
-		run_shell_command(cmd);
-	}
+	// Remove any pre-existing output directories or files.
+	cmd = "rm -rf " + aux_dir + "/* " + intermediate_dir + "/* " + log_file + " " + spliced_alignment_output_file + " " + gene_finding_output_file + " " + gene_finding_output_protein_file + " " + final_contigs_file + " " + summary_file + " " + hit_contigs_file;
+	logger->fragile_run_shell_command(cmd);
+	logger->debug(cmd);
+
 	for (unsigned i=0;i<this->libraries.size();i++){
 		string dir = data_dir + "/" + libraries[i].get_library_name();
 		cmd = "mkdir -p " + dir;
-		run_shell_command(cmd);
+		logger->fragile_run_shell_command(cmd);
 	}
 	// If pre-processing only, don't bother making useless directories.
 	if (preprocessing_only){
-		run_shell_command("mkdir " + results_dir);
 		return;
 	}
 
-	cmd = "mkdir " + results_dir + " " + intermediate_dir + " " + aux_dir;
-	run_shell_command(cmd);
+	cmd = "mkdir -p " + intermediate_dir + " " + aux_dir;
+	logger->fragile_run_shell_command(cmd);
 
 	// Set unique directory for temporary files, ideally stored in RAM (/dev/shm).
 	// If the run is disrupted, these files will remain until a computer reboot, potentially slowing down the computer.
@@ -1095,13 +1083,13 @@ void SRAssemblerMaster::create_folders(){
 	broadcast_code(ACTION_MEMDIR, 0, procID, 0);
 	this->tmp_dir = this->tmp_loc + "/SRAssemblertemp" + int2str(procID);
 	// If a disrupted run left a conflicting file behind, it should be removed first.
-	cmd = "\\rm -rf " + tmp_dir + "; mkdir " + tmp_dir;
+	cmd = "rm -rf " + tmp_dir + "; mkdir " + tmp_dir;
 	logger->debug(cmd);
-	run_shell_command(cmd);
+	logger->fragile_run_shell_command(cmd);
 	// Make sure that the existence of the tmp_dir is obvious in case of disrupted run.
 	cmd = "ln --symbolic --target-directory=" + out_dir + " " + tmp_dir;
 	logger->debug(cmd);
-	run_shell_command(cmd);
+	logger->safe_run_shell_command(cmd);
 }
 
 void SRAssemblerMaster::remove_no_hit_contigs(int round){
@@ -1110,8 +1098,8 @@ void SRAssemblerMaster::remove_no_hit_contigs(int round){
 	string alignment_type;
 	string contig_file = get_contig_file_name(round);
 	string contig_index = aux_dir + "/cindex";
-	run_shell_command("rm -f " + contig_index + "*");
-	run_shell_command("cp " + contig_file + " " + contig_file + ".beforeclean");
+	logger->fragile_run_shell_command("rm -f " + contig_index + "*");
+	logger->safe_run_shell_command("cp " + contig_file + " " + contig_file + ".beforeclean");
 	Aligner* aligner = get_aligner(round);
 	// Index contigs for easy extraction of hit contigs
 	aligner->create_index(contig_index, "dna", contig_file);
@@ -1130,10 +1118,10 @@ void SRAssemblerMaster::remove_no_hit_contigs(int round){
 	logger->debug("Removing contigs without hits against query sequences in round " + int2str(round));
 	cmd = "vseqselect -seqnum " + out_file + " " + contig_index + " | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' > " + contig_file;
 	logger->debug(cmd);
-	run_shell_command(cmd);
-	// Intermediate files are removed here.
+	logger->fragile_run_shell_command(cmd);
+	// Auxiliary files are removed here.
 	cmd = "rm -f " + out_file + " " + contig_index + "*";
-	run_shell_command(cmd);
+	logger->fragile_run_shell_command(cmd);
 	// Create a new index of the good contigs for remove_unmapped_reads to use. Happens here because remove_unmapped_reads might be parallel.
 	aligner->create_index(contig_index, "dna", contig_file);
 }
@@ -1173,6 +1161,79 @@ void SRAssemblerMaster::remove_unmapped_reads(int round){
 					send_code(source, ACTION_CLEAN, next_lib_idx, round, 0);
 				}
 			}
+		}
+	}
+}
+
+void SRAssemblerMaster::remove_taboo_reads() {
+	if (preprocessing_only || taboo_file == "") {
+		return;
+	}
+
+	int read_chunk = 0;
+	long long code_value;
+	mpi_code code;
+	int round = 0;
+	int source; // This integer is used in messages from MPI Slaves.
+
+	output_summary_header();
+
+	logger->info("Removing reads that match the taboo file ...");
+
+	int new_reads_count = 0;
+
+	// For each library, align the reads to the queries (the query file in round 1, previously found reads if the assembly round has not yet been reached, or the assembled contigs from the previous round).
+	for (unsigned lib_idx=0;lib_idx<this->libraries.size();lib_idx++){
+		int completed = 0;
+		Library lib = this->libraries[lib_idx];
+		if (mpiSize == 1){
+			for (read_chunk=1; read_chunk<=lib.get_num_chunks(); read_chunk++){
+				new_reads_count += do_alignment(round, lib_idx, read_chunk);
+			}
+		} else {
+			// If there are fewer split read files than processors
+			if (lib.get_num_chunks() < mpiSize){
+				for (read_chunk=1; read_chunk<=lib.get_num_chunks(); read_chunk++){
+					send_code(read_chunk, ACTION_ALIGNMENT, round, read_chunk, lib_idx);
+				}
+				while(completed < lib.get_num_chunks()){
+					mpi_receive(code_value, source);
+					code = get_mpi_code(code_value);
+					int found_new_reads = code.value2;
+					new_reads_count += found_new_reads;
+					completed++;
+				}
+			// If there are more split read files than processors
+			} else {
+				for (read_chunk=1;read_chunk<mpiSize;read_chunk++){
+					send_code(read_chunk, ACTION_ALIGNMENT, round, read_chunk, lib_idx);
+				}
+				while (completed < lib.get_num_chunks()){
+					mpi_receive(code_value, source);
+					code = get_mpi_code(code_value);
+					int found_new_reads = code.value2;
+					int file_idx = code.value1;
+					new_reads_count += found_new_reads;
+					completed++;
+					// As files are completed, new files are sent to slaves to be aligned.
+					int next_file_idx = file_idx + mpiSize - 1;
+					if (next_file_idx <= lib.get_num_chunks())
+						send_code(source, ACTION_ALIGNMENT, round, next_file_idx, lib_idx);
+				}
+			}
+		}
+	}
+	logger->info("Round 0: Removed " + int2str(new_reads_count) + " read (pairs) that matched the taboo file.");
+	// At the end of the round, save the found reads in case you want to restart the run.
+	if (mpiSize == 1){
+		save_found_reads(round);
+	} else {
+		// Have each slave save its own found reads.
+		int slave;
+		for (slave=1; slave < mpiSize; slave++) {
+			send_code(slave, ACTION_SAVE, round, 0, 0);
+			// Wait until all the slaves have saved their found reads.
+			mpi_receive(code_value, source);
 		}
 	}
 }

@@ -6,6 +6,7 @@
  */
 
 #include "Logger.h"
+#include "Utility.h"
 #include <stdio.h>
 #include <time.h>
 
@@ -81,4 +82,23 @@ void Logger::print_message(const string &msg, const string &level, bool to_std_o
 	log_file_stream.close();
 	if (to_std_out)
 		cout << buffer << level + " " + msg << endl;
+}
+
+void Logger::safe_run_shell_command(const string& cmd) {
+// If the shell command does not exit properly, SRAssembler logs this and continues.
+	int exitcode;
+	exitcode = run_shell_command(cmd);
+	if (exitcode != 0) {
+		error("Command <<" + cmd + ">> errored out with status:" + int2str(exitcode));
+	}
+}
+
+void Logger::fragile_run_shell_command(const string& cmd) {
+// If the shell command does not exit properly, SRAssembler logs this and throws an error.
+	int exitcode;
+	exitcode = run_shell_command(cmd);
+	if (exitcode != 0) {
+		error("Command <<" + cmd + ">> errored out with status:" + int2str(exitcode));
+		throw exitcode;
+	}
 }

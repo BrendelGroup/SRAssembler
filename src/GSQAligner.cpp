@@ -48,11 +48,11 @@ void GSQAligner::do_spliced_alignment(const string& genomic_file, const string& 
 		type_str = "Q";
 	string cmd = "GeneSeqer -L " + genomic_file + " -" + type_str + " " + query_file + " -species " + species_str + " " + param_list + " -o " + output_file + " >> /dev/null 2>> " + logger->get_log_file();
 	logger->debug(cmd);
-	run_shell_command(cmd);
+	logger->safe_run_shell_command(cmd);
 }
 
-string_map GSQAligner::get_aligned_contigs(const double& min_score, const double& min_coverage, const unsigned int& min_contig_lgth, const string& all_contig_file, const string& hit_contig_file, const string& alignment_file, const int round, tuple_map& best_hits){
 // This is for each round, to see if the ending criteria have been met.
+string_map GSQAligner::get_aligned_contigs(const double& min_score, const double& min_coverage, const unsigned int& min_contig_lgth, const string& all_contig_file, const string& hit_contig_file, const string& alignment_file, const int round, tuple_map& best_hits){
 	double best_coverage = std::get<1>(best_hits["coverage"]);
 	ifstream old_contig_fs(all_contig_file.c_str());
 	ifstream alignment_fs(alignment_file.c_str());
@@ -117,8 +117,8 @@ string_map GSQAligner::get_aligned_contigs(const double& min_score, const double
 	return aligned_query_list;
 }
 
-void GSQAligner::get_hit_contigs(const double& min_score, const double& min_coverage, const unsigned int& min_contig_lgth, const string& final_contigs_file, const string& hit_contig_file, const string& alignment_file, tuple_map& best_hits){
 // This is for the final round. The hit contigs are identified and put in the final hit_contigs.fasta file.
+void GSQAligner::get_hit_contigs(const double& min_score, const double& min_coverage, const unsigned int& min_contig_lgth, const string& final_contigs_file, const string& hit_contig_file, const string& alignment_file, tuple_map& best_hits){
 	double best_coverage = std::get<1>(best_hits["coverage"]);
 	double final_high_coverage = 0.0;
 	ifstream old_contig_fs(final_contigs_file.c_str());

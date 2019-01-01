@@ -1,0 +1,71 @@
+<HTML>
+<HEAD>
+<TITLE>SRAssembler Output</TITLE>
+</HEAD>
+<BODY>
+<A NAME=top><A NAME=file1>
+<H3>Libraries summary</H3><HR><PRE>
+
+1 library is tested
+
+<B>Library		Insert size	Paired	reads</B>
+------------------------------------------------------------------------------
+<table border="0" cellpadding="0" cellspacing="0" width="22"><tr><td bgcolor="#ffffff"><pre>
+1		200		1	input/reads1_200.fq,input/reads2_200.fq
+</td></tr></table>Paired: 1 : paired-end, 0: single</PRE><H3>Assembly summary</H3><HR></PRE><H3>Assembly summary</H3><HR><PRE>
+
+The final contigs file(<a href="all_contigs.fasta">all_contigs.fasta</a>) are generated from round 4 with k=0
+
+</PRE><H5>The best k and the number of matched reads:</H5></PRE>
+<PRE><B>Round	Best_k	Matched_reads</B>
+----------------------------------------------------
+<table border="0" cellpadding="0" cellspacing="0" width="22"><tr><td bgcolor="#ffffff"><pre>
+1	35	2024
+2	25	2976
+3	25	3364
+4	25	3668
+</td></tr></table></PRE>
+
+<H5>N50:</H5>
+<PRE><B>Round	k=15	k=25	k=35	k=45	</B>
+----------------------------------------------------
+<table border="0" cellpadding="0" cellspacing="0" width="22"><tr><td bgcolor="#ffffff"><pre>
+1	1839	1582	<B><font color="red">1846</font></B>	1582	
+2	2033	<B><font color="red">2029</font></B>	2029	1765	
+3	2033	<B><font color="red">2257</font></B>	2257	1964	
+4	2033	<B><font color="red">3732</font></B>	3732	3468	
+</td></tr></table></PRE>
+
+<H5>N90:</H5>
+<PRE><B>Round	k=15	k=25	k=35	k=45	</B>
+----------------------------------------------------
+<table border="0" cellpadding="0" cellspacing="0" width="22"><tr><td bgcolor="#ffffff"><pre>
+1	1019	1019	<B><font color="red">339</font></B>	1019	
+2	1389	<B><font color="red">1235</font></B>	1235	1235	
+3	1624	<B><font color="red">1470</font></B>	1470	1470	
+4	1860	<B><font color="red">3732</font></B>	3732	3468	
+</td></tr></table></PRE>
+
+<H5>Longest contig length:</H5>
+<PRE><B>Round	k=15	k=25	k=35	k=45	</B>
+----------------------------------------------------
+<table border="0" cellpadding="0" cellspacing="0" width="22"><tr><td bgcolor="#ffffff"><pre>
+1	1839	1582	<B><font color="red">1846</font></B>	1582	
+2	2033	<B><font color="red">2029</font></B>	2029	1765	
+3	2033	<B><font color="red">2257</font></B>	2257	1964	
+4	2033	<B><font color="red">3732</font></B>	3732	3468	
+</td></tr></table></PRE>
+
+<H5>Total contigs:</H5>
+<PRE><B>Round	k=15	k=25	k=35	k=45	</B>
+----------------------------------------------------
+<table border="0" cellpadding="0" cellspacing="0" width="22"><tr><td bgcolor="#ffffff"><pre>
+1	2	3	<B><font color="red">3</font></B>	3	
+2	2	<B><font color="red">2</font></B>	2	3	
+3	3	<B><font color="red">2</font></B>	2	3	
+4	2	<B><font color="red">1</font></B>	1	2	
+</td></tr></table>
+The red number refers to "Best k"</PRE></PRE><H3>Spliced alignment - GenomeThreader</H3><HR><PRE>
+
+No matches found with GenomeThreader
+
