@@ -80,8 +80,13 @@ void Logger::print_message(const string &msg, const string &level, bool to_std_o
 	log_file_stream.open(log_file.c_str(), ios::out | ios::app );
 	log_file_stream << buffer << level + " " + msg << endl;
 	log_file_stream.close();
-	if (to_std_out)
-		cout << buffer << level + " " + msg << endl;
+	if (to_std_out) {
+		if (level == "[ERROR]" || level == "[FATAL]") {
+			cerr << buffer << level + " " + msg << endl;
+		} else {
+			cout << buffer << level + " " + msg << endl;
+		}
+	}
 }
 
 void Logger::safe_run_shell_command(const string& cmd) {
@@ -89,7 +94,7 @@ void Logger::safe_run_shell_command(const string& cmd) {
 	int exitcode;
 	exitcode = run_shell_command(cmd);
 	if (exitcode != 0) {
-		error("Command <<" + cmd + ">> errored out with status:" + int2str(exitcode));
+		error("Command `" + cmd + "` errored out with status:" + int2str(exitcode));
 	}
 }
 
@@ -98,7 +103,7 @@ void Logger::fragile_run_shell_command(const string& cmd) {
 	int exitcode;
 	exitcode = run_shell_command(cmd);
 	if (exitcode != 0) {
-		error("Command <<" + cmd + ">> errored out with status:" + int2str(exitcode));
+		fatal("Command `" + cmd + "` errored out with status:" + int2str(exitcode));
 		throw exitcode;
 	}
 }

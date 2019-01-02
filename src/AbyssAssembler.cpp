@@ -33,7 +33,7 @@ void AbyssAssembler::do_assembly(int kmer, const vector<Library>& libraries, con
 		Library lib = libraries[i];
 		if (get_file_size(lib.get_matched_left_reads_filename()) == 0) continue;
 		if (lib.get_paired_end()) {
-			string lib_name = "pe" + int2str(lib.get_insert_size());
+			string lib_name = "pe" + lib.get_library_name();
 			lib_list += lib_name + " ";
 			paired_files += lib_name + "='" + lib.get_matched_left_reads_filename() + " " + lib.get_matched_right_reads_filename() + "' ";
 		} else
