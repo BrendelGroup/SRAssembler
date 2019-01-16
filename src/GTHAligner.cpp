@@ -54,7 +54,7 @@ string_map GTHAligner::get_aligned_contigs(const double& min_score, const double
 	ofstream new_contig_fs(hit_contig_file.c_str());
 	string line;
 	vector<string> contig_list;
-	char currentid[20];
+	char currentid[21];
 	unsigned int contig_length;
 	aligned_query_list.clear();
 	logger->debug("Finding the aligned contigs");
@@ -63,7 +63,7 @@ string_map GTHAligner::get_aligned_contigs(const double& min_score, const double
 	output_string += "--------------------------------------------------------------------------------------------------------------------\n";
 	while (getline(alignment_fs, line)) {
 		if (line.substr(0,16) == "Genomic Template"){
-			sscanf(line.substr(0, line.find_first_of("|")).c_str(),"Genomic Template: %*s %*s %*s %*s description=%*s length %d ",&contig_length);
+			sscanf(line.substr(0, line.find_first_of("|")).c_str(),"Genomic Template: %*s %*s %*s %*s description=%s length %d ",&currentid,&contig_length);
 			logger->debug("... checking contig:\t" + std::string(currentid) + "\tof length:\t" + int2str(contig_length));
 		}
 		if (line.substr(0,5) == "MATCH"){
