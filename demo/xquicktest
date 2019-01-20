@@ -32,7 +32,7 @@ echo "==========================================================================
 # Outputs to testout4 to maintain congruity with the complete test suite.
 out=testout4
 rm -rf $out
-mpirun -n 4 ${bindir}SRAssembler_MPI -q input/LOC_Os06g04560.pep -p SRAssembler.conf -l libraries_200bp_1kb.conf -r ./processed_reads -R 15000 -o $out -E 2
+mpirun -np 4 ${bindir}SRAssembler_MPI -q input/LOC_Os06g04560.pep -p SRAssembler.conf -l libraries_200bp_1kb.conf -r ./processed_reads -R 15000 -o $out -E 2
 echo "Checking results against standards..."
 diff -qs standards/${out}.html ${out}/summary.html
 

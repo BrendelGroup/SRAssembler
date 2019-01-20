@@ -21,7 +21,7 @@ echo "==========================================================================
 out=testout1
 rm -rf $out
 rm -rf processed_reads
-${bindir}SRAssembler -q input/LOC_Os06g04560.pep -p SRAssembler.conf -1 input/reads1_200.fq -2 input/reads2_200.fq -Z 200 -r ./processed_reads -R 15000 -o $out
+${bindir}SRAssembler -q input/LOC_Os06g04560.pep -p SRAssembler.conf -1 input/reads1_200.fq -2 input/reads2_200.fq -Z 200 -r ./processed_reads -R 5000 -o $out
 echo "Checking results against standards..."
 diff -qs standards/${out}.html ${out}/summary.html
 
@@ -40,7 +40,7 @@ echo " Test3: Use two libraries with a library definition file. Only the second 
 echo "============================================================================================================"
 out=testout3
 rm -rf $out
-${bindir}SRAssembler -q input/LOC_Os06g04560.pep -p SRAssembler.conf -l libraries_200bp_1kb.conf -r ./processed_reads -R 15000 -o $out
+${bindir}SRAssembler -q input/LOC_Os06g04560.pep -p SRAssembler.conf -l libraries_200bp_1kb.conf -r ./processed_reads -R 5000 -o $out
 echo "Checking results against standards..."
 diff -qs standards/${out}.html ${out}/summary.html
 
@@ -154,7 +154,7 @@ echo " Test13: Use a DNA taboo sequence to restrict certain reads from being col
 echo "============================================================================================================"
 out=testout13
 rm -rf $out
-${bindir}SRAssembler -q input/AT1G01950.cdna -t dna -p SRAssembler.conf -l libraries_200bp.conf -r ./processed_reads -R 15000 -j input/taboo.dna -J dna -o $out
+${bindir}SRAssembler -q input/AT1G01950.cdna -t dna -p SRAssembler.conf -l libraries_200bp.conf -r ./processed_reads -j input/taboo.dna -J dna -o $out
 echo "Checking results against standards..."
 diff -qs standards/${out}.html ${out}/summary.html
 
@@ -163,7 +163,7 @@ echo " Test14: Use a peptide taboo sequence to restrict certain reads from being
 echo "============================================================================================================"
 out=testout14
 rm -rf $out
-${bindir}SRAssembler -q input/LOC_Os06g04560.pep -p SRAssembler.conf -l libraries_200bp.conf -r ./processed_reads -R 15000 -j input/taboo.pep -J protein -o $out
+${bindir}SRAssembler -q input/LOC_Os06g04560.pep -p SRAssembler.conf -l libraries_200bp.conf -r ./processed_reads -j input/taboo.pep -J protein -o $out
 echo "Checking results against standards..."
 diff -qs standards/${out}.html ${out}/summary.html
 
@@ -173,7 +173,7 @@ echo "==========================================================================
 out=testout15
 rm -rf $out
 rm -rf processed_reads
-${bindir}SRAssembler -l libraries_200bp_1kb.conf -r ./processed_reads -R 15000 -o $out -P
+${bindir}SRAssembler -l libraries_200bp_1kb.conf -r ./processed_reads -R 5000 -o $out -P
 echo "Checking for preprocessed reads..."
 if [[ -e processed_reads/reads1_200library/reads2_200_chunk4.skp && -e processed_reads/1kb_lib/reads2_1000_chunk4.skp ]]; then
 	printf "Pre-processing successful.\n"

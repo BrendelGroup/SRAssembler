@@ -242,8 +242,8 @@ void SRAssemblerMaster::do_preprocessing(){
 				}
 				while (completed < lib->get_num_chunks()){
 					mpi_receive(code_value, source);
-					code = get_mpi_code(code_value);
 					completed++;
+					code = get_mpi_code(code_value);
 					if (chunk <= lib->get_num_chunks()){
 						send_code(source, ACTION_PRE_PROCESSING, lib_index, chunk, 0);
 						chunk++;
@@ -362,31 +362,39 @@ void SRAssemblerMaster::do_walking() {
 				// If there are fewer split read files than processors
 				if (lib.get_num_chunks() < mpiSize){
 					for (read_chunk=1; read_chunk<=lib.get_num_chunks(); read_chunk++){
+						logger->mpi("sending read_chunk to prc" + int2str(read_chunk) + " in round " + int2str(round) + " for lib_idx " + int2str(lib_idx));
 						send_code(read_chunk, ACTION_ALIGNMENT, round, read_chunk, lib_idx);
 					}
 					while(completed < lib.get_num_chunks()){
 						mpi_receive(code_value, source);
+						completed++;
+						logger->mpi("completed are " + int2str(completed) + " of " + int2str(lib.get_num_chunks()) + "; now receiving from source " + int2str(source) + " the code_value:\t" + to_string(code_value));
 						code = get_mpi_code(code_value);
 						int found_new_reads = code.value2;
+						logger->mpi("	action is " + int2str(code.action) + "; code.value1 is " + int2str(code.value1) + " code.value2 is " + int2str(code.value2) + " code.value3 is " + int2str(code.value3));
 						new_reads_count += found_new_reads;
-						completed++;
 					}
 				// If there are more split read files than processors
 				} else {
 					for (read_chunk=1;read_chunk<mpiSize;read_chunk++){
+						logger->mpi("sending to prc" + int2str(read_chunk) + " for alignments in round " + int2str(round) + " chunk " + int2str(read_chunk) + " lib_idx " + int2str(lib_idx));
 						send_code(read_chunk, ACTION_ALIGNMENT, round, read_chunk, lib_idx);
 					}
 					while (completed < lib.get_num_chunks()){
 						mpi_receive(code_value, source);
-						code = get_mpi_code(code_value);
-						int found_new_reads = code.value2;
-						int file_idx = code.value1;
-						new_reads_count += found_new_reads;
 						completed++;
+						logger->mpi("	completed are " + int2str(completed) + " of " + int2str(lib.get_num_chunks()) + "; received from source " + int2str(source) + " the code_value:\t" + to_string(code_value));
+						code = get_mpi_code(code_value);
+						logger->mpi("	action is " + int2str(code.action) + "; code.value1 is " + int2str(code.value1) + " code.value2 is " + int2str(code.value2) + " code.value3 is " + int2str(code.value3));
+						int file_idx = code.value1;
+						int found_new_reads = code.value2;
+						new_reads_count += found_new_reads;
 						// As files are completed, new files are sent to slaves to be aligned.
 						int next_file_idx = file_idx + mpiSize - 1;
-						if (next_file_idx <= lib.get_num_chunks())
+						if (next_file_idx <= lib.get_num_chunks()) {
+							logger->mpi("sending to prc" + int2str(source) + " for alignments in round " + int2str(round) + " chunk " + int2str(next_file_idx) + " lib_idx " + int2str(lib_idx));
 							send_code(source, ACTION_ALIGNMENT, round, next_file_idx, lib_idx);
+						}
 					}
 				}
 			}
@@ -398,9 +406,13 @@ void SRAssemblerMaster::do_walking() {
 			// Have each slave save its own found reads.
 			int slave;
 			for (slave=1; slave < mpiSize; slave++) {
+				logger->mpi("sending prc" + int2str(slave) + " the task to save reads in round " + int2str(round));
 				send_code(slave, ACTION_SAVE, round, 0, 0);
-				// Wait until all the slaves have saved their found reads.
+			}
+			// Wait until all the slaves have saved their found reads.
+			for (slave=1; slave < mpiSize; slave++) {
 				mpi_receive(code_value, source);
+				logger->mpi("	task accomplished by source " + int2str(source) + " with code_value:\t" + to_string(code_value));
 			}
 		}
 		if (new_reads_count == 0) {
@@ -686,20 +698,25 @@ int SRAssemblerMaster::do_assembly(int round) {
 			// TODO Multithreading this doesn't work because SOAPdenovo2 can't just use the nodes that aren't in use.
 			//int threads = (mpiSize - 1) / total_k;
 			for (i=1; i<=total_k; i++){
+				logger->mpi("sending prc" + int2str(i) + " the task to assemble reads in round " + int2str(round) + " for k=" +  int2str(start_k + (i-1)*step_k));
 				send_code(i, ACTION_ASSEMBLY, round, start_k + (i-1)*step_k, 1);
 			}
 			while(completed < total_k){
 				mpi_receive(code_value, source);
 				completed++;
+				logger->mpi("	" + int2str(completed) + " tasks completed; task accomplished by prc" + int2str(source) + " with code_value:\t" + to_string(code_value));
 			}
 		} else {
 			for (i=1;i<mpiSize;i++){
+				logger->mpi("sending prc" + int2str(i) + " the task to assemble reads in round " + int2str(round) + " for k=" +  int2str(start_k + (i-1)*step_k));
 				send_code(i, ACTION_ASSEMBLY, round, start_k + (i-1)*step_k, 1);
 			}
 			while(completed < total_k){
 				mpi_receive(code_value, source);
 				completed++;
+				logger->mpi("	" + int2str(completed) + " tasks completed; task accomplished by prc" + int2str(source) + " with code_value:\t" + to_string(code_value));
 				if (i <= total_k) {
+					logger->mpi("sending prc" + int2str(source) + " the task to assemble reads in round " + int2str(round) + " for k=" +  int2str(start_k + (i-1)*step_k));
 					send_code(source, ACTION_ASSEMBLY, round, start_k + (i-1)*step_k, 1);
 					i++;
 				}
@@ -1139,25 +1156,30 @@ void SRAssemblerMaster::remove_unmapped_reads(int round){
 	} else {
 		if (int(this->libraries.size()) < mpiSize){
 			for (unsigned int lib_idx = 0; lib_idx < this->libraries.size(); lib_idx++){
+				logger->mpi("sending cleaning job for library " + int2str(lib_idx+1) + " to prc" + int2str(lib_idx+1) + " for round " + int2str(round));
 				send_code(lib_idx + 1, ACTION_CLEAN, lib_idx, round, 0);
 			}
 			while (completed < this->libraries.size()){
 				mpi_receive(code_value, source);
 				completed++;
+				logger->mpi("	" + int2str(completed) + " tasks completed; task accomplished by prc" + int2str(source) + " with code_value:\t" + to_string(code_value));
 			}
 		// If there are more libraries than processors
 		} else {
 			for (int lib_idx = 0; lib_idx < mpiSize - 1; lib_idx++){ // Zero indexes libraries
+				logger->mpi("sending cleaning job for library " + int2str(lib_idx+1) + " to prc" + int2str(lib_idx+1) + " for round " + int2str(round));
 				send_code(lib_idx + 1, ACTION_CLEAN, lib_idx, round, 0);
 			}
 			while (completed < this->libraries.size()){
 				mpi_receive(code_value, source);
-				code = get_mpi_code(code_value);
-				int lib_idx = code.value1;
 				completed++;
+				code = get_mpi_code(code_value);
+				logger->mpi("	" + int2str(completed) + " tasks completed; task accomplished by prc" + int2str(source) + " with code_value:\t" + to_string(code_value));
+				int lib_idx = code.value1;
 				// As libraries are completed, new libraries are sent to slaves to be cleaned
 				int next_lib_idx = lib_idx + mpiSize - 1;
 				if (next_lib_idx < int(this->libraries.size())) {
+					logger->mpi("sending cleaning job for library " + int2str(next_lib_idx) + " to prc" + int2str(source) + " for round " + int2str(round));
 					send_code(source, ACTION_CLEAN, next_lib_idx, round, 0);
 				}
 			}
@@ -1194,12 +1216,16 @@ void SRAssemblerMaster::remove_taboo_reads() {
 			// If there are fewer split read files than processors
 			if (lib.get_num_chunks() < mpiSize){
 				for (read_chunk=1; read_chunk<=lib.get_num_chunks(); read_chunk++){
+					logger->mpi("tabooing: sending read_chunk to prc" + int2str(read_chunk) + " in round " + int2str(round) + " for lib_idx " + int2str(lib_idx));
 					send_code(read_chunk, ACTION_ALIGNMENT, round, read_chunk, lib_idx);
 				}
 				while(completed < lib.get_num_chunks()){
 					mpi_receive(code_value, source);
+					completed++;
+					logger->mpi("	completed are " + int2str(completed) + " of " + int2str(lib.get_num_chunks()) + "; now received from source " + int2str(source) + " the code_value:\t" + to_string(code_value));
 					code = get_mpi_code(code_value);
 					int found_new_reads = code.value2;
+					logger->mpi("tabooing:	action is " + int2str(code.action) + "; code.value1 is " + int2str(code.value1) + " code.value2 is " + int2str(code.value2) + " code.value3 is " + int2str(code.value3));
 					new_reads_count += found_new_reads;
 					completed++;
 				}
@@ -1207,18 +1233,23 @@ void SRAssemblerMaster::remove_taboo_reads() {
 			} else {
 				for (read_chunk=1;read_chunk<mpiSize;read_chunk++){
 					send_code(read_chunk, ACTION_ALIGNMENT, round, read_chunk, lib_idx);
+					logger->mpi("tabooing: sending read_chunk to prc" + int2str(read_chunk) + " in round " + int2str(round) + " for lib_idx " + int2str(lib_idx));
 				}
 				while (completed < lib.get_num_chunks()){
 					mpi_receive(code_value, source);
-					code = get_mpi_code(code_value);
-					int found_new_reads = code.value2;
-					int file_idx = code.value1;
-					new_reads_count += found_new_reads;
 					completed++;
+					logger->mpi("	completed are " + int2str(completed) + " of " + int2str(lib.get_num_chunks()) + "; now received from source " + int2str(source) + " the code_value:\t" + to_string(code_value));
+					code = get_mpi_code(code_value);
+					logger->mpi("	action is " + int2str(code.action) + "; code.value1 is " + int2str(code.value1) + " code.value2 is " + int2str(code.value2) + " code.value3 is " + int2str(code.value3));
+					int file_idx = code.value1;
+					int found_new_reads = code.value2;
+					new_reads_count += found_new_reads;
 					// As files are completed, new files are sent to slaves to be aligned.
 					int next_file_idx = file_idx + mpiSize - 1;
-					if (next_file_idx <= lib.get_num_chunks())
+					if (next_file_idx <= lib.get_num_chunks()) {
+						logger->mpi("tabooing: sending to prc" + int2str(source) + " in round " + int2str(round) + " chunk " + int2str(next_file_idx) + " lib_idx " + int2str(lib_idx));
 						send_code(source, ACTION_ALIGNMENT, round, next_file_idx, lib_idx);
+					}
 				}
 			}
 		}
@@ -1231,9 +1262,13 @@ void SRAssemblerMaster::remove_taboo_reads() {
 		// Have each slave save its own found reads.
 		int slave;
 		for (slave=1; slave < mpiSize; slave++) {
+			logger->mpi("sending prc" + int2str(slave) + " the task to save reads in round " + int2str(round));
 			send_code(slave, ACTION_SAVE, round, 0, 0);
-			// Wait until all the slaves have saved their found reads.
+		}
+		// Wait until all the slaves have saved their found reads.
+		for (slave=1; slave < mpiSize; slave++) {
 			mpi_receive(code_value, source);
+			logger->mpi("	task accomplished by source " + int2str(source) + " with code_value:\t" + to_string(code_value));
 		}
 	}
 }
