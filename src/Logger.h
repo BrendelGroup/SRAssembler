@@ -27,6 +27,7 @@ public:
 	void debug(const string& msg);
 	void info(const string& msg);
 	void running(const string& msg);
+	void mpi(const string& msg);
 	void warn(const string& msg);
 	void error(const string& msg);
 	void fatal(const string& msg);

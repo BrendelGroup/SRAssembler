@@ -58,7 +58,7 @@ string_map GSQAligner::get_aligned_contigs(const double& min_score, const double
 	ifstream alignment_fs(alignment_file.c_str());
 	ofstream new_contig_fs(hit_contig_file.c_str());
 	string line;
-	char currentid[20];
+	char currentid[21];
 	unsigned int contig_length;
 	vector<string> contig_list;
 	logger->running("Finding the aligned contigs");
@@ -67,7 +67,7 @@ string_map GSQAligner::get_aligned_contigs(const double& min_score, const double
 	output_string += "----------------------------------------------------------------------------------------------------------\n";
 	while (getline(alignment_fs, line)) {
 		if (line.substr(0,8) == "Sequence"){
-			sscanf(line.c_str(),"Sequence %*d: %80[^,], from %*d to %d,%*s",currentid,&contig_length);
+			sscanf(line.c_str(),"Sequence %*d: %20[^,], from %*d to %d,%*s",currentid,&contig_length);
 			logger->debug("... checking contig:\t" + std::string(currentid) + "\tof length:\t" + int2str(contig_length));
 		}
 		if (line.substr(0,5) == "MATCH"){
