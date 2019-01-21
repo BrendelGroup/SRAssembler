@@ -981,7 +981,7 @@ void SRAssembler::remove_unmapped_reads(unsigned int lib_idx, int round){
 		aligner->create_index(right_reads_index, "dna", right_matched_reads);
 	}
 
-	// Use the found reads as queries against the contigs to identify matchy reads.
+	// Use the found reads as queries against the contigs to identify matching reads.
 	string program_name = aligner->get_program_name();
 	program_name += "_reads_vs_contigs";
 	Params params = get_parameters(program_name);
@@ -991,7 +991,7 @@ void SRAssembler::remove_unmapped_reads(unsigned int lib_idx, int round){
 		aligner->do_alignment(contig_index, "reads", 0, 2, right_matched_reads, params, vmatch_outfile);
 	}
 
-	// Use vseqselect to collect matchy reads.
+	// Use vseqselect to collect matching reads.
 	logger->debug("Removing reads in library " + int2str(lib_idx + 1) + " without hits against contigs in round " + int2str(round));
 	cmd = "vseqselect -seqnum " + vmatch_outfile + " " + left_reads_index + " | awk '!/^>/ { printf \"%s\", $0; n = \"\\n\" } /^>/ { print n $0} END { printf n }' > " + left_matched_reads;
 	logger->debug(cmd);

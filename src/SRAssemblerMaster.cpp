@@ -917,7 +917,7 @@ void SRAssemblerMaster::process_long_contigs(int round, int k) {
 				aligner->create_index(aux_dir + "/right_reads_index", "dna", right_matched_reads);
 			}
 
-			// Use the found reads as queries against the long contigs to identify matchy reads
+			// Use the found reads as queries against the long contigs to identify matching reads
 			string program_name = aligner->get_program_name();
 			program_name += "_reads_vs_contigs";
 			Params params = get_parameters(program_name);
@@ -926,8 +926,6 @@ void SRAssemblerMaster::process_long_contigs(int round, int k) {
 				if (lib.get_paired_end()) {
 					aligner->do_alignment(long_contig_index, "reads", 0, 2, right_matched_reads, params, vmatch_outfile);
 				}
-
-			// Use vseqselect to AVOID matchy reads
 
 			// The .prj index file includes the total number of reads in the index
 			int readcount;
@@ -1227,7 +1225,6 @@ void SRAssemblerMaster::remove_taboo_reads() {
 					int found_new_reads = code.value2;
 					logger->mpi("tabooing:	action is " + int2str(code.action) + "; code.value1 is " + int2str(code.value1) + " code.value2 is " + int2str(code.value2) + " code.value3 is " + int2str(code.value3));
 					new_reads_count += found_new_reads;
-					completed++;
 				}
 			// If there are more split read files than processors
 			} else {
