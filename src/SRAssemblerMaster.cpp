@@ -412,7 +412,7 @@ void SRAssemblerMaster::do_walking() {
 			// Wait until all the slaves have saved their found reads.
 			for (slave=1; slave < mpiSize; slave++) {
 				mpi_receive(code_value, source);
-				logger->mpi("	task accomplished by source " + int2str(source) + " with code_value:\t" + to_string(code_value));
+				logger->mpi("	task accomplished by prc" + int2str(source) + " with code_value:\t" + to_string(code_value));
 			}
 		}
 		if (new_reads_count == 0) {
@@ -1265,7 +1265,7 @@ void SRAssemblerMaster::remove_taboo_reads() {
 		// Wait until all the slaves have saved their found reads.
 		for (slave=1; slave < mpiSize; slave++) {
 			mpi_receive(code_value, source);
-			logger->mpi("	task accomplished by source " + int2str(source) + " with code_value:\t" + to_string(code_value));
+			logger->mpi("	task accomplished by prc" + int2str(source) + " with code_value:\t" + to_string(code_value));
 		}
 	}
 }
