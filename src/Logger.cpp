@@ -40,12 +40,14 @@ void Logger::info(const string& msg)
 
 void Logger::running(const string& msg)
 {
-	print_message(msg, "  [RUN]", (log_level <= Logger::LEVEL_INFO));
+	print_message(msg, "[DOING]", (log_level <= Logger::LEVEL_INFO));
 }
 
 void Logger::mpi(const string& msg)
 {
-	print_message(msg, "  [MPI]", (log_level <= Logger::LEVEL_INFO));
+	if (this->log_level == 0) {
+		print_message(msg, "  [MPI]", (log_level <= Logger::LEVEL_DEBUG));
+	}
 }
 
 void Logger::warn(const string& msg)
