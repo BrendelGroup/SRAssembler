@@ -119,7 +119,7 @@ This can prevent slowdown or crashing in cases where an excessive number of read
 **-j** *taboo_file* : FASTA file containing DNA or protein sequences used to taboo reads and prevent them from being used for assembly.
 SRAssembler may struggle with reads from genomes with lots of transposons or other repetitive elements, or with assembling homologs to a query that contains a very common domain. With this option, SRAssembler will start by searching for reads that match the *taboo_file*, and exclude them from all assemblies.
 
-**-J** Taboo file type.
+**-J** *taboo_type* : Taboo file type.
 Accepts "protein" or "dna" (default: "protein").
 
 **-z** *masking_round* : The round in which to start masking low-complexity regions of intermediate contigs before searching for reads.
