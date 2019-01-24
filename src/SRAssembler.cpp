@@ -110,6 +110,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 	usage.append("-c: Minimum spliced alignment coverage score for hits [Default: " + double2str(MIN_COVERAGE) + "].\n");
 	usage.append("\n");
 	usage.append("-n: Maximum number of rounds for chromosome walking [Default: " + int2str(NUM_ROUNDS) + "].\n");
+	usage.append("-E: Additional rounds of recursion to perform once a hit contig is found [Default: " + int2str(EXTRA_ROUNDS) + "].\n");
 	usage.append("-a: The round in which to start read assembly [Default: " + int2str(ASSEMBLY_ROUND) + "].\n");
 	usage.append("-b: The frequency with which to periodically remove unrelated contigs and reads. For example, '-b 3' \n");
 	usage.append("    specifies that SRAssembler will purge after two rounds of not doing so. [Default: " + int2str(CLEAN_ROUND) + "].\n");

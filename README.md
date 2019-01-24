@@ -31,7 +31,7 @@ Required unless only pre-processing reads (-P).
 Accepts "protein" or "dna" (default: "protein").
 
 **-p** *parameter_file* : Configuration file for the programs used by SRAssembler.
-SRAssembler allows user to specify the parameters of the programs it controls. The parameter configuration file has sections for each program, marked by a header line in square brackets. In some cases, such as the aligner Vmatch, there are multiple headers for a program, distinguishing different parameters for different usages. The example [parameter file](demo/SRAssembler.conf) contains all of the program sections that SRAssembler recognizes, even though not all of them will be used in any one run of SRAssembler (e.g., GeneSeqer and GenomeThreader are mutually exclusive). The example file also contains comment lines marked with '#' that explain what each section is for. Copying and modifying this example file for your own runs is encouraged. A parameter file is required unless only pre-processing reads (-P).
+SRAssembler allows user to specify the parameters of the programs it controls. The parameter configuration file has sections for each program, marked by a header line in square brackets. In some cases, such as the aligner Vmatch, there are multiple headers for a program, distinguishing different parameters for different usages. The example [parameter file](demo/SRAssembler.conf) contains all of the program sections that SRAssembler recognizes, even though not all of them will be used in any one run of SRAssembler (e.g., GeneSeqer and GenomeThreader are mutually exclusive). The example file also contains comment lines marked with '#' that explain what each section is for. Copying and modifying this example file for your own runs is encouraged. A parameter file is required unless only pre-processing reads (-P flag).
 
 **-o** *output\_directory* : Output directory (default: "./SRAssembler_output").
 
@@ -85,13 +85,13 @@ Use "0" to not use a gene finder or "1" for SNAP, defaults to "0".
 #### Completion thresholds
 
 **-i** *query\_contig\_minimum* : Minimum length of contigs used for finding more reads during chromosome walking.
-Defaults to "200".
+Increasing this may make SRAssembler searches slower, but more stringent. Defaults to "200".
 
 **-m** *minimum\_contig\_length* : Minimum length of contig to accept as a potential hit for the query.
 Defaults to "200".
 
 **-M** *maximum\_contig\_length* : Maximum length of contig to assemble before discontinuing extension of that contig.
-Defaults to "10000".
+If an assembled contig is larger than the *maximum\_contig\_length*, it is trimmed at both ends to equal the *maximum\_contig\_length* and copied to the candidate-long-contig file. The candidate-long-contigs are aligned to the assembled contigs of the following round, and if they match (confirming a correct assembly) they are moved to the permanent long-contigs file and removed from the query file for the next round. The current set of matched reads are aligned to the long-contigs, and matching reads are removed (not used for assembly in future rounds). Defaults to "10000".
 
 **-e** *minimum\_score* : Minimum spliced alignment score to accept as a potential hit for the query.
 Defaults to "0.5".
@@ -105,7 +105,7 @@ Defaults to "0.8".
 Defaults to "10".
 
 **-E** *extra_rounds* : Number of additional rounds of recursion to perform once a hit contig is found.
-This option may be useful when automating many SRAssembler runs in which extending the contig beyond the bounds of the query (e.g., into the UTRs surrounding a CDS) is desirable, but the number of rounds necessary is unpredictable. Will not cause SRAssembler to exceed the number of rounds set by **-n**. Defaults to "0".
+This option may be useful when automating many SRAssembler runs in which extending the contig beyond the bounds of the query (e.g., into the UTRs surrounding a CDS) is desirable, but the number of rounds necessary is unpredictable. This does not always lead to longer hit contigs, and may in fact result in a worse assembly. This option will not cause SRAssembler to exceed the number of rounds set by **-n**. Defaults to "0".
 
 **-a** *assemble_round* : The round in which to start read assembly, defaults to "1".
 If read coverage depth is good, starting in round 1 is fine. In some cases, however, using the reads found in round 1 as queries to find additional reads before doing contig assembly can lead to better results.
@@ -116,24 +116,30 @@ SRAssembler will periodically remove assembled contigs that do not align to the 
 **-d** *contig_limit* : The minimum number of assembled contigs to automatically trigger removal of unrelated contigs and reads.
 This can prevent slowdown or crashing in cases where an excessive number of reads are found due to things like common domains or transposable elements. If set to "0", do not remove unrelated contigs and reads except as scheduled by **-b**. Defaults to "500".
 
+**-j** *taboo_file* : FASTA file containing DNA or protein sequences used to taboo reads and prevent them from being used for assembly.
+SRAssembler may struggle with reads from genomes with lots of transposons or other repetitive elements, or with assembling homologs to a query that contains a very common domain. With this option, SRAssembler will start by searching for reads that match the *taboo_file*, and exclude them from all assemblies.
+
+**-J** Taboo file type.
+Accepts "protein" or "dna" (default: "protein").
+
 **-z** *masking_round* : The round in which to start masking low-complexity regions of intermediate contigs before searching for reads.
-Reads with low-complexity regions that are assembled into contigs can wreak havoc on SRAssembler function. The number of irrelevant reads found in the next round due to shared low-complexity sequences can dwarf the number of relevant reads, and can slow down or crash the assembler. By default this option is set to "1", and SRAssembler uses NCBI's dustmasker to mask low-complexity regions in the intermediate contigs in every round. If you want to disable this feature, set this option to "0".
+Reads with low-complexity regions that are assembled into contigs can wreak havoc on SRAssembler function. The number of irrelevant reads found in the next round due to shared low-complexity sequences can dwarf the number of relevant reads, and can slow down or crash the assembler. By default this option is set to "1", and SRAssembler uses NCBI's [dustmasker](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/lxr/source/src/app/dustmasker/) to mask low-complexity regions in the intermediate contigs in every round. If you want to disable this feature, set this option to "0".
 
 **-x** *tip\_search\_round* : The round in which to start masking the center of query contigs.
-If you find SRAssembler to run slowly due to finding excessive numbers of new reads, it can be helpful to mask the center of the intermediate contigs, leaving only the contig 'tips' to match against new reads. This causes SRAssembler to prioritize finding reads that can extend the contigs, at the cost of possibly missing some reads that might contribute to a hit contig. When set to "0", no masking of the center of contigs will occur. Defaults to "2", a value that ensures that contigs derived from the inital round of searching using the query sequence to find reads (rather than intermediate contigs) are used fully before masking. When using center masking, experiment with this option, as it can have a significant effect on whether optimal hit contigs are found.
+If you find SRAssembler runs slowly due to finding excessive numbers of new reads, it can be helpful to mask the center of the intermediate contigs, leaving only the contig 'tips' to match against new reads. This causes SRAssembler to prioritize finding reads that can extend the contigs, at the cost of possibly missing some reads that might contribute to a hit contig. When set to "0", no masking of the center of contigs will occur. Defaults to "2", a value that ensures that contigs derived from the inital round of searching using the query sequence to find reads (rather than intermediate contigs) are used fully before masking. If using center masking, actively experiment with this option, as it can have a significant effect on whether optimal hit contigs are found.
 
 **-X** *tip\_search\_length* : Length of intermediate contigs to leave unmasked at both ends as queries to find new reads.
-When using this option, it should at minimum be as long as the match length requirements set in the paramaters file input with **-p**. When set to the default of "0", no masking of the center of contigs will occur.
+When using this option, it should at minimum be as long as the match length requirements set in the config file input with **-p**. When set to the default of "0", no masking of the center of contigs will occur.
 
 **-f** : Do not check for contigs that meet the completion thresholds.
-Continue chromosome walking for the number of rounds specified with **-n**. This is useful if you want to build contigs longer than just the coding region in order to capture promoter regions or nearby elements.
+Force SRAssembler to continue chromosome walking for the number of rounds specified with **-n**. This is useful if you want to build contigs longer than just the coding region in order to capture promoter regions or nearby elements.
 
 **-y** : Do not resume chromosome walking from existing SRAssembler results in the output directory specified by **-o**.
 By default, SRAssembler will continue the previous run if the **-n** option is larger than the final round in the output directory. This behavior is useful if you want to extend the hit contigs for only a few rounds or change your completion thresholds to be more selective. Using the **-y** option will cause SRAssembler to overwrite the results in the output directory and start from round 1.
 
 #### Help
 
-**-v** : Verbose output.
+**-v** : Verbose mode.
 Not only is output to stdout more verbose, but several files in the aux/ directory that are normally removed to keep things tidy are left behind. This mode is typically only used for debugging.
 
 **-h** : Print an SRAssembler usage synopsis and exit.
@@ -145,14 +151,14 @@ If no processed reads directory was specified with **-r**, the processed reads a
 If no temp directory was specified with **-t**, SRAssembler will use "/tmp".
 Assuming these defaults, SRAssembler will create the following directories and files:
 
-- **SRAssembler_output/results/summary.html** : A summary of the state of the run at each round, and the final results.
-- **SRAssembler\_output/results/all\_contigs.fasta** : All of the contigs longer than the *query\_contig\_minimum* (set with **-i**) that were assembled in the final round.
-- **SRAssembler\_output/results/hit\_contigs.fasta** : The contigs assembled in the final round that meet the completion thresholds (set with **-m**, **-M**, **-e**, and **-c**).
-- **SRAssembler\_output/results/output.aln** : The report on spliced alignment of the query to the contigs in *SRAssembler\_output/results/all\_contigs.fasta*.
-- **SRAssembler\_output/results/output.ano** : The *ab initio* gene prediction report, if a gene-finder was used.
-- **SRAssembler\_output/results/msg.log** : The detailed log file of the SRAssembler run. 
+- **SRAssembler_output/summary.html** : A summary of the state of the run at each round, and the final results.
+- **SRAssembler\_output/all\_contigs.fasta** : All of the contigs longer than the *query\_contig\_minimum* (set with **-i**) that were assembled in the final round.
+- **SRAssembler\_output/hit\_contigs.fasta** : The contigs assembled in the final round that meet the completion thresholds (set with **-m**, **-M**, **-e**, and **-c**).
+- **SRAssembler\_output/output.aln** : The report on spliced alignment of the query to the contigs in *SRAssembler\_output/all\_contigs.fasta*.
+- **SRAssembler\_output/output.ano** : The *ab initio* gene prediction report, if a gene-finder was used.
+- **SRAssembler\_output/msg.log** : The detailed log file of the SRAssembler run. 
 Contains, among other things, all of the command-line options and the contents of the parameter file used for this run.
-- **SRAssembler\_output/results/intermediates/** : This directory contains FASTA files of the assembled contigs from each round.
+- **SRAssembler\_output/intermediates/** : This directory contains FASTA files of the assembled contigs from each round.
 It also contains files that end ".masked", showing the effects, if any, of using the contig masking options, as well as files that end ".beforeclean" that correspond to the original assembled contigs in "cleaning" rounds (see option **-b**) in which unrelated contigs were purged.
 - **SRAssembler\_output/processed\_reads/** : This directory contains subdirectories, one for each library specified in the run.
 Within these subdirectories are FASTA files containing subsets of the reads from the library (number of reads per file set by **-R**) and the aligner indices of those read files. This directory will also contain symbolic links named "lib1", "lib2", etcetera, linking to each of the libraries specified for this run. Because of this, different read libraries can be used in different SRAssembler runs without the need to preprocess the reads multiple times.
