@@ -232,6 +232,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 				param_file = optarg;
 				break;
 			case 'P':
+			//TODO turn this into an optional argument for setting the vmatch prefixlength before preprocessing.
 				preprocessing_only = true;
 				break;
 			case 'q':
