@@ -64,10 +64,10 @@ From: fedora:27
     #### Prerequisites
     #### Install
     cd /opt
-    wget ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ncbi-blast-2.7.1+-x64-linux.tar.gz
-    tar -xzf ncbi-blast-2.7.1+-x64-linux.tar.gz
-    rm ncbi-blast-2.7.1+-x64-linux.tar.gz
-    ln -s ncbi-blast-2.7.1+ BLAST
+    wget ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.8.1/ncbi-blast-2.8.1+-x64-linux.tar.gz
+    tar -xzf ncbi-blast-2.8.1+-x64-linux.tar.gz
+    rm ncbi-blast-2.8.1+-x64-linux.tar.gz
+    ln -s ncbi-blast-2.8.1+ BLAST
 
     echo 'Installing GeneSeqer spliced aligner '
     #### Prerequisites
