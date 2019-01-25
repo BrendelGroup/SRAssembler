@@ -148,7 +148,7 @@ Not only is output to stdout more verbose, but several files in the aux/ directo
 
 If no output directory was specified with **-o**, SRAssembler will create a directory called "SRAssembler\_output" within the working directory. 
 If no processed reads directory was specified with **-r**, the processed reads are created in a directory called "processed\_reads" within the output directory.
-If no temp directory was specified with **-t**, SRAssembler will use "/tmp".
+If no temp directory was specified with **-T**, SRAssembler will use "/tmp".
 Assuming these defaults, SRAssembler will create the following directories and files:
 
 - **SRAssembler_output/summary.html** : A summary of the state of the run at each round, and the final results.
