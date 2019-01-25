@@ -5,10 +5,9 @@ From: fedora:27
     This container provides portable & reproducible components for SRAssembler:
     Selective Recursive local Assembler from the Brendel Group.
     Please see https://github.com/BrendelGroup/SRAssembler for complete documentation.
-    To run single-threaded, use `singularity run SRAssembler.img` with appropriate arguments.
-    To run multi-threaded, you must have openmpi installed.
-    Use `mpirun -np $processornumber singularity run --app mpi SRAssembler.img` with appropriate arguments.
-
+    To run single-threaded, use `singularity run SRAssembler.simg` with appropriate arguments.
+    To run multi-threaded, use `singularity exec SRAssembler.simg mpirun -np $NUMBER_OF_PROCESSORS SRAssembler_MPI` with appropriate arguments.
+    
 %post
     dnf -y update
     dnf -y install @development-tools
@@ -222,4 +221,4 @@ From: fedora:27
 
 %labels
     Maintainer vpbrendel
-    Version v1.0
+    Version v0.9.0
