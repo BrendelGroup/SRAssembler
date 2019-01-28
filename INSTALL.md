@@ -70,15 +70,10 @@ The following is an executable record of installation on an Ubuntu system that s
 
 #GTH
 	mkdir GTH
-	cd GTH
-	wget http://genomethreader.org/distributions/gth-1.6.6-Linux_x86_64-64bit.tar.gz
-	tar -xzf gth-1.6.6-Linux_x86_64-64bit.tar.gz
-	cd gth-1.6.6-Linux_x86_64-64bit
-	cd bin
-##note: To use gth, the user will have to get a licence file from http://genomethreader.org/cgi-bin/download.cgi
-##      and either put the file into their home directory or replace the following symbolic link:
-	ln -s ~/gth.lic ./
-	cd ../../..
+	pushd GTH
+	wget http://genomethreader.org/distributions/gth-1.7.1-Linux_x86_64-64bit.tar.gz
+	tar -xzf gth-1.7.1-Linux_x86_64-64bit.tar.gz
+	popd
 
 #SNAP
 	mkdir SNAP
