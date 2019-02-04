@@ -84,7 +84,7 @@ int VmatchAligner::parse_output(const string& output_file, unordered_set<string>
 }
 
 void VmatchAligner::create_index(const string& index_name, const string& db_type, const string& fasta_file) {
-	string cmd = "mkvtree -" + db_type + " -db " + fasta_file + " -pl -indexname " + index_name + " -allout >> " + logger->get_log_file();
+	string cmd = "mkvtree -" + db_type + " -db " + fasta_file + " -pl -indexname " + index_name + " -lcp -tis -suf -bck -sti1 -ois >> " + logger->get_log_file();
 	logger->debug(cmd);
 	logger->safe_run_shell_command(cmd);
 }
@@ -161,7 +161,7 @@ void VmatchAligner::align_long_contigs(const string& long_contig_candidate_file,
 	}
 	string indexname = aux_dir + "/contigs_index";
 	string vmatch_out_file = aux_dir + "/long_contigs_candidates.vmatch";
-	string cmd = "mkvtree -dna -db " + contig_file + " -pl -indexname " + indexname + " -allout >> " + logger->get_log_file();
+	string cmd = "mkvtree -dna -db " + contig_file + " -pl -indexname " + indexname + " -lcp -tis -suf -bck -sti1 -ois >> " + logger->get_log_file();
 	logger->debug(cmd);
 	logger->safe_run_shell_command(cmd);
 	cmd = "vmatch -q " + long_contig_candidate_file + " -d -p" + " -l " + int2str(max_contig_size) + " -showdesc 0 -nodist -noevalue -noscore -noidentity " + indexname + " | awk '{print $1,$2,$3,$4,$5,$6}' | uniq -f5 > " + vmatch_out_file;

@@ -190,7 +190,7 @@ void SRAssemblerMaster::do_preprocessing(){
 		if (file_exists(lib->get_split_file_name(1, LEFT_READ))){
 			lib->set_num_chunks(get_file_count(lib->get_split_read_prefix(lib->get_left_read()) + "*.fasta"));
 			// Test if split reads have been indexed by looking for the final index file that we expect to exist from the left reads.
-			if (file_exists(lib->get_read_chunk_index_name(lib->get_num_chunks(), LEFT_READ) + ".skp")){
+			if (file_exists(lib->get_read_chunk_index_name(lib->get_num_chunks(), LEFT_READ) + ".al1")){
 				logger->info("Using previously split files for read library " + int2str(lib_index+1));
 				broadcast_code(ACTION_TOTAL_CHUNKS, lib_index, lib->get_num_chunks(), 0);
 				continue;

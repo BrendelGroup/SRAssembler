@@ -175,7 +175,7 @@ rm -rf $out
 rm -rf processed_reads
 ${bindir}SRAssembler -l libraries_200bp_1kb.conf -r ./processed_reads -R 5000 -o $out -P
 echo "Checking for preprocessed reads..."
-if [[ -e processed_reads/reads1_200library/reads2_200_chunk4.skp && -e processed_reads/1kb_lib/reads2_1000_chunk4.skp ]]; then
+if [[ -e processed_reads/reads1_200library/reads2_200_chunk4.al1 && -e processed_reads/1kb_lib/reads2_1000_chunk4.al1 ]]; then
 	printf "Pre-processing successful.\n"
 fi
 
