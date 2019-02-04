@@ -186,20 +186,17 @@ void SRAssemblerMaster::do_preprocessing(){
 	for (unsigned lib_index=0;lib_index<this->libraries.size();lib_index++) {
 		Library* lib = &this->libraries[lib_index];
 		lib->set_num_chunks(1);
-		// Test if split files have been generated.
-		if (file_exists(lib->get_split_file_name(1, LEFT_READ))){
-			lib->set_num_chunks(get_file_count(lib->get_split_read_prefix(lib->get_left_read()) + "*.fasta"));
-			// Test if split reads have been indexed by looking for the final index file that we expect to exist from the left reads.
-			if (file_exists(lib->get_read_chunk_index_name(lib->get_num_chunks(), LEFT_READ) + ".al1")){
-				logger->info("Using previously split files for read library " + int2str(lib_index+1));
-				broadcast_code(ACTION_TOTAL_CHUNKS, lib_index, lib->get_num_chunks(), 0);
-				continue;
-			}
+		// Test if split files have been generated and indexed, and that the correct number of index files are present.
+		if (file_exists(lib->get_read_chunk_index_name(1, LEFT_READ) + ".al1") && ((get_file_count(lib->get_split_read_prefix(lib->get_left_read()) + "*") / 13.0) == double(get_file_count(lib->get_split_read_prefix(lib->get_left_read()) + "*.al1")))) {
+		lib->set_num_chunks(get_file_count(lib->get_split_read_prefix(lib->get_left_read()) + "*.fasta"));
+			logger->info("Using previously split files for read library " + int2str(lib_index+1));
+			broadcast_code(ACTION_TOTAL_CHUNKS, lib_index, lib->get_num_chunks(), 0);
+			continue;
 		}
 		logger->running("Splitting read library " + int2str(lib_index+1) + " ...");
 		// Auxiliary files are removed here.
 		// Remove any pre-existing files in case of an incomplete earlier pre-processing.
-		cmd = "rm -f " + data_dir + "/lib" + int2str(lib_index+1) + "/" + get_file_base_name(lib->get_left_read()) + "* " + data_dir + "/lib" + int2str(lib_index+1) + "/" + get_file_base_name(lib->get_right_read()) + "*";
+		cmd = "rm -f " + data_dir + "/" + lib->get_library_name() + "/" + get_file_base_name(lib->get_left_read()) + "* " + data_dir + "/" + lib->get_library_name() + "/" + get_file_base_name(lib->get_right_read()) + "*";
 		logger->fragile_run_shell_command(cmd);
 		// 'source' variable is for identifying where an MPI message came from.
 		int source;
