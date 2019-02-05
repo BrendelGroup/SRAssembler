@@ -32,6 +32,10 @@ __SRAssembler__ is a workflow that invokes easily available third-party software
 
 All installed programs must be accessible in your binary search path ($PATH, typically set in _~/.bashrc_ or _~/.profile_).
 To run the parallel version of __SRAssembler__, you will need to have an MPI version such as [Open MPI](http://www.open-mpi.org/) installed.
+You may find you need to set the LD_LIBRARY_PATH for proper Open MPI function:
+```bash
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64/openmpi/lib
+```
 
 The following is an executable record of installation on an Ubuntu system that should serve as a template for installation on any flavor of Linux.
 
@@ -139,4 +143,4 @@ make mpi with-boost=boost_path
 ```
 
 ## Finally
-Go to the _demo_ directory and study and execute the _xtest_ script.
+Go to the _demo_ directory and examine and execute the _xtest_ script.
