@@ -73,8 +73,7 @@ int SRAssembler::init(int argc, char * argv[], int rank, int mpiSize) {
 	bool default_e = true;
 	bool default_i = true;
 	preprocessed_exist = false;
-	usage = "Usage:\n";
-	usage.append("\n");
+	usage = "SRAssembler v" + VERSION + " usage:\n";
 	usage.append("    SRAssembler [options] -q query_file -p parameter_file\n");
 	usage.append("                [-l library_file OR -1 reads_file1 -2 reads_file2]\n");
 	usage.append("\n");
