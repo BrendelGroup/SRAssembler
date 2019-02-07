@@ -47,18 +47,7 @@ From: fedora:27
     tar -xzf vmatch-2.3.0-Linux_x86_64-64bit.tar.gz
     rm vmatch-2.3.0-Linux_x86_64-64bit.tar.gz
     ln -s vmatch-2.3.0-Linux_x86_64-64bit VMATCH
-    chown -R root:users VMATCH
-    chmod a-s VMATCH
-    chmod a+x VMATCH
-    chmod a+r VMATCH
-    cd VMATCH
-    chmod a+r chain2dim cleanpp.sh matchcluster mkdna6idx mkvtree repfind.pl upgradeprj.pl vendian vmatch vmatchselect Vmatchtrans.pl vmigrate.sh vseqinfo vseqselect vstree2tex vsubseqselect
-    chmod a+x chain2dim cleanpp.sh matchcluster mkdna6idx mkvtree repfind.pl upgradeprj.pl vendian vmatch vmatchselect Vmatchtrans.pl vmigrate.sh vseqinfo vseqselect vstree2tex vsubseqselect
-    chmod a+r *pdf README.distrib SELECT TRANS
-    chmod a+x SELECT TRANS
-    chmod a+r SELECT/*
-    chmod a+r TRANS/*
-
+    
     echo 'Installing BLAST+ from NCBI '
     #### Prerequisites
     #### Install
@@ -221,4 +210,4 @@ From: fedora:27
 
 %labels
     Maintainer vpbrendel
-    Version v0.9.0
+    Version v0.9.1

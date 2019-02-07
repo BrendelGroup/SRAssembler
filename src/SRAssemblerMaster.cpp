@@ -27,8 +27,8 @@ int SRAssemblerMaster::init(int argc, char * argv[], int rank, int mpiSize) {
 		create_folders();
 	// Make sure the query is indexed for cleaning rounds.
 	SRAssembler::create_index(1);
-	// Start the msg.log with the command used to run SRAsssembler.
-	command = "Command: ";
+	// Start the msg.log with the SRAssembler version and the command used to run SRAsssembler.
+	command = "SRAssembler v" + VERSION + " command: ";
 	for (int i=0; i<argc;i++){
 		command.append(argv[i]).append(" ");
 	}

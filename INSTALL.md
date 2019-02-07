@@ -2,21 +2,19 @@
 
 ## Obtaining SRAssembler
 
-Presumably you are reading this file on our github site and thus you are
-likely to know that the following commands on your local machine should get
-you going:
+Presumably you are reading this file on our github site and thus you are likely to know that the following commands on your local machine should get you going:
 
 ```bash
 git clone https://github.com/BrendelGroup/SRAssembler
 cd SRAssembler/
 ```
 
-That said, an implicit assumption is that your local machine runs some version
-of Linux.
+That said, an implicit assumption is that your local machine runs some version of Linux.
+
+If you would like to avoid the hassle of installing and configuring a bunch of dependencies, we highly recommend using the containerization software [Singularity](https://www.sylabs.io/singularity/) and running `singularity pull shub://BrendelGroup/SRAssembler` to download a convenient SRAssembler container.
 
 ## Prerequisite programs
-__SRAssembler__ is a workflow that invokes easily available third-party software,
-which must be pre-installed on your system.
+__SRAssembler__ is a workflow that invokes easily available third-party software, which must be pre-installed on your system.
 
 - string matching and read mapping:
   [Vmatch](http://www.vmatch.de)
@@ -32,89 +30,78 @@ which must be pre-installed on your system.
 - (optional) a gene finder:
   [SNAP](http://korflab.ucdavis.edu/software.html)
 
-To run the parallel version of __SRAssembler__, you will to have an MPI version such as [Open MPI](http://www.open-mpi.org/) installed.
-All installed programs should of course be accessible in your binary search path (typically set in _~/.bashrc_ or _~/.profile_).
-For Open MPI you may need to set the _LD_PRELOAD_ variable.
-For example, in bash:
+All installed programs must be accessible in your binary search path ($PATH, typically set in _~/.bashrc_ or _~/.profile_).
+To run the parallel version of __SRAssembler__, you will need to have an MPI version such as [Open MPI](http://www.open-mpi.org/) installed.
+You may find you need to set the LD_LIBRARY_PATH for proper Open MPI function:
 ```bash
-     export LD_PRELOAD=/usr/lib64/openmpi/lib/libmpi_cxx.so
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64/openmpi/lib
 ```
 
 The following is an executable record of installation on an Ubuntu system that should serve as a template for installation on any flavor of Linux.
 
 ```bash
+# Change this if you want to install dependencies in a different location.
+source_location="/usr/local/src"
+# Change this if you want the executable binaries in a different location.
+binary_location="/usr/local/bin"
+pushd ${source_location}
+	
 #SYSTEM
-	cd /usr/local/src
-#... change the above if you want to install in a different location
-#
 	apt-get install openmpi-bin openmpi-doc libopenmpi-dev
 	apt-get install libboost-all-dev
 
 #ABYSS
 	apt-get install abyss
+	
+#DUSTMASKER
+	wget ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.8.1/ncbi-blast-2.8.1+-x64-linux.tar.gz
+	tar -xzf ncbi-blast-2.8.1+-x64-linux.tar.gz
+	rm ncbi-blast-2.8.1+-x64-linux.tar.gz
+	ln -i -t "${binary_location}" ncbi-blast-2.8.1+/bin/*
 
 #GENESEQER
-	mkdir GENESEQER
-	cd GENESEQER
 	git clone https://github.com/brendelgroup/GeneSeqer
-	cd GeneSeqer/
-	cd src
-	make linux
-	make clean
-	cp makefile.lnxMPI makefile.lnxMPIorig
-	sed -e "s/^#MPICC/MPICC/" makefile.lnxMPI | sed -e "0,/^MPICC/s/^MPICC/#MPICC/" > makefile.lnxMPIu
-	make -f makefile.lnxMPIu
-	make clean
-	make install
-	cd ../../..
+	pushd GeneSeqer/src
+		make linux
+	popd
+	ln -i GeneSeqer/bin/GeneSeqer "${binary_location}"
 
-#GTH
-	mkdir GTH
-	pushd GTH
+#GENOMETHREADER
 	wget http://genomethreader.org/distributions/gth-1.7.1-Linux_x86_64-64bit.tar.gz
 	tar -xzf gth-1.7.1-Linux_x86_64-64bit.tar.gz
-	popd
+	rm gth-1.7.1-Linux_x86_64-64bit.tar.gz
+	ln -i gth-1.7.1-Linux_x86_64-64bit/bin/gth "${binary_location}"
+	# GenomeThreader requires its data to be in the same directory as the binary.
+	cp -ir gth-1.7.1-Linux_x86_64-64bit/bin/gthdata "${binary_location}"
+	cp -ir gth-1.7.1-Linux_x86_64-64bit/bin/bssm "${binary_location}"
 
 #SNAP
-	mkdir SNAP
-	cd SNAP
-	wget http://korflab.ucdavis.edu/Software/snap-2013-11-29.tar.gz
-	tar -xzf snap-2013-11-29.tar.gz
-	cd ..
+	git clone https://github.com/KorfLab/SNAP.git
+	pushd SNAP
+		make
+	popd
+	ln -i SNAP/snap "${binary_location}"
+	# SNAP requires the ZOE environment variable (see its manual).
+	# If you intend to use SNAP, adjust the following line
+	# and add it to your .bashrc, .bash_profile, or .profile file.
+	export ZOE="${source_location}/SNAP"
 
 #SOAPdenovo2
 	git clone https://github.com/aquaskyline/SOAPdenovo2
-	cd SOAPdenovo2/
-	make
-	cp SOAP* /usr/local/bin
-	make clean
-	cd ..
+	pushd SOAPdenovo2/
+		make
+	popd
+	ln -i -t "${binary_location}" SOAPdenovo2/SOAPdenovo*
 
 #VMATCH
-	mkdir VMATCH
-	cd VMATCH
 	wget http://www.vmatch.de/distributions/vmatch-2.3.0-Linux_x86_64-64bit.tar.gz
 	tar -xzf vmatch-2.3.0-Linux_x86_64-64bit.tar.gz
-	ln -s vmatch-2.3.0-Linux_x86_64-64bit vmatch.distribution
-
-	chown -R root:users vmatch.distribution
-	chmod a-s vmatch.distribution
-	chmod a+x vmatch.distribution
-	chmod a+r vmatch.distribution
-
-	cd vmatch.distribution
-	chmod a+r chain2dim cleanpp.sh matchcluster mkdna6idx mkvtree repfind.pl upgradeprj.pl vendian vmatch vmatchselect Vmatchtrans.pl vmigrate.sh vseqinfo vseqselect vstree2tex vsubseqselect
-	chmod a+x chain2dim cleanpp.sh matchcluster mkdna6idx mkvtree repfind.pl upgradeprj.pl vendian vmatch vmatchselect Vmatchtrans.pl vmigrate.sh vseqinfo vseqselect vstree2tex vsubseqselect
-	chmod a+r *pdf README.distrib SELECT TRANS
-	chmod a+x SELECT TRANS
-	cd SELECT
-	chmod a+r *
-	cd ../TRANS
-	chmod a+r *
-	cd ..
-
-	\cp chain2dim cleanpp.sh matchcluster mkdna6idx mkvtree repfind.pl vendian vmatch vmatchselect vmigrate.sh vseqinfo vseqselect vstree2tex vsubseqselect  /usr/local/bin/
-	cd ../..
+	rm vmatch-2.3.0-Linux_x86_64-64bit.tar.gz
+	pushd vmatch-2.3.0-Linux_x86_64-64bit
+		ln -i -t "${binary_location}" chain2dim cleanpp.sh matchcluster mkdna6idx mkvtree repfind.pl vendian vmatch vmatchselect vmigrate.sh vseqinfo vseqselect vstree2tex vsubseqselect
+	popd
+	
+popd
 ```
 
 ## Serial version installation
@@ -130,7 +117,7 @@ make install
 ```bash
 cd src
 make mpi
-# ... will put binary SRAssemblerMPI into the ../bin folder
+# ... will put binary SRAssembler_MPI into the ../bin folder
 make install
 # ... will put the contents of ../bin into /usr/local/bin [default]
 ```
@@ -156,4 +143,4 @@ make mpi with-boost=boost_path
 ```
 
 ## Finally
-go to the _demo_ directory and study and execute the _xtest_ script.
+Go to the _demo_ directory and examine and execute the _xtest_ script.
