@@ -179,6 +179,10 @@ void SRAssemblerMaster::show_usage(){
 	cout << usage <<endl;
 }
 
+void SRAssemblerMaster::show_extended_usage(){
+	cout << extended_usage <<endl;
+}
+
 void SRAssemblerMaster::do_preprocessing(){
 	logger->running("Now pre-processing the reads files ...");
 	string cmd;

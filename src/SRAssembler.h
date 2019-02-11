@@ -44,6 +44,7 @@ public:
 	virtual void remove_taboo_reads()=0;
 	virtual void do_walking()=0;
 	virtual void show_usage()=0;
+	virtual void show_extended_usage()=0;
 	virtual void print_message(const std::string&)=0;
 	static SRAssembler* getInstance(int pid);
 	Logger* get_logger();
@@ -135,6 +136,7 @@ protected:
 	std::string gene_finding_output_file;
 	std::string gene_finding_output_protein_file;
 	std::string usage;
+	std::string extended_usage;
 	std::string final_scaf_file;
 	std::string final_contigs_file;
 	std::string hit_contigs_file;

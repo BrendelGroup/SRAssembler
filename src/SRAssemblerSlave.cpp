@@ -19,7 +19,9 @@ void SRAssemblerSlave::print_message(const string& msg){
 }
 
 void SRAssemblerSlave::show_usage(){
+}
 
+void SRAssemblerSlave::show_extended_usage(){
 }
 
 void SRAssemblerSlave::do_preprocessing(){
