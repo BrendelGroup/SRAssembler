@@ -16,6 +16,7 @@ public:
 	SRAssemblerMaster();
 	int init(int argc, char * argv[], int rank, int mpiSize);
 	void show_usage();
+	void show_extended_usage();
 	void print_message(const string&);
 	int do_assembly(int round);
 	void do_preprocessing();

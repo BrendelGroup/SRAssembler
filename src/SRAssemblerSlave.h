@@ -15,6 +15,7 @@ public:
 	SRAssemblerSlave();
 	int init(int argc, char * argv[], int rank, int mpiSize);
 	void show_usage();
+	void show_extended_usage();
 	void print_message(const string&);
 	void do_preprocessing();
 	void remove_taboo_reads();
