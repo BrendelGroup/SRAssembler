@@ -15,7 +15,7 @@ From: fedora:27
     dnf -y install bc git tcsh tzdata unzip zip wget which bzip2
     dnf -y install nano
 
-    echo 'Installing Abyss assembler '
+    echo 'Installing Abyss assembler version 2.1.5'
     #### Prerequisites
     dnf -y install boost-devel
     dnf -y install autoconf automake
@@ -25,21 +25,21 @@ From: fedora:27
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64/openmpi/lib
     #### Install
     cd /opt
-    git clone https://github.com/bcgsc/abyss.git
+    git clone --branch 2.1.5 --depth 1 https://github.com/bcgsc/abyss.git
     cd abyss
     ./autogen.sh
     ./configure
     make
     
-    echo 'Installing SOAPdenovo2 assembler '
+    echo 'Installing SOAPdenovo2 assembler version r241'
     #### Prerequisites
     #### Install
     cd /opt
-    git clone https://github.com/aquaskyline/SOAPdenovo2.git
+    git clone --branch r241 --depth 1 https://github.com/aquaskyline/SOAPdenovo2.git
     cd SOAPdenovo2
     make
     
-    echo 'Installing VMATCH aligner from http://vmatch.de '
+    echo 'Installing VMATCH aligner version 2.3.0 from http://vmatch.de '
     #### Prerequisites
     #### Install
     cd /opt
@@ -48,7 +48,7 @@ From: fedora:27
     rm vmatch-2.3.0-Linux_x86_64-64bit.tar.gz
     ln -s vmatch-2.3.0-Linux_x86_64-64bit VMATCH
     
-    echo 'Installing BLAST+ from NCBI '
+    echo 'Installing BLAST+ version 2.8.1 from NCBI '
     #### Prerequisites
     #### Install
     cd /opt
@@ -65,7 +65,7 @@ From: fedora:27
     cd GeneSeqer/src
     make linux
     
-    echo 'Installing GenomeThreader spliced aligner '
+    echo 'Installing GenomeThreader version 1.7.0 spliced aligner '
     #### Prerequisites
     #### Install
     cd /opt
@@ -75,6 +75,8 @@ From: fedora:27
     ln -s gth-1.7.0-Linux_x86_64-64bit GENOMETHREADER
 
     echo 'Installing SNAP gene finder '
+    # This git repository doesn't have tags, but hasn't been touched in 2 years.
+    # Hopefully there won't be any version-breaking changes made.
     #### Prerequisites
     #### Install
     cd /opt
@@ -104,7 +106,7 @@ From: fedora:27
     cd ..
     rm master.zip
 
-    echo 'Installing SAMTOOLS of http://www.htslib.org/ '
+    echo 'Installing SAMTOOLS version 1.9 '
     #### Prerequisites
     dnf -y install libncurses.so.5 ncurses ncurses-devel bzip2-devel xz-devel
     #### Install
@@ -116,14 +118,14 @@ From: fedora:27
     ./configure
     make && make install
 
-    echo 'Installing BOWTIE2 of http://bowtie-bio.sourceforge.net/bowtie2 '
-    ######
+    echo 'Installing BOWTIE2 version 2.3.4.3 '
+    #####
     cd /opt
     wget https://sourceforge.net/projects/bowtie-bio/files/bowtie2/2.3.4.3/bowtie2-2.3.4.3-linux-x86_64.zip
     unzip bowtie2-2.3.4.3-linux-x86_64.zip
     rm bowtie2-2.3.4.3-linux-x86_64.zip
 
-    echo 'Installing Integrated Genome Viewer '
+    echo 'Installing Integrated Genome Viewer version 2.4.14'
     #### Dependencies
     dnf -y install java-1.8.0-openjdk xorg-x11-server-Xvfb
     ####
@@ -135,7 +137,7 @@ From: fedora:27
     printf '#!/bin/sh\n(Xvfb :10 &) && DISPLAY=:10 java -Xmx4000m -Dapple.laf.useScreenMenuBar=true -Djava.net.preferIPv4Stack=true -jar /opt/IGV_2.4.14/lib/igv.jar "$@" && pkill Xvfb\n' > /usr/local/bin/igv
     chmod 777 /usr/local/bin/igv
 
-    echo 'Installing MUSCLE aligner'
+    echo 'Installing MUSCLE aligner version 3.8.31 '
     #### Dependencies
     ####
     cd /opt
@@ -147,37 +149,40 @@ From: fedora:27
     echo 'Installing InterMine Python package '
     easy_install intermine
         
-    echo 'Installing R'
+    echo 'Installing R '
     #### Dependencies
     dnf -y install udunits2-devel libcurl libcurl-devel geos-devel
-    #### 
+    ####
+    cd /opt
     dnf -y install R-base R-devel
     R CMD javareconf
 
     echo 'Installing R packages'
+    echo 'repo <- "http://ftp.ussg.iu.edu/CRAN"' > R2install
     #### Dependencies
     dnf -y install cairo-devel libXt-devel
     ####
-    echo 'install.packages("R.devices", repos="http://ftp.ussg.iu.edu/CRAN", dependencies=TRUE)' > R2install
+    echo 'install.packages("R.devices", repos = repo, quick = TRUE)' >> R2install
     #### Dependencies
-    dnf -y install openssl-devel mysql-devel postgresql-devel
+    dnf -y install openssl-devel mysql-devel postgresql-devel 
     ####
-    echo 'install.packages("dplyr", repos="http://ftp.ussg.iu.edu/CRAN", dependencies=TRUE)' >> R2install
-    echo 'install.packages("ggplot2", repos="http://ftp.ussg.iu.edu/CRAN", dependencies=TRUE)' >> R2install
+    echo 'install.packages("dplyr", repos = repo, quick = TRUE)' >> R2install
+    echo 'install.packages("ggplot2", repos = repo, quick = TRUE)' >> R2install
     #### Dependencies
     dnf -y install libjpeg-turbo-devel libxml2-devel ImageMagick-c++-devel
     ####
-    echo 'install.packages("knitr", repos="http://ftp.ussg.iu.edu/CRAN", dependencies=TRUE)' >> R2install
-    echo 'install.packages("magrittr", repos="http://ftp.ussg.iu.edu/CRAN", dependencies=TRUE)' >> R2install
-    echo 'install.packages("readr", repos="http://ftp.ussg.iu.edu/CRAN", dependencies=TRUE)' >> R2install
-    echo 'source("https://bioconductor.org/biocLite.R")' >> R2install
-    echo 'biocLite(c("GenomicRanges"),ask=FALSE)' >> R2install
+    echo 'install.packages("knitr", repos = repo, quick = TRUE)' >> R2install
+    echo 'install.packages("readr", repos = repo, quick = TRUE)' >> R2install
+    echo 'install.packages("BiocManager", version = "1.30.4", repos = repo, quick=TRUE)' >> R2install
+    echo 'BiocManager::install(c("GenomicRanges"), version = c("3.8"))' >> R2install
+    
     Rscript R2install
 
 
 
     
 %environment
+    export LC_ALL=C
     export PATH=$PATH:/opt/VMATCH
     export PATH=$PATH:/opt/SOAPdenovo2
     export PATH=$PATH:/opt/GeneSeqer/bin
@@ -200,12 +205,25 @@ From: fedora:27
 %runscript
     exec SRAssembler "$@"
 
-%apprun mpi
-    exec SRAssembler_MPI "$@"
-
 %test
-    #cd /opt/SRAssembler/demo
-    #./xtest
+    export LC_ALL=C
+    export PATH=$PATH:/opt/VMATCH
+    export PATH=$PATH:/opt/SOAPdenovo2
+    export PATH=$PATH:/opt/GeneSeqer/bin
+    export PATH=$PATH:/opt/BLAST/bin
+    export PATH=$PATH:/opt/GENOMETHREADER/bin
+    export PATH=$PATH:/opt/SNAP
+    export PATH=$PATH:/opt/abyss/bin
+    export PATH=$PATH:/opt/abyss/ABYSS
+    export PATH=$PATH:/usr/lib64/openmpi/bin
+    export PATH=$PATH:/opt
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64/openmpi/lib
+    export BSSMDIR="/opt/GENOMETHREADER/bin/bssm"
+    export GTHDATADIR="/opt/GENOMETHREADER/bin/gthdata"
+    export ZOE="/opt/SNAP"
+    export PATH=$PATH:/opt/SRAssembler/bin
+    cd /opt/SRAssembler/demo
+    ./xtest defaultpath
 
 
 %labels
