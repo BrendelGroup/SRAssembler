@@ -228,4 +228,4 @@ From: fedora:27
 
 %labels
     Maintainer vpbrendel
-    Version v0.9.2
+    Version v1.0.0
