@@ -10,6 +10,6 @@
 #include <string>
 
 // Version information
-static const std::string VERSION="0.3.0";
+static const std::string VERSION="1.0.0";
 
 #endif /* VERSION_H_ */
