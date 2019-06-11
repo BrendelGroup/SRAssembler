@@ -1,5 +1,5 @@
 bootstrap: docker
-From: fedora:27
+From: fedora:30
 
 %help
     This container provides portable & reproducible components for SRAssembler:
@@ -14,6 +14,8 @@ From: fedora:27
     dnf -y install gcc-c++
     dnf -y install bc git tcsh tzdata unzip zip wget which bzip2
     dnf -y install nano
+    dnf -y install python2-setuptools
+    dnf -y install python3-setuptools
 
     echo 'Installing Abyss assembler version 2.1.5'
     #### Prerequisites
@@ -48,14 +50,14 @@ From: fedora:27
     rm vmatch-2.3.0-Linux_x86_64-64bit.tar.gz
     ln -s vmatch-2.3.0-Linux_x86_64-64bit VMATCH
     
-    echo 'Installing BLAST+ version 2.8.1 from NCBI '
+    echo 'Installing BLAST+ version 2.9.0 from NCBI '
     #### Prerequisites
     #### Install
     cd /opt
-    wget ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.8.1/ncbi-blast-2.8.1+-x64-linux.tar.gz
-    tar -xzf ncbi-blast-2.8.1+-x64-linux.tar.gz
-    rm ncbi-blast-2.8.1+-x64-linux.tar.gz
-    ln -s ncbi-blast-2.8.1+ BLAST
+    wget ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.9.0/ncbi-blast-2.9.0+-x64-linux.tar.gz
+    tar -xzf ncbi-blast-2.9.0+-x64-linux.tar.gz
+    rm ncbi-blast-2.9.0+-x64-linux.tar.gz
+    ln -s ncbi-blast-2.9.0+ BLAST
 
     echo 'Installing GeneSeqer spliced aligner '
     #### Prerequisites
@@ -75,8 +77,6 @@ From: fedora:27
     ln -s gth-1.7.0-Linux_x86_64-64bit GENOMETHREADER
 
     echo 'Installing SNAP gene finder '
-    # This git repository doesn't have tags, but hasn't been touched in 2 years.
-    # Hopefully there won't be any version-breaking changes made.
     #### Prerequisites
     #### Install
     cd /opt
@@ -228,4 +228,4 @@ From: fedora:27
 
 %labels
     Maintainer vpbrendel
-    Version v1.0.0
+    Version v1.1.0

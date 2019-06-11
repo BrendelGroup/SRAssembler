@@ -75,8 +75,6 @@ From: fedora:27
     ln -s gth-1.7.0-Linux_x86_64-64bit GENOMETHREADER
 
     echo 'Installing SNAP gene finder '
-    # This git repository doesn't have tags, but hasn't been touched in 2 years.
-    # Hopefully there won't be any version-breaking changes made.
     #### Prerequisites
     #### Install
     cd /opt
