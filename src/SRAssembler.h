@@ -87,7 +87,7 @@ protected:
 	GeneFinder* get_gene_finder();
 	boost::unordered_map<std::string,Params> read_param_file();
 	Params get_parameters(string program_name);
-	std::string probe_file, species, probe_type, out_dir;
+	std::string probe_file="", species, probe_type, out_dir;
 	std::string taboo_file, taboo_type;
 	int init_match_length;
 	int recur_match_length;
