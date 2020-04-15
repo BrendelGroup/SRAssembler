@@ -832,6 +832,10 @@ Logger* SRAssembler::get_logger(){
 }
 
 void SRAssembler::create_index(int round) {
+	// In case of pre-processing only, there is no probe to index.
+	if (probe_file == "") {
+		return;
+	}
 	Aligner* aligner = get_aligner(round);
 	// This index is used during cleaning rounds, to find contigs that match the probe_file.
 	aligner->create_index(aux_dir + "/qindex", probe_type, probe_file);
