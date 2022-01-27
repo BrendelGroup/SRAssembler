@@ -146,13 +146,17 @@ From: fedora:35
     printf '#!/bin/sh\n(Xvfb :10 &) && DISPLAY=:10 java -Xmx4000m -Dapple.laf.useScreenMenuBar=true -Djava.net.preferIPv4Stack=true -jar /opt/IGV_2.11.0/lib/igv.jar "$@" && pkill Xvfb\n' > /usr/local/bin/igv
     chmod 777 /usr/local/bin/igv
 
-    echo 'Installing MUSCLE aligner version 5.1 '
+    echo 'Installing MUSCLE aligner versions 3.8 and 5.1 '
     #### Dependencies
     ####
     cd /opt/bin
+    wget https://drive5.com/muscle/downloads3.8.31/muscle3.8.31_i86linux64.tar.gz
+    tar -xzf muscle3.8.31_i86linux64.tar.gz 
+    chmod a+x muscle3.8.31_i86linux64
+    ln -s muscle3.8.31_i86linux64  muscle
     wget https://github.com/rcedgar/muscle/releases/download/v5.1/muscle5.1.linux_intel64
     chmod a+x muscle5.1.linux_intel64
-    ln -s muscle5.1.linux_intel64 muscle
+    ln -s muscle5.1.linux_intel64  muscle5
 
     echo 'Installing InterMine Python package '
     pip3 install intermine

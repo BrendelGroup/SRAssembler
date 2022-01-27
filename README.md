@@ -14,7 +14,7 @@ Hopefully this code will be useful to you if you
 
 Detailed instructions for installation from source are available in the [INSTALL](./INSTALL.md) document.
 The simplest way to get going is to use the SRAssembler
-[Singularity](https://sylabs.io/docs/) container, e.g. as follows:
+[Singularity](https://apptainer.org/) container, e.g. as follows:
 
 ```bash
 cd
@@ -30,6 +30,10 @@ go into the SRAssembler/demo directory that has been created, download the SRAss
 Singularity container, define the bash alias _rws_ ("run with singularity"),
 and check that everything works by running the _xtest_ command with the _defaultpath_
 option (which will use the binaries from within the container).
+
+Of course this assumes that you have [Apptainer/Singularity](https://apptainer.org/) installed on your system.
+Check whether there is package built for your system.
+Otherwise, follow the instructions to [install Singularity from source code](https://apptainer.org/user-docs/master/quick_start.html#quick-installation-steps).
 
 ## Running SRAssembler
 
