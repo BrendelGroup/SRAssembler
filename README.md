@@ -12,13 +12,30 @@ Hopefully this code will be useful to you if you
 
 ## Installation
 
-Detailed instructions for installation from source are available in the [INSTALL](./INSTALL.md) document. You can also download and use our [Singularity image](https://singularity-hub.org/collections/1653) directly.
+Detailed instructions for installation from source are available in the [INSTALL](./INSTALL.md) document.
+The simplest way to get going is to use the SRAssembler
+[Singularity](https://sylabs.io/docs/) container, e.g. as follows:
+
+```bash
+cd
+git clone https://github.com/BrendelGroup/SRAssembler
+cd SRAssembler/demo
+wget https://BrendelGroup.org/SingularityHub/sra.sif
+alias rws="singularity exec -e -B ~/SRAssembler/demo  ~/SRAssembler/demo//sra.sif"
+rws ./xtest defaultpath
+```
+
+In the above example, you clone this repository into your Linux home directory,
+go into the SRAssembler/demo directory that has been created, download the SRAssembler
+Singularity container, define the bash alias _rws_ ("run with singularity"),
+and check that everything works by running the _xtest_ command with the _defaultpath_
+option (which will use the binaries from within the container).
 
 ## Running SRAssembler
 
 SRAssembler is run at the command line with `path/to/SRAssembler [options]`. It can also take advantage of multiple processors on machines with OpenMPI by using `mpirun -np $number_of_processors path/to/SRAssembler_MPI [options]`.
 
-If you are using the Singularity image instead of compiling the SRAssembler binaries, you can run the SRAssembler program with `singularity run --cleanenv --bind $(pwd) path/to/SRAssembler.simg [options]`. To use the Singularity image with multiple processors, run `singularity exec --cleanenv --bind $(pwd) path/to/SRAssembler.simg mpirun -np $number_of_processors SRAssembler_MPI [options]`.
+If you are using the Singularity image instead of compiling the SRAssembler binaries, you can run the SRAssembler program with `singularity run --cleanenv --bind $(pwd) path/to/sra.sif [options]`. To use the Singularity image with multiple processors, run `singularity exec --cleanenv --bind $(pwd) path/to/sra.sif mpirun -np $number_of_processors SRAssembler_MPI [options]`.
 
 ### Command-line options
 
@@ -181,8 +198,9 @@ The SRAssembler package conforms to our [RAMOSE](https://github.com/BrendelGroup
 
 ## Reference
 
-Thomas W. McCarthy, Hsien-Chao Chou, and Volker P. Brendel (2018) **SRAssembler:**
-_Selective Recursive local Assembly of homologous genomic regions._ To be submitted.
+Thomas W. McCarthy, Hsien-Chao Chou, and Volker P. Brendel (2019) **SRAssembler:**
+_Selective Recursive local Assembly of homologous genomic regions._
+[BMC Bioinformatics 20, 371.](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/s12859-019-2949-4)
 
 ## Contact
 
