@@ -21,7 +21,7 @@ cd
 git clone https://github.com/BrendelGroup/SRAssembler
 cd SRAssembler/demo
 wget https://BrendelGroup.org/SingularityHub/sra.sif
-alias rws="singularity exec -e -B ~/SRAssembler/demo  ~/SRAssembler/demo//sra.sif"
+alias rws="singularity exec -e -B ~/SRAssembler/demo  ~/SRAssembler/demo/sra.sif"
 rws ./xtest defaultpath
 ```
 
