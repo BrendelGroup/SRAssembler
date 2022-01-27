@@ -172,7 +172,7 @@ If no processed reads directory was specified with **-r**, the processed reads a
 If no temp directory was specified with **-T**, SRAssembler will use "/tmp".
 Assuming these defaults, SRAssembler will create the following directories and files:
 
-- **SRAssembler_output/summary.html** : A summary of the state of the run at each round, and the final results.
+- **SRAssembler\_output/summary.html** : A summary of the state of the run at each round, and the final results.
 - **SRAssembler\_output/all\_contigs.fasta** : All of the contigs longer than the *query\_contig\_minimum* (set with **-i**) that were assembled in the final round.
 - **SRAssembler\_output/hit\_contigs.fasta** : The contigs assembled in the final round that meet the completion thresholds (set with **-m**, **-M**, **-e**, and **-c**).
 - **SRAssembler\_output/output.aln** : The report on spliced alignment of the query to the contigs in *SRAssembler\_output/all\_contigs.fasta*.
@@ -190,11 +190,11 @@ This directory is entirely for the temporary storage of many very small files th
 
 ## Testing installation
 
-The [demo/](demo/) directory contains the necessary files to test the functionality of most of SRAssembler's options. The bash script [xtest](demo/xtest) runs SRAssembler several times using various command-line options and compares the results to the summary files in [demo/standards/](demo/standards). This confirms the installation and functionality of all the SRAssembler dependencies. The bash script xquicktest runs just tests 1 and 4, confirming the basic functionality of the SRAssembler and SRAssembler_MPI executables. The demo/ directory also contains two library configuration files and a sample parameter configuration file. Examining these files is a good way to familiarize yourself with setting up SRAssembler runs.
+The [demo/](demo/) directory contains the necessary files to test the functionality of most of SRAssembler's options. The bash script [xtest](demo/xtest) runs SRAssembler several times using various command-line options and compares the results to the summary files in [demo/standards/](demo/standards). This confirms the installation and functionality of all the SRAssembler dependencies. The bash script xquicktest runs just tests 1 and 4, confirming the basic functionality of the SRAssembler and SRAssembler\_MPI executables. The demo/ directory also contains two library configuration files and a sample parameter configuration file. Examining these files is a good way to familiarize yourself with setting up SRAssembler runs.
 
 Within [demo/input/](demo/input/) are two FASTA query files and four FASTQ reads files. The query files are the transcript sequence of At1g01950.1, an *Arabidopsis thaliana* gene located at Chr1:325316-330619, and the amino acid sequence of the homologous rice protein LOC_Os06g04560.1. We used SAMTools' wgsim program to simulate two libraries from region 300,000..400,000 of chromosome 1 of Arabidopsis, with insert sizes 200bp and 1kb. Each library has 50,000 paired reads. The base error rate is 0.002 and the fraction of indels is 0.001.
 
-Running the tests is as simple as executing `bash xtest`. Each test will output progress to standard out, and after each test the script will report whether the test's summary file matches the one in the standards/ directory. At the end of the script, the comparison of all the tests' results to the standards will again be reported for easy viewing. To test the functionality of the Singularity image, run `singularity exec -e -B $(pwd) path/to/SRAssembler.simg ./xtest defaultpath` from within the demo/ directory. This will bind the demo directory to the Singularity instance, allowing it to read and write, but cause it to use only its internal SRAssembler software to execute the tests.
+Running the tests is as simple as executing `bash xtest`. Each test will output progress to standard out, and after each test the script will report whether the test's summary file matches the one in the standards/ directory. At the end of the script, the comparison of all the tests' results to the standards will again be reported for easy viewing. To test the functionality of the Singularity image, run `singularity exec -e -B $(pwd) path/to/SRAssembler.sif ./xtest defaultpath` from within the demo/ directory. This will bind the demo directory to the Singularity instance, allowing it to read and write, but cause it to use only its internal SRAssembler software to execute the tests.
 
 ## License
 
